@@ -12,7 +12,12 @@ reports/   Sprint-Berichte (QA, Playtest, Metriken, Compliance, Owner-Bericht)
 src/       Rojo-Projekt: server/ → ServerScriptService, client/ → StarterPlayerScripts, shared/ → ReplicatedStorage
 tests/     Logik-Tests (laufen im Luau-CLI ohne Roblox)
 scripts/   check.sh (Format, Lint, Build, Typprüfung, Tests), setup_tools.sh
+installer/ Windows-Installer zum Testen in Roblox Studio (install.ps1 + .bat-Starter)
 ```
+
+## Auf dem PC testen (Windows)
+
+Doppelklick auf `installer/Schwungturm-Installieren.bat`. Der Installer lädt Rojo, baut die Spieldatei und öffnet sie in Roblox Studio. Details: [`installer/ANLEITUNG.md`](installer/ANLEITUNG.md).
 
 ## Lokal arbeiten (Owner-Maschine)
 

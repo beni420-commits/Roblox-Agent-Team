@@ -126,4 +126,9 @@ Der Owner hat in §0.1 keine Werte ausgefüllt. Es gelten die Defaults:
 - **Entscheidung:** Sprint 1 hat keine Sounds. Die Pfade der Engine-Sounds (Kat. 0) sind in der Doku nicht belegt und hier nicht prüfbar; Kat. 1 bräuchte Asset-IDs aus dem Creator Store (nicht erreichbar).
 - **Folge:** Feedback läuft nur visuell. Sounds folgen in Sprint 2, nachdem der Owner Pfade bzw. IDs in Studio geprüft hat (Asset-Register).
 
+### D-031 · 2026-10-12 · Orchestrator · Windows-Installer zum Testen (Owner-Wunsch „Installer für PC“)
+- **Entscheidung:** `installer/` mit `install.ps1`, Doppelklick-Startern (`.bat`) und `ANLEITUNG.md`. Ablauf: Rojo 7.7.1 aus dem offiziellen GitHub-Release laden (SHA-256 gegen den veröffentlichten Digest prüfen, sonst Hash anzeigen), Spieldatei bauen, Roblox Studio am dokumentierten Ort finden (sonst offizielle Seite öffnen), Rojo-Plugin und Desktop-Verknüpfung anlegen, Studio mit `--task EditFile --localPlaceFile` öffnen. Dazu gibt es eine Deinstallation. Keine Adminrechte nötig.
+- **Begründung:** Roblox-Spiele sind keine eigenständigen PC-Programme. Der realistische Weg „auf dem PC spielen“ ist Roblox Studio, und der Installer macht ihn zum Doppelklick.
+- **Evidenz:** [GETESTET] 14 Tests mit PowerShell 7 unter Linux, darunter nachgebildeter Download inkl. Prüfsumme, Build, Gesamtlauf, Deinstallation, AST-Prüfung auf Syntax nur für PowerShell 7 und Dateiformate. Mutationstest bestanden. Die Tests fanden 2 echte Fehler (typografische Anführungszeichen als String-Ende, Rojo-Ausgabe im Rückgabewert). **Nicht getestet:** echtes Windows, Windows PowerShell 5.1, Desktop-Verknüpfung (COM), Studio-Start, echter GitHub-Download.
+
 <!-- Weitere Entscheidungen werden unten angehängt. -->

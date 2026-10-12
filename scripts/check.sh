@@ -35,4 +35,11 @@ luau-analyze tests/
 step "Logik-Tests (Luau-CLI)"
 "$LUAU_BIN" tests/run.luau
 
+step "Installer-Tests (PowerShell 7)"
+if command -v pwsh >/dev/null 2>&1; then
+	pwsh -NoProfile -File installer/tests/Test-Installer.ps1
+else
+	echo "pwsh nicht gefunden – Installer-Tests übersprungen."
+fi
+
 printf '\nAlle Prüfungen bestanden.\n'

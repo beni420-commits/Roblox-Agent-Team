@@ -1,0 +1,3 @@
+# Windows-Dateien des Installers unverändert lassen (CRLF, UTF-8-BOM), auch beim ZIP-Download von GitHub.
+*.bat -text
+installer/*.ps1 -text

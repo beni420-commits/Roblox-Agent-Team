@@ -97,3 +97,7 @@
 
 ### Orchestrator – Sprint-1-Abschluss
 - Owner-Bericht Sprint 1 geschrieben. **Stopp: wartet auf Owner-Test P0.**
+
+## 2026-10-12 – Owner-Wunsch: Installer für PC
+- Windows-Installer (`installer/`) erstellt: Rojo-Download mit Prüfsumme, Build, Studio-Erkennung, Plugin, Verknüpfung, Deinstallation (D-031).
+- 14 Installer-Tests mit PowerShell 7 [GETESTET]; Teil von `scripts/check.sh` (wird übersprungen, wenn `pwsh` fehlt). Echtes Windows ist ungetestet.
