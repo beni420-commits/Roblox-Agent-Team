@@ -9,4 +9,6 @@ TestRunner.run({
 	require("./shared/Util/Validator.spec"),
 	require("./shared/Util/RateLimiter.spec"),
 	require("./shared/Util/Trove.spec"),
+	require("./shared/Logic/Reachability.spec"),
+	require("./shared/Logic/TowerGenerator.spec"),
 })
