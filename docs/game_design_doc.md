@@ -124,7 +124,7 @@ Kein Kauf-/Shop-Hinweis im Onboarding (Compliance). Texte maximal als 1–3-Wort
 - **Keine Spieler-Kollision** (CollisionGroup), damit niemand andere herunterschubsen kann (Anti-Griefing).
 - **Keine eigenen Text-Features**, keine Freitext-Schilder, keine Freundschafts-Aufforderungen. Nur der Roblox-Standard-Chat (TextChatService, altersabhängig von Roblox gesteuert).
 - *(Could)* **Seilschaft:** Freunde im selben Server erhalten +2 Funken, wenn sie ein Lager innerhalb von 20 s nacheinander erreichen; Freunde werden mit farbigem Leucht-Marker gezeigt. Kein Chat nötig.
-- *(Should)* **Bestenliste Tagesturm:** nur Server-Bestenliste, Anzeige gemäß Compliance-Auflage (§11); nur Läufe ohne Plausibilitätsverstoß.
+- *(Should)* **Bestenliste Tagesturm:** Die Standardansicht ist die **persönliche Bestmarke**. Fremde Namen erscheinen **nur in der Roblox-eigenen PlayerList** (`leaderstats` bzw. persistente PlayerList-Bestenliste, Beta). Unsere UI zeigt nur den eigenen Rang bzw. Score. Es zählen nur Läufe ohne Plausibilitätsverstoß; Scores werden nur serverseitig geschrieben. Für Ranglistenplätze gibt es keine Belohnungen (C-A16).
 
 ## 9. Feature-Liste (MoSCoW)
 
@@ -164,9 +164,42 @@ Format: *Wenn wir X einführen, dann ändert sich Kennzahl K um Y, gemessen übe
 
 Vor dem Release sind alle Hypothesen ungeprüft. Vor-Release-Indikatoren: Owner-Playtest (Zeiten je Etage, Fehlversuche), Persona-Simulation `[SIMULIERT]`.
 
-## 11. Compliance-Auflagen (aus `reports/compliance_check_sprint0.md`)
+## 11. Compliance-Auflagen (aus `reports/compliance_check_sprint0.md` v1.1)
 
-*Wird nach Abschluss der Compliance-Vorprüfung übernommen.*
+Urteil Compliance: **Freigabe mit Auflagen**, erwartetes Label **Minimal**. Die Auflagen C-A1 bis C-A18 sind verbindlich und Teil der Definition of Done.
+
+| Auflage | Umsetzung in diesem GDD |
+|---|---|
+| C-A1 Maturity-Fragebogen vor jedem Zugang Dritter (auch Playtests); Antworten versioniert ablegen | Owner-Aufgabe vor dem ersten Fremd-Playtest; Antworten-Entwurf in `docs/compliance/questionnaire.md` (Sprint 1) |
+| C-A2 kein Spieler-Freitext im MVP | Es gibt keine Benennungen und keine Schilder (§8) |
+| C-A3 generierte Namen nur aus kuratierten Wortlisten + Blocklist-Test | Der Tagesturm bekommt höchstens Namen aus Wortlisten (DE/EN). Ein Unit-Test prüft alle Kombinationen gegen eine Blocklist. |
+| C-A4 nur unveränderter Standard-Chat; nur vordefinierte, nicht körperliche Signale | §8; keine eigenen Kanäle |
+| C-A5 keine Links, Handles, Invite-Codes; keine Belohnungen für Like/Favorite/Follow/Gruppe/Einladen | kein Referral-Bonus (Hausregel); Seilschaft nur für gemeinsames Spielen (C-A17) |
+| C-A6 nur UserId + Spielstand; RTBF-Templates mit statischem `{UserId}`-Muster | Schema v1 (`player_<UserId>`) erfüllt das. Die Tagesbestenliste darf keine täglich wechselnden Store-Namen nutzen (Tech Notes §6). |
+| C-A7 HR-FOMO: keine Streaks, keine „nur heute“-Belohnungen, keine Benachrichtigungen, kein Verlust bei Abwesenheit | §3.3: Tagesturm ohne Streak, Belohnungen flach; vergangene Tagestürme später als Archiv spielbar *(Could)* |
+| C-A8 später nur Kosmetik, kein Pay-to-Skip, keine Zufallskäufe | §5 (Upgrades nie gegen Robux), §9 Won't |
+| C-A9 Asset-Kategorien-Regel (nach Owner-Freigabe) | §4 Art-Stil nutzt nur Kategorie 0 (Engine-Inhalte). Sounds aus Kategorie 1 erst nach Sammelfreigabe. |
+| C-A10 Prinzipien statt Kopie | Tabelle §11.1 |
+| C-A11 Markenprüfung des Titels durch den Owner; kein „Roblox“ oder „Blox“ im Namen | Arbeitstitel bleibt bis zur Prüfung vorläufig |
+| C-A12 Store-Medien nur aus echten Captures; keine fremden Spielnamen in den Metadaten | Release-Checkliste |
+| C-A13 Spieler-Kollision aus; keine Avatar-zu-Avatar-Interaktion | §8, Tech Notes §6.7 |
+| C-A14 kein Flackern > 3 Blitze/s | Zone 3: Taktplatten ≤ 1 Hz (UX B5) |
+| C-A15 Publishing Requirements und 16+-Startphase einplanen | Owner-Bericht (Freigabe/Frage); Telemetrie §6 trennt Phase-1-Daten |
+| C-A16 Bestenliste: persönliche Bestmarke zuerst, fremde Namen nur über die Roblox-PlayerList, keine Platzierungs-Belohnungen, serverseitige Validierung | §8 |
+| C-A17 Seilschaft-Bonus nur für gemeinsames Erreichen, nicht an Einladen geknüpft | §8 (Could) |
+| C-A18 Frustschutz kostenlos, nie „Etage überspringen“ gegen Robux; Gewitter ohne Schaden/Schreck | §6.3, §4 Zone 3 |
+
+### 11.1 Prinzipien statt Kopie (C-A10)
+
+| Referenzspiel | Übernommenes Prinzip | Ausdrücklich NICHT übernommen |
+|---|---|---|
+| Tower of Hell | Turm aus zufällig kombinierten Modulen, klares Ziel „nach oben“ | Name/Titelmuster, Modulkatalog, Layouts, Timer-Runden, Look |
+| „+1 Speed“-Escape-Obbies | spürbares Stärkerwerden durch Aktionen | „+1 …“-Titelmuster, Keyboard-/Meme-Thematik, Zahlen-Inflation ohne Fähigkeiten |
+| Grow a Garden | ruhiger, gewaltfreier Einstieg, verständliche Schleife | jede Garten-/Samen-Thematik, Shop-Restock, Handel |
+| 99 Nights in the Forest | sichtbarer Zähler als Ziel (Etage x/30), Koop als Antrieb | Survival/Horror, Nacht-Thematik, Kreaturen |
+| Fisch | kleine Geschicklichkeits-Aktion im Kern plus Langzeit-Sammelziel | Angel-Thematik, Enzyklopädie-Layout |
+
+Keine Namen von Referenzspielen in Titel, Beschreibung, Tags oder Thumbnails.
 
 ## 12. Offene Designfragen
 

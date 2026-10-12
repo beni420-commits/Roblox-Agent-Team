@@ -211,6 +211,7 @@ Server → Client: `StateChanged` (Funken, Etage, Fähigkeiten, Upgrades – nur
 - Charakterphysik ist clientseitig (Standard). Der Server tastet die Position mit 2 Hz ab (`Logic/MovementCheck`): horizontale Geschwindigkeit ≤ max(WalkSpeed · Upgrades, Dash) · 1,5 Toleranz; Höhengewinn je Probe ≤ erreichbare Sprunghöhe (mit Doppelsprung) + Plattform-Bewegung + Toleranz; Etagen-Sprünge > 1 Etage ohne Zwischenprobe = Verstoß.
 - Folgen eines Verstoßes: **kein** Kick, **keine** Strafe im Hauptturm (Kinder, Lag-Fehlalarme). Nur `run.flagged = true` → dieser Lauf zählt nicht für Bestzeit/Tagesturm-Bestenliste; Zähler in Telemetrie. [ANNAHME: verhältnismäßig, da kein PvP/Handel]
 - Mindestzeit je Abschnitt aus dem Generator (Wegstrecke ÷ Höchstgeschwindigkeit) als zweite Plausibilitätsgrenze.
+- **Speicherung der Tagesbestenliste (Should, Sprint 3):** Es dürfen keine täglich wechselnden Store-Namen verwendet werden, weil RTBF-Templates ein statisches `{UserId}`-Muster brauchen (Compliance C-A6). Zwei Kandidaten: (a) die persistente PlayerList-Bestenliste von Roblox (Beta; ein registrierter OrderedDataStore pro Spiel, Roblox rendert die Namen, C-A16), (b) MemoryStore SortedMap mit TTL ≤ 45 Tage. Entscheidung per Spike in Sprint 3. [ANNAHME]
 - Option für später: Roblox „Server Authority“ (laut Research inzwischen Full Release, benötigt „Next Generation Replication“) → Spike, falls Bestenlisten-Cheats auftreten.
 
 ### 6.7 Spieler-Kollision
