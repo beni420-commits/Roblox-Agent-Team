@@ -1,0 +1,23 @@
+# Build-Ausgaben
+/build/
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
+!/assets/**/*.rbxm
+sourcemap.json
+
+# Lokale Werkzeuge / Editor
+/.vscode/settings.json
+.DS_Store
+/node_modules/
+/Packages/
+/ServerPackages/
+/DevPackages/
+
+# Geheimnisse – niemals committen
+.env
+*.key
+*.secret
+roblox_api_key*
+/.tools/

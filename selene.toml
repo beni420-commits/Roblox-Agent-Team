@@ -1,0 +1,11 @@
+# Roblox-Standardbibliothek kann hier nicht generiert werden (API-Dump-Download von
+# setup.rbxcdn.com ist per Netzwerk-Policy gesperrt). Deshalb: eigene, schlanke Std
+# mit Roblox-Globals (siehe roblox_lite.yml). Die eigentliche Roblox-API-Prüfung
+# übernimmt luau-lsp mit aktuellen Typdefinitionen. Siehe docs/tech_notes.md.
+std = "roblox_lite"
+
+[lints]
+global_usage = "deny"
+unused_variable = "warn"
+shadowing = "warn"
+unscoped_variables = "deny"

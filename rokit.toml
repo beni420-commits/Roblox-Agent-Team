@@ -1,0 +1,8 @@
+# Werkzeugversionen für die lokale Owner-Maschine (Rokit: https://github.com/rojo-rbx/rokit).
+# Hinweis: In der Agenten-Umgebung wurden dieselben Versionen aus dem Quellcode gebaut
+# (cargo / CMake), nicht über Rokit installiert. Rokit selbst wurde hier nicht getestet.
+[tools]
+rojo = "rojo-rbx/rojo@7.7.1"
+selene = "Kampfkarren/selene@0.31.0"
+stylua = "JohnnyMorganz/StyLua@2.6.0"
+luau-lsp = "JohnnyMorganz/luau-lsp@1.70.1"
