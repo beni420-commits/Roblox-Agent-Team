@@ -11,4 +11,7 @@ TestRunner.run({
 	require("./shared/Util/Trove.spec"),
 	require("./shared/Logic/Reachability.spec"),
 	require("./shared/Logic/TowerGenerator.spec"),
+	require("./shared/Logic/RunState.spec"),
+	require("./shared/Logic/LandingLocator.spec"),
+	require("./exploit/RemoteExploit.spec"),
 })
