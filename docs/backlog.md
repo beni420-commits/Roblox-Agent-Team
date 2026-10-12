@@ -34,7 +34,7 @@ Stand: 2026-10-12 (Sprint 0, nach GDD v0.2). Sprint-Zuordnung ist ein Vorschlag 
 | A-011 | MovementCheck (Fensterbudget, Fähigkeiten-Grenzen, Luftzeit, lückenlose Etagenfolge) + Tests mit synthetischen Spuren | 8 | 5 | 5 | 200 | SIMULIERT (P-06) | 2 |
 | A-017 | Social ohne Chat: Freundes-Marker, Lager-Lift, 3 Signale (C-A30), gemeinsame Lager-Feier | 8 | 4 | 6 | 192 | SIMULIERT (P-07) | 2 |
 | A-018 | Neu gemischter Turm ab Lauf 2 + Lebenszeit-Meilensteine (5 Leuchtspur-Farben) | 7 | 4 | 7 | 196 | SIMULIERT (P-08) | 2 |
-| A-012 | Tagesturm mit Normwerten + Server-Bestenliste | 7 | 3 | 5 | 105 | ANNAHME (H5) | 3 (Should) |
+| A-012 | Tagesturm mit Normwerten + Bestmarke (Bestenliste nur über Roblox-PlayerList, C-A16) | 7 | 3 | 5 | 105 | ANNAHME (H5) | 3 (Should) |
 | A-013 | Wandsprung (Should); optionale Funkenrouten sind mit dem Gleiter Teil von A-009 | 5 | 4 | 5 | 100 | ANNAHME | 3 (Should) |
 | A-014 | Schwung-Leiste | 5 | 3 | 7 | 105 | ANNAHME (H7) | 3 (Should) |
 | A-015 | Seilschaft-Bonus (C-A31) | 5 | 3 | 6 | 90 | ANNAHME | nach MVP (Could) |

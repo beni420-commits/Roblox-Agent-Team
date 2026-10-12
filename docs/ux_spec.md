@@ -159,7 +159,7 @@ Maus/Tastatur: Dash = `Shift`/`Q`, Optionen = `Esc`-unabhängig über Icon bzw. 
 - Der Schrein pulsiert nur für das **empfohlene nächste Ziel**. Für den Gleiter gibt es eine Spar-Leiste (P-12).
 - Eine **Messlatte** neben dem Schrein zeigt mit einem Geist-Sprung „vorher/nachher“, was ein Sprung-Upgrade bewirkt.
 - Karten zeigen Symbol, Stufe als **gefüllte Punkte**, Preis. Ist ein Upgrade nicht leistbar, zeigt die Karte **Schloss-/Grau-Muster plus fehlende Funken als Zahl**, nicht nur eine andere Farbe.
-- Kauf: Karte wählen → „Kaufen“ → Server bestätigt → Effekt (Partikel + Ton) und Zähler sinkt. Doppeltipp-Schutz: Der Knopf ist bis zur Server-Antwort gesperrt.
+- Tausch: Karte wählen → „Tauschen“ → Server bestätigt → Effekt (Partikel + Ton) und Zähler sinkt. Doppeltipp-Schutz: Der Knopf ist bis zur Server-Antwort gesperrt.
 - **Kein** Robux-Bezug, keine Rabatt-Optik, keine Countdown-Elemente (Compliance HR-MON).
 - Gamepad: Start-Fokus auf der ersten leistbaren Karte; `B` schließt.
 

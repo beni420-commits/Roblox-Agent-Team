@@ -37,3 +37,29 @@
 - Luau-CLI (`luau`, `luau-analyze`) und luau-lsp 1.70.1 gebaut. `scripts/check.sh` ist vollständig grün [GETESTET].
 - luau-lsp fand einen echten Typfehler (eingefrorene Tabelle vs. Lese-/Schreib-Typ) in `BuildInfo.luau`; behoben.
 - Gegenprobe: Ein absichtlich fehlschlagender Test liefert Exit-Code 1, ein absichtlicher Typfehler lässt `luau-analyze` mit Exit-Code 1 scheitern [GETESTET].
+
+### Market Researcher – Research-Report
+- `docs/research_report.md`: 34 Websuchen, 8 Genres, 9 Referenzspiele, 3 Konzepte. Empfehlung A „Schwungturm“ (gewichtet 16/20), Plan B „Formwächter“.
+
+### Systems Engineer – Tech-Faktensammlung
+- `docs/research_tech_facts_2026-10-12.md`: Die Fakten sind überwiegend im Original gelesen (Git-Klon `Roblox/creator-docs` @af5f853 und Tool-Repos).
+- Korrekturen in den Tech Notes: ProfileStore steht unter Apache-2.0 (nicht MIT); die 6-s-Schreibregel ist überholt; neue DataStore-Budgets; `math.isfinite`; `ModelStreamingBehavior = Improved`.
+
+### Orchestrator – Original-Doku als Quelle (D-017)
+- `Roblox/creator-docs` per Git geklont. Humanoid- und Workspace-Defaults (WalkSpeed 16, JumpHeight 7,2, Gravity 196,2, `CharacterUseJumpPower = true`) im Original geprüft.
+
+### Compliance – Konzept-Vorprüfung
+- A, B und C erhalten jeweils „Freigabe mit Auflagen“; A hat das geringste Risiko (Label Minimal).
+- Im Original geklärt: Publishing-Hürde (1.000 R$ oder Plus/Premium, 250 Spielstarts durch zahlende 16+-Spieler in 60 Tagen); Social Hangouts erst ab 16; `FilterStringAsync` scheitert bei Offline-Autoren, deshalb erscheinen fremde Namen nur in der Roblox-PlayerList.
+
+### Game Designer / Data Analyst / UX / Systems Engineer – Design v0.1
+- GDD, Telemetrie-Plan, UX Teil B und Tech Notes §6 für Konzept A.
+
+### Playtest-Simulator – Persona-Walkthrough [SIMULIERT]
+- 5 Personas. Gate Spielspaß **nicht bestanden**: 8 Befunde „hoch“ (P-01 bis P-08), 21 weitere.
+
+### Game Designer u. a. – Design v0.2
+- Alle „hoch“-Befunde und die meisten mittleren im Design behoben (GDD §13). Compliance-Nachtrag zu v0.2: neue Auflagen C-A29 bis C-A32, keine Blocker.
+
+### Orchestrator – Sprint-0-Abschluss
+- Owner-Bericht geschrieben, state.md aktualisiert, `scripts/check.sh` grün. **Stopp: Warten auf Owner-Freigabe.**
