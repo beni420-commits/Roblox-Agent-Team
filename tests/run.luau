@@ -14,4 +14,5 @@ TestRunner.run({
 	require("./shared/Logic/RunState.spec"),
 	require("./shared/Logic/LandingLocator.spec"),
 	require("./exploit/RemoteExploit.spec"),
+	require("./shared/TelemetryEvents.spec"),
 })

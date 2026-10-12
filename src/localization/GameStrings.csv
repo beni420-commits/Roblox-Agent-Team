@@ -1,0 +1,6 @@
+Key,Source,Context,Example,en,de
+zone.1.name,Meadow,,,Meadow,Wiese
+zone.2.name,Clouds,,,Clouds,Wolken
+zone.3.name,Thunder,,,Thunder,Gewitter
+zone.cleared,{1} cleared!,,Meadow cleared!,{1} cleared!,{1} geschafft!
+hud.floor,{1}/{2},,3/30,{1}/{2},{1}/{2}

@@ -1,5 +1,5 @@
 {
-  "name": "RobloxAgentTeam",
+  "name": "Schwungturm",
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
@@ -13,10 +13,31 @@
       }
     },
     "StarterPlayer": {
+      "$properties": {
+        "CharacterUseJumpPower": false,
+        "CharacterJumpHeight": 7.2,
+        "CharacterWalkSpeed": 16,
+        "CameraMinZoomDistance": 8,
+        "CameraMaxZoomDistance": 30,
+        "DevCameraOcclusionMode": "Invisicam",
+        "AutoJumpEnabled": true
+      },
       "StarterPlayerScripts": {
         "Client": {
           "$path": "src/client"
         }
+      }
+    },
+    "Workspace": {
+      "$properties": {
+        "Gravity": 196.2,
+        "StreamingEnabled": true,
+        "ModelStreamingBehavior": "Improved"
+      }
+    },
+    "LocalizationService": {
+      "GameStrings": {
+        "$path": "src/localization/GameStrings.csv"
       }
     }
   }

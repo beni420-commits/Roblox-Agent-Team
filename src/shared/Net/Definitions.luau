@@ -36,10 +36,10 @@ local Definitions: { [string]: Definition } = {
 }
 
 -- Server → Client (keine Prüfung nötig; nur Namen, damit beide Seiten dieselben nutzen).
-local ServerToClient = table.freeze({
+local serverToClient: { [string]: string } = {
 	StateSync = "StateSync",
-	Feedback = "Feedback",
-})
+}
+local ServerToClient = table.freeze(serverToClient)
 
 return table.freeze({
 	ClientToServer = table.freeze(Definitions),
