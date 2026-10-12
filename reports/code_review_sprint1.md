@@ -14,6 +14,94 @@
 
 **Ergebnis in Kürze:** **0 Blocker, 1 Kritisch, 13 Mittel, 16 Gering.** API-Namen, `require`-Pfade und Analytics-Signaturen stimmen mit der Doku überein. Ein Laufzeitfehler, der den Start verhindert, wurde nicht gefunden. Die Schwächen liegen in der Sprungpad-Mechanik, in der kontextblinden Sturz- und Fehlversuch-Logik und in der Datenqualität des Onboarding-Funnels.
 
+**Nachprüfung am Stand `c7f81b1`:** siehe Abschnitt 0. Von den 30 Befunden sind 23 behoben, 4 teilweise behoben und 3 bewusst offen (Sprint 2, Backlog). Neu sind 8 Befunde (CR-31 bis CR-38), davon 1 Mittel.
+
+---
+
+## 0. Status nach c7f81b1 (Nachprüfung, 2026-10-12)
+
+**Methode der Nachprüfung:**
+1. Diff `e372371..c7f81b1` für alle Dateien unter `src/` vollständig gelesen.
+2. Neue APIs in der Doku nachgeschlagen: `WorldRoot:RegisterCollisionGroup`, `RunService.PreSimulation`, `LogFunnelStepEvent`, `ResetButtonCallback`, `RequestStreamAroundAsync`, `FallenPartsDestroyHeight`.
+3. `scripts/check.sh` ausgeführt: grün, 76/76 Tests.
+4. Simulationen im Luau-CLI mit einer Kopie von `src/shared` im Scratchpad wiederholt (200 Seeds).
+
+Weiterhin gilt: nichts davon lief in der Engine.
+
+**Ergebnisse der Simulation (neuer Stand):**
+- **Sprungpads:** Alle 852 Pad-Verbindungen sind jetzt auch **ohne** Pad-Impuls lösbar, sowohl im großzügigen Modell als auch für einen echten Spieler mit Latenz und Kantenabstand. Jede Pad-Verbindung hat eine Hilfsstufe, keine Etage ist ohne Hilfsstufe.
+- **Erkennungsfenster der Raycast-Sturzerkennung:** Gemeint ist das Fenster, in dem die HRP unter der Schwelle liegt und noch kein Boden in 6 Studs Tiefe ist.
+
+  | currentFloor | Dauer des Fensters |
+  |---|---|
+  | 1 | **0,09–0,17 s** (mit Sprung 0,09 s, über dem Erdboden) |
+  | 2 | 0,24–0,33 s |
+  | 3 | 0,35–0,45 s |
+  | ≥ 4 | ≥ 0,35 s |
+
+  Der Server-Takt liegt bei 0,10–0,12 s (siehe CR-31).
+- **Fingerabdruck:** deterministisch, 1798557578 für den festen Seed.
+
+### 0.1 Status je Befund
+
+| ID | Status | Nachweis / Restpunkt |
+|---|---|---|
+| CR-01 | **behoben** | Pad ohne `Jumping`. Stattdessen Geschwindigkeit setzen, `Freefall` und Nachprüfung per `PreSimulation:Once` (`MovementController.luau:30-46`). Laut Doku ist `PreSimulation` genau für „adjusting … velocity … just before“ gedacht. Zusätzliches Netz: Pad-Anstieg ≤ 6,5, alle Pad-Verbindungen auch ohne Impuls lösbar (Simulation). Studio-Prüfung S2 bleibt. |
+| CR-02 | **behoben** | Hilfsstufen auch für Pads und schon ab Lücke ≥ 1 bzw. Anstieg ≥ 1,5. Keine Etage ohne Hilfsstufe (200 Seeds), fester Seed 6–8 je Etage. |
+| CR-03 | **behoben** | `spawnPosition` wird erst nach dem Platzieren plus 2 s Schonfrist gemessen (`PlayerService.luau:212-214`). |
+| CR-04 | **behoben** (Rest: CR-37) | Teleport nach `AncestryChanged` + 0,2 s + Streaming; Schonfrist. Bleibt eine Heuristik ohne Erfolgskontrolle (CR-37). |
+| CR-05 | **teilweise** (Rest: **Mittel**) | Stehen und Gehen auf tieferen Plattformen zählt nicht mehr. **Offen:** Wer auf dem Rückweg eine Lücke unterhalb der Schwelle überspringt oder übertritt, hat über der Lücke keinen Boden im Raycast. Folge: Vignette am Client und, je nach Positionsverzug, Teleport mit Fehlversuch. Durch CR-07 (abgedunkelte Funken bleiben einsammelbar) wird Zurückgehen jetzt sogar gefördert. Fix: Schwelle sektorabhängig, d. h. hinter der aktuellen Etagenplattform (Bogenwinkel im Sektor von Etage n) gilt `landings[n-1].y` als Basis. |
+| CR-06 | **behoben** (Rest: CR-32) | `isAtTop`: keine Schwelle, keine Fehlversuche, keine Hilfe. Folge siehe CR-32. |
+| CR-07 | **behoben** (Rest: CR-33) | Client prüft Etagen 1…`highestFloor + 1`; Funken passierter Etagen mit Transparenz 0,6. |
+| CR-08 | **behoben** | `StateSync.fails`; steigt der Wert, ruft der Client `guideBriefly()` auf (`GuidanceController.luau`). Beim Etagenwechsel fällt `fails` auf 0, also kein Fehlauslösen. Ein Reset per Knopf erhöht `fails` nicht (korrekt). |
+| CR-09 | **behoben** | 6 Chevrons von der Plaza zu L00, nur bis zur ersten Etage; Chevrons insgesamt etwa doppelt so groß. Kosmetik: Der erste und der letzte Chevron ragen in Plaza bzw. L00 hinein (y = 0,2 unter deren Oberkante 1,0). |
+| CR-10 | **teilweise** (Rest: Gering) | Schritte in natürlicher Reihenfolge, Semantik „mindestens bis Schritt n“ in Events und im Plan dokumentiert. Auto-Complete bleibt: FirstMove (2) wird erst nach 2 s Schonfrist plus 4 Studs gemessen, deshalb kommt FirstJump (3) oft vorher und schließt Schritt 2 ab. Für H1 vertretbar. Sauberer wäre, wenn der Server spätere Schritte puffert. |
+| CR-11 | **behoben** | Schritt 1 erst bei `ReportPreferredInput` oder nach 10-s-Timeout (`PlayerService.luau:141-150`). |
+| CR-12 | **behoben** | „Floor1“-Zeit ab `readyAt` (`PlayerService.luau:194`). |
+| CR-13 | **behoben** (Rest: CR-38) | Funnel „TowerRun“ per `LogFunnelStepEvent`; Signatur und Parameterreihenfolge stimmen mit der Doku (`AnalyticsService.yaml` Z. 528-598). |
+| CR-14 | **offen (bewusst)** | Backlog A-011, jetzt mit Vorrang vor dem Speicherstand. Schweregrad unverändert Mittel. |
+| CR-15 | **behoben** (Rest: CR-34) | Debounce 0,2 s für Anfragen in der Luft; Anfragen am Boden setzen `jumpedSinceGround`. |
+| CR-16 | **behoben** | `workspace:IsCollisionGroupRegistered/RegisterCollisionGroup/CollisionGroupSetCollidable`. |
+| CR-17 | **behoben** (Rest: CR-32, CR-36) | `ResetButtonCallback` mit BindableEvent → `RequestReset`. Teleport ohne Fehlversuch; 10 Versuche im Abstand von 1 s, bis `SetCore` verfügbar ist. |
+| CR-18 | **behoben** | `task.spawn(Strings.init)`, HUD rendert per `Strings.onReady` neu. |
+| CR-19 | **behoben** für den Respawn-Pfad | `RequestStreamAroundAsync` in `pcall` vor dem Respawn-Teleport. Der Reset-Pfad fehlt noch (CR-36). |
+| CR-20 | **teilweise** (Rest: Gering) | Fachliche Ablehnungen werden als `Remote:Grund` gezählt. Offen: Die Kick-Schwelle aus Tech Notes §3 ist weder umgesetzt noch aus der Doku gestrichen. `RequestRespawn:notFalling` entsteht auch bei ehrlichen Spielern (Positionsverzug) und verwässert die Exploit-Kennzahl. |
+| CR-21 | **behoben** | Sitzungsprüfung vor `setInput`. |
+| CR-22 | **behoben** | `isActive` nach jedem Yield und in `sync`. |
+| CR-23 | **teilweise** (Rest: Gering) | Fingerabdruck `TowerHash` ist deterministisch (nur bit32 und gerundete Lücke/Anstieg). Bei Abweichung gibt es aber nur ein `warn` am Client: Der Server erfährt nichts, und die Funken werden trotzdem gebaut. Fix: `ReportOnboardingStep`-ähnliches Remote `ReportMismatch` mit Telemetrie `DataError:tower_mismatch`. |
+| CR-24 | **behoben** | Schwelle `landing.y − 4 + ROOT_HEIGHT`. |
+| CR-25 | **behoben** | `MARGIN_ALONG = 0,3`, quer weiterhin 1. |
+| CR-26 | **behoben** | Eigene ScreenGui mit `ScreenInsets.None` und `DisplayOrder −1`, `Active = false`. |
+| CR-27 | **behoben** (Rest: CR-35) | Pads per `GetTagged` und `GetInstanceAddedSignal`, `BasePart.Touched` je Pad. |
+| CR-28 | **behoben** | `BUILD` aus `BuildInfo`, F03 = Laufnummer, Plan auf „F00-04“ angepasst. |
+| CR-29 | **offen (bewusst)** | Backlog A-019. Die Neon-Regel für Pads ist im GDD ergänzt (erledigt). |
+| CR-30 | **offen (bewusst)** | Backlog A-020. |
+
+**Zu den gezielten Fragen des Orchestrators:**
+- **Kann die Schonfrist (`graceUntil = math.huge`) hängen bleiben?**
+  - In normalen Abläufen nein. Jeder neue Charakter setzt die Frist neu. Ein alter Thread, der in `AncestryChanged:Wait()` oder im Streaming hängt, kehrt wegen `Character ~= character` zurück, ohne die Frist anzufassen.
+  - Einziger Pfad: Die HRP fehlt länger als 10 s (`PlayerService.luau:237-240`). Dann bleibt `math.huge` stehen, bis der nächste Charakter kommt. Laut `Player.yaml` existieren HRP und Gliedmaßen aber beim Feuern von `CharacterAdded` bereits auf dem Server. Deshalb nur ein Restpunkt in CR-37.
+  - Ein Thread, dessen Charakter nie eingehängt wird, bleibt in `AncestryChanged:Wait()` hängen. Das ist ein kleines Leck, aber unschädlich.
+- **Raycast-Sturzerkennung:** Sie behebt CR-05 nur teilweise (Lücken auf dem Rückweg) und führt bei `currentFloor = 1` ein knappes Erkennungsfenster ein (CR-31).
+- **Pad mit `Freefall` und `PreSimulation:Once`:** schlüssig. `Freefall` löst keinen Sprungimpuls aus, und die Nachprüfung im nächsten Schritt fängt ein Überschreiben ab. Eine Sprungtaste, die auf dem Pad gehalten wird, kann im Fall nicht springen. Studio-Bestätigung S2 bleibt.
+- **Neue Funnel-Nummerierung:** konsistent über alle Stellen: Client sendet 3, `Definitions` erlaubt 1–7, `RunState.CLIENT_ONBOARDING_STEPS = {3}`, Server markiert 4 (Funke) und 7 (Etage 10). Kommt FirstJump vor dem Schritt 1 (Bereitschaft), wird er verworfen und pro Charakter nicht wiederholt. Durch Auto-Complete fällt das im Funnel nicht auf (Gering, unter CR-10).
+- **`ResetButtonCallback`:** korrekt laut `StarterGui.yaml` (BindableEvent statt Standardverhalten). Restpunkte sind in CR-36 (Rate-Limit, Streaming) und CR-32 (ein anderer Todesweg bleibt).
+- **Fingerabdruck:** korrekt und deterministisch, die Reaktion auf eine Abweichung fehlt (CR-23, teilweise).
+- **`StateSync.fails` → Chevrons:** korrekt (siehe CR-08).
+
+### 0.2 Neue Befunde
+
+| ID | Datei:Zeile | Schweregrad | Befund | Beleg | Konkreter Fix |
+|---|---|---|---|---|---|
+| CR-31 | `src/server/Services/PlayerService.luau:223`, `:85-97`, `:342`; `src/client/Controllers/FallController.luau:47-48` | **Mittel** | **Sturz über dem Erdboden bei `currentFloor = 1` kann unerkannt bleiben.** Auf dem Weg zu Etage 2 liegt darunter nur der Erdboden. Das Fenster „HRP unter Schwelle 16 und kein Boden in 6 Studs“ dauert nur 0,09–0,17 s, der Server-Takt 0,10–0,12 s kann es verfehlen. Die schnellere Client-Anfrage prüft der Server mit seinem nachlaufenden Positionsbild (`Y < Schwelle + 2` und kein Boden). Schon bei ≈ 20 ms Verzug gilt sie als „notFalling“, und der Client fragt 1 s lang nicht erneut. Folge: Das Kind steht ohne Rücksetzer auf dem Boden unter Etage 2 und muss zurück zu L00. Springt es dort auf dem Weg von Etage 1 über eine Lücke, wird es mit einem Fehlversuch auf E1 teleportiert. | Simulation 0.1: Fenster 0,09–0,17 s; bei `currentFloor ≥ 2` ≥ 0,24 s. Takt: Akkumulator wird auf 0 gesetzt, also 6–7 Frames. | Boden zählt nur, wenn das getroffene Teil zur aktuellen Etage n oder zur Zieletage n+1 gehört (Modell `Floor_%02d` bzw. Name `L%02d`/`F%02d_…`). Erdboden, Plaza und tiefere Etagen gelten als Sturz, auf Server **und** Client gleich. Das schließt auch die Lücke bei Abweichungen durch Positionsverzug. |
+| CR-32 | `src/server/Services/PlayerService.luau:77-80` | Gering | **Oberste Etage hat überhaupt keine Fallgrenze mehr.** Wer nach Zone 1 auf dem Boden herumläuft und über den Rand der Bodenscheibe (Radius 95, nur ≈ 11 Studs neben der Plaza) läuft, fällt bis `FallenPartsDestroyHeight`. Der Charakter wird entfernt; danach folgen Tod, 5 s Wartezeit, Respawn und Teleport. Das widerspricht „kein Tod“. | `Workspace.yaml` Z. 324-333 (fallende Teile werden „parenting them to nil“ entfernt); `Players.yaml` Z. 296-302. | Auf der obersten Etage Schwelle = Erdboden − 10 (Leere) und dann ohne Fehlversuch auf die oberste Etagenplattform setzen (Pfad wie `RequestReset`). |
+| CR-33 | `src/server/Services/PlayerService.luau:312-333`, `:188-189` | Gering | Funken passierter Etagen, die nachträglich eingesammelt werden (neu möglich durch CR-07), erzeugen **kein** Economy-Source-Event; geloggt wird nur beim Erreichen der Etage. Damit ist die Summe der Quellen ≠ Guthaben, obwohl der Telemetrie-Plan §5 Gleichheit verlangt. | Code: `economySource` nur in `onLanding`. | Im `CollectSpark`-Handler bei `sparkId // 100 <= currentFloor` sofort `economySource(…, 1, …, "floor_sparks")` senden (selten, budgetneutral). |
+| CR-34 | `src/client/Controllers/MovementController.luau:112-121` | Gering | Eine `JumpRequest` am Boden setzt `jumpedSinceGround = true` und den Debounce, **ohne** dass feststeht, dass der Humanoid springt. Ist `FloorMaterial` an der Kante einen Schritt veraltet, sperrt das genau den Coyote-Sprung, für den die Logik da ist, für 0,2 s. | Code-Analyse; `FloorMaterial` wird im Humanoid-Schritt aktualisiert (`Humanoid.yaml` Z. 365-390). | `jumpedSinceGround` nur im `StateChanged(Jumping)` setzen; am Boden nur `lastRequestAt` merken, und in der Luft den Coyote-Sprung erlauben, solange kein `Jumping` beobachtet wurde. Studio S14. |
+| CR-35 | `src/client/Controllers/MovementController.luau:48-62`, `:155-158` | Gering | `bindPad` verbindet `Touched` bei jedem `InstanceAdded` neu und trennt nie. Wird ein Pad aus- und wieder eingestreamt, sammeln sich Verbindungen an. Der Debounce verhindert Doppelstarts, das Leck bleibt. | Code-Analyse. | Verbindung je Pad in einer Tabelle halten; `GetInstanceRemovedSignal` trennt sie. |
+| CR-36 | `src/server/Services/PlayerService.luau:348-356`; `src/shared/Net/Definitions.luau:26-30` | Gering | Bei `RequestReset` fehlt das Streaming vor dem Teleport (z. B. vom Erdboden nach E10, 161 Studs). Rate 0,5/s mit Burst 1: Ein zweiter Reset innerhalb von 2 s wird stumm verworfen, und das Menü schließt sich ohne Wirkung. | `Player.yaml` Z. 2616-2634. | Streaming wie im Respawn-Pfad (`task.spawn` mit `RequestStreamAroundAsync`, dann Teleport); Burst 2. |
+| CR-37 | `src/server/Services/PlayerService.luau:237-260` | Gering | Der Respawn-Teleport hängt an der Heuristik „`AncestryChanged` + 0,2 s“ und hat keine Erfolgskontrolle. Weil die Raycast-Erkennung die Plaza jetzt als Boden sieht, gibt es kein Sicherheitsnetz mehr: Geht der Teleport verloren, steht das Kind mit `currentFloor ≥ 1` auf der Plaza. Relevant nur bei echtem Respawn (z. B. CR-32). Außerdem bleibt `graceUntil = math.huge`, wenn die HRP fehlt. | `Player.yaml` Z. 2263-2277 (Reihenfolge; Zeitabstand undokumentiert). | Nach 1 s prüfen, ob die HRP ≤ 20 Studs von der Ziel-Etagenplattform steht; sonst erneut teleportieren. Fallback `task.delay(15, …)`, der eine hängende Frist auflöst. |
+| CR-38 | `src/server/Services/TelemetryService.luau:82-93` | Gering | `funnelSessionId = tostring(runIndex)` ist in Sprint 1 immer „1“, weil es keinen Speicherstand gibt. Bei einem Rejoin wertet Roblox die Etagen-Schritte als Wiederholung und ignoriert sie. Der Etagen-Funnel zeigt damit nur die erste Sitzung je Spieler. | `AnalyticsService.yaml` (Parameter `step`: „Repeated steps by the same user in the same funnel session … will be ignored“). | Bis zum Speicherstand: Session-ID = `runIndex .. "-" .. HttpService:GenerateGUID(false)` je Lauf in der Session speichern. |
+
 ---
 
 ## 1. Befundtabelle
@@ -106,6 +194,11 @@ Ergänzt `reports/owner_test_template.md`. In Klammern: zugehöriger Befund bzw.
 | S22 | Funken-Positionen | liegen knapp über den Plattformen, nicht in der Luft (Client/Server-Determinismus, CR-23) |
 | S23 | Kleine bzw. große Avatar-Skalierung und R6 | Funken werden mit 3,5 Studs Radius noch eingesammelt; Pads lösen aus |
 | S24 | Erst in einem **veröffentlichten Test-Place** (nicht Studio): Creator Hub → Analytics → View Events | Reihenfolge der Funnel-Schritte, Werte von CF01 bei Schritt 1 (CR-10, CR-11) |
+| S25 | *(Nachprüfung c7f81b1)* Auf dem Weg zu **Etage 2** zehnmal von hohen Plattformen (≈ 30 Studs) abspringen, möglichst in Studio mit simulierter Latenz (Network → Incoming Replication Lag 0,1 s) | jedes Mal Rücksetzer auf E1. Landet das Kind ohne Rücksetzer auf dem Erdboden, ist CR-31 bestätigt |
+| S26 | Auf E3–E5 zu einem abgedunkelten Funken zwei bis drei Plattformen zurückgehen bzw. -springen | kein Rücksetzer, keine Vignette, Funke wird eingesammelt (CR-05 Rest) |
+| S27 | Nach E10 auf den Erdboden springen und über den Rand der Bodenscheibe laufen | kein Tod; heute erwartet: Tod und 5 s Respawn (CR-32) |
+| S28 | Esc → Reset zweimal kurz hintereinander; Reset vom Erdboden nach Abschluss von E10 | kein Zerfallen des Avatars; zweiter Reset wirkt (heute: verworfen, CR-36); kein Hänger beim Teleport |
+| S29 | Pad auf E3/E4/E10 mit gehaltener Sprungtaste betreten | Pad-Höhe ≈ 13 Studs, kein normaler Sprung (CR-01, `Freefall` + `PreSimulation`) |
 
 ---
 

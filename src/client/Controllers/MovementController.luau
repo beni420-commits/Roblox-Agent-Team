@@ -14,7 +14,6 @@ local MovementController = {}
 
 local JUMP_PAD_TAG = "JumpPad"
 local PAD_DEBOUNCE = 0.25
-local REQUEST_DEBOUNCE = 0.2 -- JumpRequest feuert mehrfach pro Druck (UserInputService-Doku, CR-15)
 
 type CharacterState = {
 	humanoid: Humanoid,
@@ -24,6 +23,7 @@ type CharacterState = {
 }
 
 local current: CharacterState? = nil
+local boundPads: { [Instance]: boolean } = setmetatable({}, { __mode = "k" }) :: any
 
 -- Sprungpad: nur die Geschwindigkeit setzen und in den Fall-Zustand wechseln. Kein Wechsel nach
 -- „Jumping“, sonst überschreibt der normale Sprungimpuls den Pad-Impuls (Code-Review CR-01).
@@ -46,9 +46,10 @@ local function launch(state: CharacterState, velocity: number)
 end
 
 local function bindPad(pad: Instance)
-	if not pad:IsA("BasePart") then
-		return
+	if not pad:IsA("BasePart") or boundPads[pad] then
+		return -- jedes Pad nur einmal binden (CR-35)
 	end
+	boundPads[pad] = true
 	pad.Touched:Connect(function(hit: BasePart)
 		local state = current
 		if not state or not hit:IsDescendantOf(state.character) then
@@ -73,7 +74,7 @@ local function bindCharacter(context: Context.Context, character: Model)
 	local lastGroundedAt = os.clock()
 	local jumpedSinceGround = false
 	local bufferedAt = -math.huge
-	local lastRequestAt = -math.huge
+	local groundRequestAt = -math.huge
 	local reportedJump = false
 	local connections: { RBXScriptConnection } = {}
 
@@ -110,17 +111,14 @@ local function bindCharacter(context: Context.Context, character: Model)
 		UserInputService.JumpRequest:Connect(function()
 			local now = os.clock()
 			if humanoid.FloorMaterial ~= Enum.Material.Air then
-				-- Normaler Sprung (macht der Humanoid). Sofort merken, damit ein zweites Feuern derselben
-				-- Anfrage im nächsten Frame keinen Coyote-Sprung auslöst.
-				jumpedSinceGround = true
-				lastRequestAt = now
+				-- Normaler Sprung (macht der Humanoid). Zeitpunkt merken: Feuert dieselbe Anfrage gleich danach
+				-- in der Luft noch einmal (JumpRequest feuert mehrfach, CR-15), darf das keinen Coyote-Sprung
+				-- auslösen. Wer dagegen ohne Sprung über die Kante läuft, behält die Coyote-Time (CR-34).
+				groundRequestAt = now
 				return
 			end
-			if now - lastRequestAt < REQUEST_DEBOUNCE then
-				return -- dieselbe Anfrage feuert mehrfach
-			end
-			lastRequestAt = now
-			if not jumpedSinceGround and now - lastGroundedAt <= Movement.CONTROL.coyoteTime then
+			local sameRequest = now - groundRequestAt < 0.25
+			if not jumpedSinceGround and not sameRequest and now - lastGroundedAt <= Movement.CONTROL.coyoteTime then
 				-- Coyote-Time: knapp nach der Kante noch springen dürfen.
 				jumpedSinceGround = true
 				local velocity = root.AssemblyLinearVelocity

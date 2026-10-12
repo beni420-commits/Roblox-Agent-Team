@@ -6,8 +6,10 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
+local LandingLocator = require("@game/ReplicatedStorage/Shared/Logic/LandingLocator")
 local Movement = require("@game/ReplicatedStorage/Shared/Logic/Movement")
 
+local ClientState = require("./ClientState")
 local Context = require("./Context")
 local HudController = require("./HudController")
 
@@ -28,12 +30,22 @@ function FallController.start(context: Context.Context)
 	RunService.Heartbeat:Connect(function()
 		local character = context.player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart")
-		local resetY = context.player:GetAttribute("ResetY")
-		if not character or not root or not root:IsA("BasePart") or type(resetY) ~= "number" then
+		if not character or not root or not root:IsA("BasePart") or not ClientState.hasReceived() then
 			return
 		end
+		local currentFloor = ClientState.get().currentFloor
+		local position = root.Position
+		-- Gleiche Regel wie der Server (Shared/Logic/LandingLocator).
+		local resetY = LandingLocator.resetThreshold(
+			context.tower,
+			currentFloor,
+			position.X,
+			position.Z,
+			Movement.FALL_RESET_DEPTH,
+			Movement.ROOT_HEIGHT
+		)
 		local now = os.clock()
-		if now - spawnedAt < SPAWN_GRACE or root.Position.Y >= resetY then
+		if now - spawnedAt < SPAWN_GRACE or position.Y >= resetY then
 			return
 		end
 		-- Alle Charaktere ausschließen: andere Spieler sind kein Boden.
@@ -44,9 +56,12 @@ function FallController.start(context: Context.Context)
 			end
 		end
 		params.FilterDescendantsInstances = exclude
-		local below = workspace:Raycast(root.Position, Vector3.new(0, -(Movement.ROOT_HEIGHT + 3), 0), params)
+		local below = workspace:Raycast(position, Vector3.new(0, -(Movement.ROOT_HEIGHT + 3), 0), params)
 		if below then
-			return -- steht auf einer tieferen Plattform (z. B. Rückweg zu einem Funken)
+			local floor = below.Instance:GetAttribute("Floor")
+			if LandingLocator.isLegitGround(if type(floor) == "number" then floor else nil, currentFloor) then
+				return -- steht auf einem Teil der aktuellen bzw. nächsten Etage (z. B. Rückweg zu einem Funken)
+			end
 		end
 		if now - lastRequest >= REQUEST_INTERVAL then
 			lastRequest = now

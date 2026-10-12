@@ -55,4 +55,46 @@ TestRunner.it(suite, "Rand in Laufrichtung ist kleiner als jede letzte Lücke (C
 	end
 end)
 
+TestRunner.it(suite, "Sektor: Abschnitt k liegt in Sektor (k-1) mod 4 (Mitte jedes Abschnitts)", function()
+	for floor = 1, tower.builtFloors do
+		local spec = tower.floors[floor]
+		local part = spec.parts[1]
+		expect(LandingLocator.sectorOf(part.cx, part.cz)):toBe((floor - 1) % 4)
+	end
+end)
+
+TestRunner.it(
+	suite,
+	"Rückweg: hinter der aktuellen Etagenplattform gilt die Schwelle der Etage davor (CR-05)",
+	function()
+		local current = 4
+		for _, part in tower.floors[current].parts do
+			if part.kind == "platform" then
+				local threshold = LandingLocator.resetThreshold(tower, current, part.cx, part.cz, 4, 3)
+				expect(threshold):toBe(tower.landings[current - 1].y - 1)
+				-- Jede Plattform des Rückwegs liegt über der Schwelle (wer darauf steht, fällt nicht).
+				expect(part.cy + part.sy / 2 + 3 >= threshold):toBeTruthy()
+			end
+		end
+	end
+)
+
+TestRunner.it(suite, "Vorwärts: im nächsten Abschnitt gilt die Schwelle der aktuellen Etagenplattform", function()
+	local current = 4
+	local part = tower.floors[current + 1].parts[1]
+	expect(LandingLocator.resetThreshold(tower, current, part.cx, part.cz, 4, 3)):toBe(tower.landings[current].y - 1)
+end)
+
+TestRunner.it(suite, "Oberste Etage: nur wer von der Welt fällt, wird zurückgesetzt (CR-32)", function()
+	expect(LandingLocator.resetThreshold(tower, tower.builtFloors, 40, 0, 4, 3)):toBe(LandingLocator.OFF_WORLD_Y)
+end)
+
+TestRunner.it(suite, "Boden zählt nur auf der aktuellen und der nächsten Etage (CR-31)", function()
+	expect(LandingLocator.isLegitGround(3, 3)):toBe(true)
+	expect(LandingLocator.isLegitGround(4, 3)):toBe(true)
+	expect(LandingLocator.isLegitGround(2, 3)):toBe(false)
+	expect(LandingLocator.isLegitGround(-1, 3)):toBe(false) -- Erdboden
+	expect(LandingLocator.isLegitGround(nil, 3)):toBe(false)
+end)
+
 return suite

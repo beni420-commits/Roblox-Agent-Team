@@ -33,6 +33,8 @@ local function makePart(spec: TowerGenerator.PartSpec): Part
 	part.TopSurface = Enum.SurfaceType.Smooth
 	part.BottomSurface = Enum.SurfaceType.Smooth
 	part.CastShadow = spec.kind ~= "gate"
+	-- Etagenzugehörigkeit für die Sturzerkennung (nur aktuelle/nächste Etage zählt als Boden, CR-31).
+	part:SetAttribute("Floor", if spec.kind == "ground" or spec.kind == "column" then -1 else spec.floor)
 	local palette = zonePalette(spec.zone)
 	local position = Vector3.new(spec.cx, spec.cy, spec.cz)
 

@@ -42,7 +42,6 @@ local RESPAWN_DEBOUNCE = 1
 local SPAWN_GRACE = 2
 local READY_TIMEOUT = 10
 local HELPERS_ENABLED = true -- Optionen folgen in Sprint 2
-local NO_RESET = -1e6
 
 local tower: TowerGenerator.TowerSpec
 local net: NetLike
@@ -74,15 +73,20 @@ local function popcount(mask: number): number
 	return count
 end
 
-local function resetY(state: RunState.RunState): number
-	if RunState.isAtTop(state, tower.builtFloors) then
-		return NO_RESET -- oberste Etage: frei herumlaufen, kein Zurücksetzen (CR-06)
-	end
-	return LandingLocator.fallThreshold(tower, state.currentFloor, Movement.FALL_RESET_DEPTH, Movement.ROOT_HEIGHT)
+local function resetY(state: RunState.RunState, position: Vector3): number
+	return LandingLocator.resetThreshold(
+		tower,
+		state.currentFloor,
+		position.X,
+		position.Z,
+		Movement.FALL_RESET_DEPTH,
+		Movement.ROOT_HEIGHT
+	)
 end
 
--- Steht der Charakter (fast) auf etwas? Dann geht er zurück und fällt nicht (CR-05).
-local function hasGroundBelow(character: Model, root: BasePart): boolean
+-- Steht der Charakter auf einem Teil der aktuellen oder nächsten Etage? Dann geht er zurück bzw. weiter
+-- und fällt nicht. Erdboden, Plaza und tiefere Etagen zählen nicht als Boden (CR-05, CR-31).
+local function hasGroundBelow(character: Model, root: BasePart, currentFloor: number): boolean
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	-- Alle Charaktere ausschließen: andere Spieler sind kein Boden.
@@ -93,7 +97,12 @@ local function hasGroundBelow(character: Model, root: BasePart): boolean
 		end
 	end
 	params.FilterDescendantsInstances = exclude
-	return workspace:Raycast(root.Position, Vector3.new(0, -(Movement.ROOT_HEIGHT + 3), 0), params) ~= nil
+	local hit = workspace:Raycast(root.Position, Vector3.new(0, -(Movement.ROOT_HEIGHT + 3), 0), params)
+	if not hit then
+		return false
+	end
+	local floor = hit.Instance:GetAttribute("Floor")
+	return LandingLocator.isLegitGround(if type(floor) == "number" then floor else nil, currentFloor)
 end
 
 local function sync(session: Session)
@@ -102,7 +111,6 @@ local function sync(session: Session)
 	end
 	local state = session.state
 	session.player:SetAttribute("Floor", state.currentFloor)
-	session.player:SetAttribute("ResetY", resetY(state))
 	net.fire(session.player, "StateSync", {
 		sparks = state.sparks,
 		currentFloor = state.currentFloor,
@@ -127,8 +135,19 @@ local function teleportToFloor(session: Session, floor: number)
 		return
 	end
 	session.graceUntil = os.clock() + 0.5
-	character:PivotTo(landingCFrame(floor))
+	local target = landingCFrame(floor)
+	character:PivotTo(target)
 	root.AssemblyLinearVelocity = Vector3.zero
+	-- Erfolgskontrolle: Kommt die Position nicht an (z. B. Physik-Besitz), einmal wiederholen (CR-37).
+	task.delay(0.4, function()
+		if isActive(session) and session.player.Character == character then
+			local current = rootOf(session.player)
+			if current and (current.Position - target.Position).Magnitude > 12 then
+				character:PivotTo(target)
+				current.AssemblyLinearVelocity = Vector3.zero
+			end
+		end
+	end)
 end
 
 local function markStep(session: Session, step: number, fromClient: boolean, context: string?)
@@ -220,7 +239,11 @@ local function tickSession(session: Session)
 	if floor and floor > session.state.currentFloor then
 		onLanding(session, floor)
 	end
-	if position.Y < resetY(session.state) and now >= session.graceUntil and not hasGroundBelow(character, root) then
+	if
+		position.Y < resetY(session.state, position)
+		and now >= session.graceUntil
+		and not hasGroundBelow(character, root, session.state.currentFloor)
+	then
 		onFall(session)
 	end
 end
@@ -327,6 +350,10 @@ local handlers = {
 		if not ok then
 			return "rule"
 		end
+		if spark.floor <= session.state.currentFloor then
+			-- Nachträglich eingesammelt (Etage schon abgeschlossen): sofort als Quelle melden (CR-33).
+			TelemetryService.economySource(player, 1, session.state.sparks, Events.ECONOMY_SKUS.floorSparks)
+		end
 		markStep(session, 4, false, nil)
 		sync(session)
 		return nil
@@ -339,7 +366,11 @@ local handlers = {
 			return "state"
 		end
 		-- Nur echte Stürze zählen (der Client meldet früher als der 10-Hz-Takt des Servers).
-		if root.Position.Y < resetY(session.state) + 2 and not hasGroundBelow(character, root) then
+		local position = root.Position
+		if
+			position.Y < resetY(session.state, position) + 2
+			and not hasGroundBelow(character, root, session.state.currentFloor)
+		then
 			onFall(session)
 			return nil
 		end

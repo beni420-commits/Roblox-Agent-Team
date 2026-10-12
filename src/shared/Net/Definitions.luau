@@ -27,7 +27,7 @@ local Definitions: { [string]: Definition } = {
 		-- Roblox-Reset-Knopf: zurück an den Etagenanfang, ohne Fehlversuch und ohne Charaktertod (CR-17).
 		check = Validator.args({}),
 		perSecond = 0.5,
-		burst = 1,
+		burst = 2,
 	},
 	ReportOnboardingStep = {
 		check = Validator.args({ Validator.integer(1, 7) }),

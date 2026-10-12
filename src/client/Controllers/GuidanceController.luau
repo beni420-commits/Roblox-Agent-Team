@@ -128,6 +128,7 @@ function GuidanceController.start(context: Context.Context)
 			part.Material = Enum.Material.Glass
 			part.Color = color(Palette.HELPER)
 			part.Transparency = 0.2
+			part:SetAttribute("Floor", spec.floor)
 			part.Parent = helperFolder
 		end
 	end
