@@ -18,6 +18,23 @@
 
 ---
 
+## 0a. Status nach 0d9d440 (Orchestrator, 2026-10-12)
+
+Die Fixes für die Befunde aus der Nachprüfung stehen in Commit `0d9d440`. Prüfkette grün, 81 Tests [GETESTET]. Eine erneute unabhängige Nachprüfung dieser Fixes ist **noch nicht** erfolgt.
+
+| Befund | Status | Umsetzung |
+|---|---|---|
+| CR-05 (Rest) | behoben | Schwelle je Sektor: Auf dem Rückweg zählt die Etagenplattform davor (`LandingLocator.resetThreshold`, getestet) |
+| CR-31 | behoben | Als Boden zählen nur Teile der aktuellen/nächsten Etage (Attribut `Floor` an allen Bauteilen, `LandingLocator.isLegitGround`, getestet); Server und Client nutzen dieselbe Regel |
+| CR-32 | behoben | Oberste Etage: Zurücksetzen nur unterhalb von y = −10 (von der Welt gefallen) |
+| CR-33 | behoben | Nachträglich eingesammelte Funken → `economySource(1)` |
+| CR-34 | behoben | Kein Zeit-Debounce mehr; Mehrfachfeuern derselben Anfrage über den Zeitstempel der Boden-Anfrage (0,25 s) |
+| CR-35 | behoben | Pads in schwacher Tabelle, Bindung nur einmal |
+| CR-36 | teilweise | Reset-Burst 2; Streaming vor dem Reset-Teleport bewusst nicht (Ziel liegt in der Nähe) |
+| CR-37 | behoben | Erfolgskontrolle 0,4 s nach dem Teleport, einmalige Wiederholung |
+| CR-38 | akzeptiert | Session-ID „1“ ist in Sprint 1 korrekt (nur Lauf 1); ab Sprint 2 laufen weitere Läufe |
+| CR-10/20/23 (Rest gering) | offen, gering | Backlog-Kandidaten, keine Wirkung auf Sprint-1-Gates |
+
 ## 0. Status nach c7f81b1 (Nachprüfung, 2026-10-12)
 
 **Methode der Nachprüfung:**

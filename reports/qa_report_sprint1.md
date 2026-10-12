@@ -1,6 +1,6 @@
 # QA-Bericht Sprint 1 – Vertical Slice Zone 1
 
-Rolle: QA-Engineer · Datum: 2026-10-12 · Build: Commit `c7f81b1` (Code-Stand), `BuildInfo.sprint = 1`
+Rolle: QA-Engineer · Datum: 2026-10-12 · Build: Commit `0d9d440` (Code-Stand), `BuildInfo.sprint = 1`
 Methode: automatisierte Prüfkette `scripts/check.sh` im Luau-CLI, Mutationstests, unabhängiges Code-Review der Roblox-Schicht (`reports/code_review_sprint1.md`).
 **Grenze:** Keine Ausführung in der Roblox-Engine (kein Studio). Alles, was Instanzen, Physik, Netzwerk, UI oder Geräte betrifft, ist **nicht geprüft**, bis der Owner-Test vorliegt.
 
@@ -13,12 +13,12 @@ Methode: automatisierte Prüfkette `scripts/check.sh` im Luau-CLI, Mutationstest
 | Rojo-Build (7.7.1) | **ausgeführt** [GETESTET] | baut; Einstellungen (Invisicam, Streaming „Improved“, CharacterUseJumpPower = false, LocalizationTable EN/DE) im `.rbxlx` nachgewiesen |
 | Typprüfung `src` (luau-lsp 1.70.1, Roblox-Typen 2026-10-10, neuer Solver) | **ausgeführt** [GETESTET] | 0 Fehler. Gegenprobe: ein absichtlicher Typfehler im Client wird erkannt |
 | Typprüfung `tests` (luau-analyze) | **ausgeführt** [GETESTET] | 0 Fehler |
-| Logik-Tests (76 in 11 Suites) | **ausgeführt** [GETESTET] | **76/76 grün** (Laufzeit < 1 s) |
+| Logik-Tests (81 in 11 Suites) | **ausgeführt** [GETESTET] | **81/81 grün** (Laufzeit < 1 s) |
 | Mutationstests (3 absichtliche Fehler) | **ausgeführt** [GETESTET] | alle 3 erkannt (zu große Lücken, fehlende Deckenprüfung, falsche Doppelsprung-Physik) |
 | Exploit-Suite (10 Tests) | **ausgeführt** [GETESTET] | grün: Müll-Argumente (NaN, ±inf, Bruch, riesig, falsche Typen, zusätzliche/fehlende Argumente), Spam (1000/s), unbekannte Remotes, Teleport an die Spitze, Doppel-Einsammeln, Funken entfernter Etagen, Lager-Bonus-Farming, Onboarding-Spam, Reset-Spam |
 | Datenverlust-Suite | **nicht vorhanden** | Kein Speicherstand in Sprint 1 (kommt mit A-007 in Sprint 2) |
 | CI-Workflow (`.github/workflows/ci.yml`) | **geschrieben, nicht auf GitHub ausgeführt** | Hol- und Submodul-Schritte lokal identisch ausgeführt [GETESTET]; Bau-Schritte wie hier gelaufen |
-| Code-Review Roblox-Schicht (16 Dateien) | **ausgeführt** (statisch + Doku-Abgleich) | 30 Befunde, kein Blocker; Fixes in `c7f81b1`; Nachprüfung siehe §3 |
+| Code-Review Roblox-Schicht (16 Dateien) | **ausgeführt** (statisch + Doku-Abgleich, 2 Runden) | 38 Befunde, kein Blocker; Fixes in `c7f81b1` und `0d9d440`; Status siehe §3 |
 | Engine-Tests (Studio, Gerät, Mehrspieler) | **nicht ausgeführt** | Owner-Test `reports/owner_test_template.md` |
 | Performance (FPS, Speicher, Heartbeat) | **nicht gemessen** | nur am Gerät möglich |
 
@@ -32,12 +32,12 @@ Methode: automatisierte Prüfkette `scripts/check.sh` im Luau-CLI, Mutationstest
 | shared/Logic/Reachability | 12 | Sprungphysik, Referenz vs. großzügig, Decke, Pad, Pflicht-Fähigkeiten (Befunde für Zone 2/3) |
 | shared/Logic/TowerGenerator | 13 | Determinismus, **200 Seeds × 10 Etagen lösbar**, Hilfsstufen lösbar und nie leer, Pad-Sicherheitsnetz, Funken, Budget, Helix, Kopffreiheit, Fingerabdruck |
 | shared/Logic/RunState | 8 | lückenlose Etagen, Lager-Bonus einmalig, Hilfe 3/6, oberste Etage, Funken, Onboarding |
-| shared/Logic/LandingLocator | 5 | Etagenerkennung, 10-Hz-Abtastung, Fall-Schwelle, Rand |
+| shared/Logic/LandingLocator | 10 | Etagenerkennung, 10-Hz-Abtastung, Fall-Schwelle je Sektor, Boden-Regel, oberste Etage, Rand |
 | exploit/RemoteExploit | 10 | siehe oben |
 | shared/Telemetry/Events | 3 | Katalog-Grenzen, Funnel-Schritte, Kardinalität |
 | shared/BuildInfo | 3 | Metadaten |
 
-## 2. Fehler nach Schweregrad (Stand `c7f81b1`)
+## 2. Fehler nach Schweregrad (Stand `0d9d440`)
 
 | Schwere | Anzahl offen | Details |
 |---|---|---|
@@ -49,7 +49,9 @@ Methode: automatisierte Prüfkette `scripts/check.sh` im Luau-CLI, Mutationstest
 Reproduktionsschritte und Belege je Befund: `reports/code_review_sprint1.md`.
 
 ## 3. Nachprüfung der Fixes
-Die unabhängige Nachprüfung der Fixes durch den Reviewer läuft bzw. ist im Code-Review-Bericht unter „Status nach c7f81b1“ dokumentiert.
+- **Runde 1 (unabhängig):** Nachprüfung am Stand `c7f81b1`. Ergebnis: 23 behoben, 4 teilweise, 3 bewusst offen; 8 neue Befunde (CR-31 bis CR-38, davon 1 mittel).
+- **Runde 2 (Orchestrator):** Fixes in `0d9d440` (CR-31 bis CR-37, Rest von CR-05), siehe `code_review_sprint1.md` §0a. Eine erneute unabhängige Prüfung von `0d9d440` steht aus.
+- **Offen ab Mittel:** nur CR-14 (MovementCheck, bewusst Sprint 2).
 
 ## 4. Gate-Bewertung (Masterprompt §5)
 

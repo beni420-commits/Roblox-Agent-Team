@@ -2,7 +2,7 @@
 
 > Jede Rolle liest diese Datei zu Beginn jeder Sitzung zuerst. Max. 1 Seite.
 
-**Datum:** 2026-10-12 · **Sprint:** 1 (Vertical Slice Zone 1) · **Status:** ▶ in Arbeit
+**Datum:** 2026-10-12 · **Sprint:** 1 (Vertical Slice Zone 1) · **Status:** ⏸ Build fertig – **wartet auf Owner-Test P0** (`reports/owner_report_sprint1.md`)
 
 ## Sprint 1
 - **Owner-Freigaben** (D-022–D-024): Konzept A, Compliance-Auflagen, Asset-Regel „ohne Copyright“ (Kat. 0 frei; Kat. 1 nur Roblox-eigen ohne Rechte Dritter, keine Musik). **Offen:** Veröffentlichungskosten (D-025).
@@ -45,16 +45,19 @@
 | `docs/tech_notes.md` | Systems Engineer | fertig (inkl. Schema v1, Remotes, Budgets) |
 | `docs/backlog.md` | Live-Ops | fertig (ICE) |
 | `reports/owner_report_sprint0.md` | Orchestrator | fertig |
+| `reports/qa_report_sprint1.md`, `code_review_sprint1.md`, `compliance_check_sprint1.md`, `owner_report_sprint1.md` | QA / Compliance / Orchestrator | fertig (Sprint 1) |
+| `reports/owner_test_template.md`, `docs/compliance/questionnaire.md` | Orchestrator / Compliance | Vorlage bzw. Entwurf für den Owner |
 
 ## Offene Freigaben an den Owner
 1. Veröffentlichungskosten 1.000 R$ bzw. Plus/Premium (§8.2), spätestens vor dem öffentlichen Release
 2. Offene Fragen: Publisher-Konto oder -Gruppe; Studio- und Handy-Test pro Sprint möglich?
 
 ## Sprint-1-Stand
-- **Gebaut:** Zone 1 (Etagen 1–10) mit Generator, Erreichbarkeitsprüfer, Funken, Lagern, Rücksetzpunkt, Hilfe 3/6, Führung, Coyote-Time, Sprungpads, HUD (EN/DE), Telemetrie, Remote-Guard, Reset-Knopf ohne Tod.
-- **Geprüft:** `scripts/check.sh` grün, 76/76 Tests [GETESTET]; Code-Review mit 30 Befunden, Fixes in `c7f81b1`.
-- **Nicht geprüft:** alles in der Engine. Owner-Test P0 nach `reports/owner_test_template.md` steht aus.
-- **Bewusst offen (Sprint 2):** MovementCheck vor dem Speicherstand (CR-14), Feedback-Katalog (CR-29), Avatar-Transparenz (C-A32).
+- **Gebaut:** Zone 1 (Etagen 1–10) mit Generator, Erreichbarkeitsprüfer, Funken, Lagern, Rücksetzpunkt je Etage, Hilfe 3/6, Führung, Coyote-Time, Sprungpads, HUD (EN/DE), Telemetrie (inkl. Etagen-Funnel), Remote-Guard, Reset-Knopf ohne Tod.
+- **Geprüft:** `scripts/check.sh` grün, 81/81 Tests [GETESTET]. Code-Review in 2 Runden: 38 Befunde, alle mittleren und kritischen behoben (Stand `0d9d440`), außer CR-14.
+- **Compliance:** Freigabe mit Auflagen T-1 bis T-4 für einen privaten Test-Place (`reports/compliance_check_sprint1.md`).
+- **Nicht geprüft:** alles in der Engine; die Fixes aus `0d9d440` noch nicht unabhängig nachgeprüft.
+- **Bewusst offen (Sprint 2):** MovementCheck vor dem Speicherstand (CR-14), Feedback-Katalog (CR-29), Avatar-Transparenz (C-A32), Sounds (D-030).
 
 ## Nächster Schritt
-Owner-Test P0 (Studio und Handy). Danach Sprint-2-Planung: MovementCheck → Speicherstand → Zonen 2–3, Fähigkeiten, Schrein, Social.
+**Owner-Test P0** (Studio und Handy) nach `reports/owner_test_template.md`. Danach Sprint 2 (Vorschlag im Owner-Bericht §6): Primärziel ist der sichere Fortschritt (MovementCheck → Speicherstand), Nebenziele sind Zone 2 mit DJ und Schrein/Upgrades/Gleiter.

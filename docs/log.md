@@ -87,3 +87,13 @@
 
 ### Orchestrator – Infrastruktur und Compliance-Vorbereitung
 - CI-Workflow angelegt (nicht auf GitHub ausgeführt, D-029). Fragebogen-Entwurf. Owner-Testvorlage P0.
+
+### QA – Nachprüfung der Fixes (unabhängig) und Runde 2
+- Am Stand `c7f81b1`: 23 behoben, 4 teilweise, 3 bewusst offen, 8 neu (CR-31 bis CR-38). Fixes in `0d9d440`: Sturzerkennung je Sektor mit Boden-Regel (gemeinsam für Server und Client), oberste Etage, Coyote ohne Debounce u. a. Tests: 81.
+- Vorfall: Ein Bearbeitungsskript hat `reports/qa_report_sprint1.md` versehentlich geleert; aus dem letzten Commit wiederhergestellt, bevor etwas verloren ging.
+
+### Compliance – Check Sprint 1
+- Freigabe mit Auflagen T-1 bis T-4 für einen privaten Test-Place; Fragebogen-Entwurf korrigiert (Fear und Violence für Zone 3, regionales Ergebnis, „Allow strong language“ aus).
+
+### Orchestrator – Sprint-1-Abschluss
+- Owner-Bericht Sprint 1 geschrieben. **Stopp: wartet auf Owner-Test P0.**
