@@ -268,3 +268,31 @@ Gilt für: **A**, **B**, **C** bzw. „alle“.
 | C-A6 | RTBF: tägliche Nachricht, Deletion-Templates mit statischem `{UserId}`-Muster, domain-scoped IDs | Datenschema und Tagesbestenliste RTBF-tauglich planen. |
 
 **Urteile unverändert:** A Freigabe mit Auflagen (empfohlen), B Freigabe mit Auflagen (kernnah: C-A20), C Freigabe mit Auflagen für das MVP mit bedingtem Veto gegen spätere Monetarisierung (C-A26).
+
+## 11. Nachtrag GDD v0.2 (Konzept A, §3.3, §6.3, §8, §13) – geprüft 2026-10-12
+
+Gesamtbefund: Die neuen Social- und Komfortfunktionen halten C-A4, C-A5, C-A13, C-A17 und HR-FOMO ein. Kein Punkt ist ❌. Sie machen das Spiel **nicht** zum Social Hangout, weil der Kern das Klettern bleibt und kein Gespräch (KS-01, `OG: production/promotion/content-maturity.md`). Das Urteil zu A bleibt: **Freigabe mit Auflagen**, ergänzt um C-A29 bis C-A32.
+
+| Punkt | Bew. | Begründung | Regel-IDs / Auflage |
+|---|---|---|---|
+| (a) Freundes-Marker | ✅ | Gilt nur für bestehende Roblox-Freunde im selben Server. Es gibt keine Aufforderung zu Freundschaften, Fremde bleiben unmarkiert, es entsteht kein neuer Kontaktweg. Der Marker zeigt nur Ring und Icon, keinen eigenen Namenstext. | C-A5, KS-01, TXT-01 → C-A32 |
+| (b) Lager-Lift | ✅ | Ziel ist immer ein Ort (ein selbst erreichtes Lager), nie eine fremde Person. „Zum Freund“ gilt nur für Freunde, Fremden kann man nicht folgen. Es gibt kein Überspringen und keinen Kaufbezug. | C-A5, C-A18, KS-01 |
+| (c) Drei Signale | ⚠ | Die Signale sind vordefiniert, ohne Text, mit Rate-Limit und pro Spieler stummschaltbar (C-A4 erfüllt). Restrisiko: Fremde können Kinder mit „Hier!“ zuspammen oder lenken. | C-A4, TXT-05 → **C-A30** |
+| (d) Gemeinsame Lager-Feier | ✅ | Rein visuell und ohne Belohnung. Unabhängig von Freundschaft ist sie sogar besser, weil sie keinen Druck zum Hinzufügen erzeugt. Nach der Feier kommt kein Freundschafts-Prompt. | C-A17, C-A5 |
+| (e) Lebenszeit-Meilensteine | ✅ | Dauerhaft und kumulativ, ohne Zeitfenster und ohne Verlust. Die Farben sind nur erspielbar und nicht kaufbar. | C-A7 (HR-FOMO), C-A8 |
+| (f) Seilschaft-Bonus (Could) | ⚠ → frei mit Auflage | Der Bonus belohnt gemeinsames Erreichen und nicht Einladen oder Folgen. Er ist fest, gedeckelt und unabhängig von Freundschaft (C-A17 erfüllt). Risiken: Druck, auf Fremde zu warten, und Farming mit Zweit-Accounts. | C-A17, CS-10 → **C-A31** |
+| Halbtransparenz im 6-Studs-Umkreis | ⚠ | Lokal, rein visuell, ohne Gameplay-Wirkung, und passt zu C-A13. Restrisiko: Bei Layered Clothing könnte gleichmäßige Transparenz Körperflächen unter der Kleidung durchscheinen lassen `[ANNAHME]`. | C-A13, CS-01/05 → **C-A32** |
+
+**Neue Auflagen (Konzept A):**
+- **C-A29 Metadaten:** Titel, Beschreibung und Tags enthalten keine Hangout-Begriffe („hangout“, „chill“, „abhängen“, „meet new friends“), denn Hangout-Bezüge in den Metadaten führen zur Einstufung als Social Hangout und damit zu 16+ (KS-01).
+- **C-A30 Signale:**
+  - Serverseitiges Rate-Limit, z. B. ≤ 1 Signal pro 3 s und ≤ 5 pro 30 s `[ANNAHME, im Playtest kalibrieren]`.
+  - „Hier!“ nur auf erreichbare Turm-Orte, nie auf Avatare. Signale von Nicht-Freunden sind nur auf derselben oder der benachbarten Etage sichtbar.
+  - Es gibt die Option „Signale nur von Freunden“. Signale blockierter Nutzer werden ausgeblendet.
+- **C-A31 Seilschaft-Bonus:**
+  - Keine UI-Aufforderung, auf andere zu warten oder sie einzuladen. Der Bonus ist unabhängig von der Gruppengröße.
+  - Er zählt nur für Lager, die serverseitig lückenlos erreicht wurden (`run.campsClaimed`), und hat keinen Einfluss auf Tagesturm-Wertung oder Bestenliste.
+- **C-A32 Darstellung fremder Avatare:**
+  - Halbtransparenz nur lokal und einheitlich auf alle Teile inkl. Accessoires und Layered Clothing, alternativ eine neutrale Geist-Silhouette.
+  - Der Owner prüft im Studio mit Layered-Clothing-Avataren, dass keine Körperdetails sichtbar werden.
+  - Marker zeigen keinen eigenen Namenstext; die Namen kommen nur aus der Roblox-Nameplate bzw. PlayerList (C-A16).

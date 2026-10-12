@@ -139,9 +139,13 @@ Mechanik (Entwurf):
 - **Eingabe:** `seed: number`, `zoneConfig` (Module-Gewichte, Schwierigkeitskurve, Palette), Bewegungsparameter.
 - **Ausgabe:** `{ floors = { { index, zone, parts = { PartSpec }, sparks = { SparkSpec }, camp = CampSpec?, helperParts = { PartSpec } } } }`.
 - **Zufall:** eigener deterministischer PRNG im Code (z. B. PCG32/xorshift), **nicht** `Random.new` – so ist die Ausgabe in Luau-CLI und Roblox bitgleich und testbar. [ANNAHME: `Random` ist plattformabhängig nicht garantiert gleich]
-- **Etagenhöhe** 16 Studs, Grundfläche ~64 × 64 Studs; Lager = breite Plattform mit Funkenschrein.
+- **Layout: Helix** (GDD v0.2 §4). Etagenhöhe 16 Studs, jede Etage liegt im nächsten 90°-Sektor um die zentrale Säule (Radius ~40 Studs). Über einem Pfad ist erst nach 4 Etagen (64 Studs) wieder etwas gebaut. Lager = breite Plattform mit Funkenschrein und Lager-Lift.
+- **Seeds:** Lauf 1 hat einen festen Seed pro Spielversion. Ab Lauf 2 ist `seed = baseSeed + runIndex`. Der Tagesturm nutzt `dailySeed(dayId)`. Jeder genutzte Seed muss den Prüfer bestehen; scheitert eine Etage, würfelt der Generator diese Etage deterministisch neu (`floorSalt + 1`, max. 8 Versuche, sonst gibt es einen Testfehler).
+- **Gipfel-Leuchtfeuer:** eigenes Modell mit `ModelStreamingMode = Persistent`, unabhängig vom TowerBuilder. Spawn-Plaza ~40 Studs neben dem Turm mit freier Sichtachse.
 - **Bewegliche Teile:** Physikbasiert (`PrismaticConstraint`/`AlignPosition` an nicht verankerten Parts mit Server-Network-Owner), damit Charaktere mitgenommen werden. CFrame-Tweens verankerter Parts nehmen Charaktere nicht mit [VORWISSEN, nicht aktuell]. Förderbänder über `AssemblyLinearVelocity` an verankerten Parts.
 - **Bauteil-Budget pro Etage** ≤ 120 Parts (inkl. Deko) → 30 Etagen ≤ 3 600 Parts (Budget §5: ≤ 15 000). Der Generator-Test prüft das.
+- **Hilfsstufen** sind Teil der Etagenbeschreibung, werden aber **nur clientseitig** und nur für den betroffenen Spieler gebaut. Der Server kennt sie für die Plausibilitätsprüfung.
+- **Takt- und Wolkenanimation** läuft clientseitig synchron über `workspace:GetServerTimeNow()`, damit hoher Ping nicht bestraft wird.
 
 ### 6.3 Bewegungsmodell für den Erreichbarkeitsprüfer
 Basiswerte (wir setzen sie explizit, statt Defaults zu vertrauen):
@@ -153,10 +157,21 @@ Basiswerte (wir setzen sie explizit, statt Defaults zu vertrauen):
 | JumpHeight | 7,2 Studs → Absprunggeschwindigkeit v₀ = √(2·g·h) ≈ 53,15 Studs/s | Default 7,2 [QUELLE: creator-docs StarterPlayer.yaml] |
 | WalkSpeed | 16 Studs/s | Default [QUELLE: creator-docs StarterPlayer.yaml] |
 | Flugzeit (gleiche Höhe) | t = 2·v₀/g ≈ 0,542 s → horizontale Reichweite ≈ 8,7 Studs | [EIGENE RECHNUNG] |
-| Doppelsprung | zweiter Impuls mit 85 % Höhe (≈ 6,1 Studs zusätzlich) | Designwert (GDD §5) |
-| Dash | 48 Studs/s horizontal für 0,25 s, vertikale Geschwindigkeit beim Start auf 0 → ≈ 12 Studs | Designwert (GDD §5) |
+| Doppelsprung | setzt vy auf √(2·g·0,85·7,2) ≈ 49,0 Studs/s (≈ 6,1 Studs zusätzlich, Gipfel ≈ 13,3 Studs) | Designwert (GDD v0.2 §5) |
+| Dash | 48 Studs/s horizontal für 0,25 s, Schwerkraft währenddessen aus (vy = 0) → ≈ 12 Studs | Designwert (GDD v0.2 §5) |
 
-Sicherheitsfaktoren (Anteil der theoretischen Reichweite/Höhe, die eine Lücke höchstens verlangen darf): Zone 1 ≤ 0,55 · Zone 2 ≤ 0,70 · Zone 3 ≤ 0,75 · Tagesturm ≤ 0,80 [ANNAHME → Owner-Playtest]. Upgrades fließen **nicht** in die Prüfung ein (Lösbarkeit mit Basiswerten, GDD §5). Hilfsstufen halbieren die größte Lücke.
+Die Werte für Doppelsprung und Dash sind verbindlich und gelten gleich für GDD und Code (GDD v0.2 §5): Der **DJ setzt** `vy` auf √(2·g·0,85·JumpHeight) ≈ 49,0 Studs/s, er addiert nicht. Der **Dash** läuft mit 48 Studs/s horizontal für 0,25 s, die **Schwerkraft ist währenddessen aus**, Abklingzeit 2,5 s.
+
+**Erreichbarkeitsprüfung über einen Referenzcharakter (ersetzt die Faktoren je Achse, Playtest P-02):**
+1. Der Referenzcharakter hat Basiswerte × Zonenfaktor *f* (WalkSpeed·f, JumpHeight·f, DJ-Höhe·f, Dash-Geschwindigkeit·f). Startwerte: **Z1 f = 0,75 · Z2 f = 0,85 · Z3 f = 0,88 · Tagesturm f = 0,88** [ANNAHME → Owner-Playtest].
+2. Für jede Pflicht-Verbindung simuliert der Prüfer die **Flugbahn** in festen Zeitschritten (1/120 s). Dabei gelten: Hitbox 2 × 5 × 1 Studs [VORWISSEN, nicht aktuell → Owner prüft R15-Maße]; Absprung an der Kante minus 0,5 Studs; **Eingabelatenz 0,1 s**; DJ zum realistischen Zeitpunkt (Scheitel ± 0,1 s, beide Enden müssen gelingen); Dash am Scheitel; **Kopffreiheit ≥ 20 Studs** über der ganzen Bahn (keine Deckenberührung).
+3. **Pflicht-Fähigkeit** für eine Lücke heißt: Sie ist *ohne* die Fähigkeit mit dem großzügigen Modell (Basiswerte, f = 1, optimales Timing) **unlösbar** und *mit* ihr mit dem Referenzcharakter **lösbar**. So verlangt eine DJ-Lücke den DJ wirklich und bleibt trotzdem fair.
+4. **Dynamische Module (P-10):** Wartefenster ≥ 1,5 s bei Wolken- und Taktplatten; keine Pflichtsprünge gegen den Wind; Förderband-Sprünge nur in Bandrichtung; zwischen zwei Dash-Pflichtstellen liegt mindestens die Basis-Abklingzeit + 1 s Wegzeit; bewegliche Plattformen werden an der ungünstigsten Phase geprüft.
+5. **Tunnel und Windwand** (Dash-Pflicht über die Form): Tunnelhöhe ≤ 6 Studs über ≥ 14 Studs Länge über einer Lücke (Springen unmöglich); eine Windwand blockiert alles außer einem Dash.
+6. Upgrades fließen **nicht** in die Prüfung ein (Lösbarkeit mit Basiswerten). Hilfsstufen müssen mit f = 0,6 lösbar sein, für Weite **und** Anstieg.
+7. **Tests (Must):** Grenzfälle „maximale Weite + maximaler Anstieg“ je Zone; 200 Seeds × 30 Etagen ohne Prüffehler; jede Pflicht-Lücke ist ohne die Fähigkeit unlösbar; Kopffreiheit; Bauteil-Budget.
+
+**Steuerung (Client, `MovementController`):** Coyote-Time 0,12 s; Sprungpuffer 0,1 s; DJ nur auf eine neue Drück-Flanke (Input Action System „Pressed“), eine frühe Eingabe wird gepuffert und frühestens 0,15 s nach dem Absprung ausgeführt. Gleiter: nur nach verbrauchtem DJ, nur bei `vy < 0` und ≥ 0,2 s gehaltenem Sprung. AutoJump: Zone 1 an, ab Zone 2 aus (Gerätetest).
 
 ### 6.4 Datenschema v1 (`PlayerData_v1`, Key `player_<UserId>`)
 
@@ -173,22 +188,29 @@ export type PlayerDataV1 = {
 		bestRunSeconds: number?,      -- nil = noch kein Gipfel
 	},
 	run: {                            -- aktueller Lauf (überlebt Rejoin → kein Funken-Farming)
-		index: number,                -- 1, 2, … (Lauf-Nummer)
-		checkpointFloor: number,      -- 0, 5, 10, …
+		index: number,                -- 1, 2, … (Lauf-Nummer; bestimmt den Seed ab Lauf 2)
+		state: string,                -- "climbing" | "summited" (Gipfel schließt den Lauf atomar ab)
+		campFloor: number,            -- letztes erreichtes Lager: 0, 5, 10, … (Rejoin- und Speicherpunkt)
+		highestFloor: number,         -- höchste Etage DIESES Laufs (Funken nur bis highestFloor + 1)
+		campsClaimed: number,         -- Bitmaske eingelöster Lager-Boni (kein Bonus-Farming)
+		practiceDone: number,         -- Bitmaske absolvierter Übungsstrecken (DJ, Dash)
 		collected: { [string]: number }, -- Etage (als String-Key) → Bitmaske eingesammelter Funken (≤ 16 Bits)
 		startedAt: number,            -- os.time() des Laufbeginns
-		elapsedSeconds: number,       -- aktive Spielzeit im Lauf (für Bestzeit; pausiert bei Abwesenheit)
+		elapsedSeconds: number,       -- aktive Zeit: läuft nur, solange der Spieler im Server ist UND sich in den letzten 30 s bewegt hat
 		flagged: boolean,             -- Plausibilitätsverstoß → keine Bestzeit/Bestenliste
 	},
 	daily: { dayId: number, bestFloor: number, bestSeconds: number? }, -- Should
-	cosmetics: { owned: { [string]: boolean }, equipped: string? },    -- nur erspielte Kosmetik
-	settings: { helpers: boolean, music: boolean, effects: boolean },
+	cosmetics: { owned: { [string]: boolean }, equipped: string? },    -- nur erspielte Kosmetik (Gipfel, Lebenszeit-Meilensteine)
+	settings: { helpers: boolean, othersTrails: boolean, music: boolean, effects: boolean },
+	experiments: { [string]: string }, -- einmal zugewiesene Experiment-Varianten (Kontinuität über Sessions, D-021)
 	onboarding: { stepsDone: number },  -- Bitmaske der Funnel-Schritte (keine Doppelmeldung)
 	meta: { firstJoin: number, lastJoin: number, sessions: number, lastPlaceVersion: number },
 }
 ```
 
 - **Keine personenbezogenen Daten** (keine Namen, keine Texte). Größe ≈ 1–2 KB.
+- **Etagen-Rücksetzpunkt** (GDD v0.2): Die Rücksetzung an den Etagenanfang ist Laufzeitzustand (Server-Speicher) und wird **nicht** gespeichert. Beim Rejoin startet man am `campFloor`.
+- **Gipfel-Abschluss** ist eine atomare Transaktion: `summits += 1`, Gipfel-Bonus, `state = "summited"`, Bestzeit (falls nicht `flagged`), Kosmetik. Ein neuer Lauf entsteht nur über `StartNewRun`.
 - String-Keys für `collected`, weil DataStore-JSON gemischte Tabellen nicht sauber abbildet [VORWISSEN, nicht aktuell].
 - Validierung beim Laden: Typen, Bereiche, unbekannte Felder verwerfen, fehlende mit Defaults auffüllen (`Schema.reconcile`). Tests decken alle Felder ab.
 - Migration v0 → v1: v0 = „kein Datensatz“ → Default v1. Künftige Migrationen v1 → v2 als reine Funktionen + Tests; Schemaänderungen im Live-Spiel brauchen Owner-Freigabe (§8.3).
@@ -198,19 +220,27 @@ export type PlayerDataV1 = {
 | Remote | Argumente | Rate-Limit | Server-Prüfungen |
 |---|---|---|---|
 | `CollectSpark` | `sparkId: number` (Ganzzahl, existiert in aktueller Etagenliste) | 10/s, Burst 20 | Spieler lebt; Distanz Charakter ↔ Funke ≤ 8 Studs (+ Latenz-Toleranz); Funke im aktuellen Lauf noch nicht gesammelt; Etage ≤ höchste plausible Etage + 1 |
-| `RequestUpgrade` | `upgradeId: "jump" \| "speed" \| "dashCooldown" \| "glide" \| "wallJump"` | 2/s, Burst 4 | Spieler in Reichweite eines Funkenschreins (≤ 12 Studs); Kosten ≤ Guthaben; Stufe < Max.; Transaktions-Lock (kein Doppelkauf) |
-| `RequestRespawn` | – | 1/s, Burst 2 | setzt an `run.checkpointFloor` zurück |
-| `ReportAbilityUsed` | `abilityId` (Enum), `inputType` (Enum) | 5/s, Burst 10 | Fähigkeit freigeschaltet; nur Telemetrie und Plausibilitäts-Kontext (Physik bleibt clientseitig) |
+| `RequestUpgrade` | `upgradeId: "jump" \| "speed" \| "dashCooldown" \| "glide" \| "wallJump"` | 2/s, Burst 4 | Spieler in Reichweite eines Funkenschreins (≤ 12 Studs); Kosten ≤ Guthaben; Stufe < Max.; Transaktions-Lock (kein Doppelkauf); Should-Fähigkeiten per Feature-Flag abgelehnt |
+| `RequestRespawn` | – | 1/s, Burst 2 | setzt an den Anfang der aktuellen Etage zurück |
+| `RequestCampLift` | `targetCamp: number` (5, 10, …) | 1/2 s | Spieler steht an einem Lager; Ziel ≤ `run.campFloor` (nur selbst erreichte Lager) |
+| `SendSignal` | `signalId: "wave" \| "thumbsUp" \| "here"`, bei `here`: Zielposition (Vector3, endlich, ≤ 60 Studs vom Spieler, **nicht** innerhalb von 3 Studs eines Avatars) | 1/2 s, Burst 3 | nur vordefinierte Signale; Zustellung an Nicht-Freunde nur bei ±1 Etage; nicht an Empfänger, die den Absender stummgeschaltet oder blockiert haben (`Player:GetBlockedUserIdsAsync` o. ä. [ANNAHME, API in Sprint 2 prüfen]) oder „nur Freunde“ gewählt haben (C-A30) |
+| `ReportAbilityUsed` | `abilityId` (Enum), `inputType` (Enum) | 5/s, Burst 10 | Fähigkeit freigeschaltet; Dash nur, wenn die Abklingzeit laut Server abgelaufen ist; liefert Kontext für die Plausibilitätsprüfung. Ob ein Einsatz **erfolgreich** war, bestimmt der Server aus den Positionsproben (Landung auf der Zielplattform), nicht der Client |
 | `ReportOnboardingStep` | `step: number` (1..8) | 2/s | Schritt nicht doppelt (Bitmaske), Reihenfolge plausibel; Server loggt den Funnel |
-| `SetSetting` | `key` (Enum), `value: boolean` | 2/s | nur bekannte Keys |
+| `SetSetting` | `key` (Enum: helpers, othersTrails, music, effects), `value: boolean` | 2/s | nur bekannte Keys |
 | `StartNewRun` | – | 1/10 s | nur nach mindestens einem Gipfel; am Turmfuß |
 
-Server → Client: `StateChanged` (Funken, Etage, Fähigkeiten, Upgrades – nur eigener Spieler), `FeedbackEvent` (kosmetisch; `UnreliableRemoteEvent`, Payload ≤ 900 Bytes). **Keine** RemoteFunction Server → Client. Lager-Erreichen und Etagenwechsel erkennt der **Server** aus der Charakterposition (Höhe + Etagen-Bounding-Box), nicht der Client.
+Server → Client: `StateChanged` (Funken, Etage, Fähigkeiten, Upgrades – nur eigener Spieler), `FeedbackEvent` (kosmetisch; `UnreliableRemoteEvent`, Payload ≤ 900 Bytes; Fremd-Effekte ≤ 1/s je Spieler, Lager-Feier nur beim ersten Erreichen pro Lauf). **Keine** RemoteFunction Server → Client. Lager-Erreichen und Etagenwechsel erkennt der **Server** aus der Charakterposition (Höhe + Etagen-Bounding-Box), nicht der Client.
 
 ### 6.6 Bewegungs-Plausibilität und Bestenliste
-- Charakterphysik ist clientseitig (Standard). Der Server tastet die Position mit 2 Hz ab (`Logic/MovementCheck`): horizontale Geschwindigkeit ≤ max(WalkSpeed · Upgrades, Dash) · 1,5 Toleranz; Höhengewinn je Probe ≤ erreichbare Sprunghöhe (mit Doppelsprung) + Plattform-Bewegung + Toleranz; Etagen-Sprünge > 1 Etage ohne Zwischenprobe = Verstoß.
-- Folgen eines Verstoßes: **kein** Kick, **keine** Strafe im Hauptturm (Kinder, Lag-Fehlalarme). Nur `run.flagged = true` → dieser Lauf zählt nicht für Bestzeit/Tagesturm-Bestenliste; Zähler in Telemetrie. [ANNAHME: verhältnismäßig, da kein PvP/Handel]
-- Mindestzeit je Abschnitt aus dem Generator (Wegstrecke ÷ Höchstgeschwindigkeit) als zweite Plausibilitätsgrenze.
+- Charakterphysik ist clientseitig (Standard). Der Server tastet die Position mit 2 Hz ab (`Logic/MovementCheck`, reine Funktion, mit synthetischen Spuren getestet). Neues Prüfmodell (Playtest P-06):
+  1. **Wegbudget je 0,5-s-Fenster:** horizontaler Weg ≤ WalkSpeed · Upgrade-Faktor · 0,5 · 1,15. Dazu kommen **+8 Studs Dash-Zusatz nur**, wenn der Dash laut Server-Abklingzeit verfügbar war und gemeldet wurde, sowie die Förderband- bzw. Plattformgeschwindigkeit aus den Generatordaten.
+  2. **Höhengrenze** nach den **freigeschalteten** Fähigkeiten (ohne DJ: Sprunghöhe · Upgrade; mit DJ: + DJ-Höhe) plus Sprungpad-Impulse aus den Generatordaten plus Toleranz 1,5 Studs.
+  3. **Luftzeit:** > 1,5 s ohne Bodenkontakt (Raycast nach unten am Server) gilt als Verstoß, außer beim Gleiter mit freigeschalteter Fähigkeit und begrenzter Sinkrate oder beim Fallen.
+  4. **Mindestzeit je Abschnitt** aus einer **Pfad-Simulation** des Generators mit Basiswerten · 0,8 (nicht Weg ÷ Dash-Geschwindigkeit).
+  5. **Lückenlose Etagenfolge:** Der Server erkennt jede Etage über Positionsproben. Freischaltungen, Lager-Boni, Gipfel und Kosmetik gibt es nur, wenn alle Etagen dazwischen erkannt wurden. Teleport-Sprünge zählen nicht als Erreichen.
+  6. Lag-Toleranz: Ein einzelnes überschrittenes Fenster ist kein Verstoß. Erst 3 überschrittene von 10 aufeinanderfolgenden Fenstern zählen.
+- Folgen eines Verstoßes: **kein** Kick und **keine** Strafe im Hauptturm (Kinder, Lag-Fehlalarme). Gesetzt wird nur `run.flagged = true`: Der Lauf zählt nicht für Bestzeit und Bestenliste, der Verstoß geht als Zähler in die Telemetrie. Aufgrund von Punkt 5 wird zusätzlich keine Etage „erreicht“, die übersprungen wurde. [ANNAHME: verhältnismäßig, da kein PvP und kein Handel]
+- **Bestenliste erst, wenn** die MovementCheck-Tests (Speedhack ×1,2/×1,5, Teleport, Schweben, Infinite Jump, Fly) grün sind **und** ein Spike zu Roblox „Server Authority“ gemacht wurde. Bis dahin gibt es nur die persönliche Bestmarke.
 - **Speicherung der Tagesbestenliste (Should, Sprint 3):** Es dürfen keine täglich wechselnden Store-Namen verwendet werden, weil RTBF-Templates ein statisches `{UserId}`-Muster brauchen (Compliance C-A6). Zwei Kandidaten: (a) die persistente PlayerList-Bestenliste von Roblox (Beta; ein registrierter OrderedDataStore pro Spiel, Roblox rendert die Namen, C-A16), (b) MemoryStore SortedMap mit TTL ≤ 45 Tage. Entscheidung per Spike in Sprint 3. [ANNAHME]
 - Option für später: Roblox „Server Authority“ (laut Research inzwischen Full Release, benötigt „Next Generation Replication“) → Spike, falls Bestenlisten-Cheats auftreten.
 

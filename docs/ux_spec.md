@@ -1,6 +1,6 @@
 # UX-Spezifikation
 
-Rolle: Level- & UX-Designer · Stand: 2026-10-12 (Sprint 0) · Status: **Grundspezifikation für das MVP; wird nach Owner-Freigabe im Vertical Slice verfeinert**
+Rolle: Level- & UX-Designer · Stand: 2026-10-12 (Sprint 0) · **Version 0.2** (nach Persona-Playtest) · Status: **Grundspezifikation für das MVP; wird nach Owner-Freigabe im Vertical Slice verfeinert**
 
 Evidenz: Alles in diesem Dokument ist Planung. Ohne Studio/Geräte-Emulator ist hier nichts am Gerät geprüft (`[SIMULIERT]`/`[ANNAHME]`). Plattform-Fakten stammen aus `docs/research_tech_facts_2026-10-12.md`, sonst sind sie als `[VORWISSEN, nicht aktuell]` markiert.
 
@@ -56,8 +56,8 @@ Evidenz: Alles in diesem Dokument ist Planung. Ohne Studio/Geräte-Emulator ist 
 - Jedes Menü ist vollständig per Gamepad bedienbar: Beim Öffnen wird der Fokus auf den ersten sinnvollen Knopf gesetzt, B/Kreis schließt.
 
 ### A5. Spielerführung visuell statt per Text
-- Das Ziel ist das **hellste/gesättigtste** Objekt im Bild. Der Rest der Welt ist gedämpft (Primitive-Stil: matte, entsättigte Grundfarben, Ziele in Neon + `Highlight`).
-- **Leitlinien:** Beam/Trail-Pfad zum nächsten Ziel während des Onboardings. Er blendet sich aus, sobald der Spieler den Schritt einmal geschafft hat.
+- Das Ziel ist das **hellste/gesättigtste** Objekt im Bild. Der Rest der Welt ist gedämpft (Primitive-Stil: matte, entsättigte Grundfarben). **Neon nur für Ziele**, Deko in SmoothPlastic.
+- **Reservierte Führungssprache:** **goldene Chevron-Pfeile am Boden**, nur für Führung (Onboarding, Rejoin) und Hilfe. Gold kommt sonst nirgends vor. Spuren anderer Spieler sind dünn, kurz (≤ 1 s), nie gold und abschaltbar (P-09).
 - **Feedback auf jede Aktion** innerhalb von 100 ms: Ton, Partikelstoß, Zahl, die zum Zähler fliegt, leichtes Kamera-/UI-„Punch“. Auf Mobile zusätzlich Haptik (`HapticService`), wo unterstützt. [ANNAHME: Feedback-Dichte ist der wichtigste Spaßhebel ohne Art-Content]
 - Text ist nur ergänzend: max. **5 Wörter** pro Hinweis, über Lokalisierungsschlüssel, nie die einzige Erklärung.
 
@@ -80,26 +80,31 @@ Evidenz: Alles in diesem Dokument ist Planung. Ohne Studio/Geräte-Emulator ist 
 
 ## Teil B – MVP-spezifisch: „Schwungturm“
 
-### B1. Map-Layout (ein Ort: der Turm)
+### B1. Map-Layout (ein Ort: der Turm, Helix)
 
 ```
-            ★ Gipfel (Etage 30): runde Plattform, Leuchtfeuer, Gipfel-Fest
+            ★ Gipfel (Etage 30) + persistentes Gipfel-Leuchtfeuer (Lichtsäule, nie ausgestreamt)
             │
-   Zone 3 „Gewitter“  Etage 21–30  (Violett/Orange, dunkler Himmel, Blitz-Takt-Licht)
-            ├── Lager E25 (Funkenschrein)
-            ├── Lager E20 → Dash-Freischaltung + Übungsstrecke
-   Zone 2 „Wolken“    Etage 11–20  (Weiß/Hellblau, Nebel, weiche Lichtstimmung)
+   Zone 3 „Gewitter“  Etage 21–30  (Violett/Orange, dunkler Himmel, Takt-Licht ≤ 1 Hz)
+            ├── Lager E25 (Funkenschrein, Lager-Lift)
+            ├── Lager E20 → Dash-Freischaltung + Übungsstrecke (Dash, dann Sprung + Dash)
+   Zone 2 „Wolken“    Etage 11–20  (Weiß/Hellblau, dunkle Unterseiten/Konturen, Nebel erst ab ~120 Studs)
             ├── Lager E15
             ├── Lager E10 → Doppelsprung-Freischaltung + Übungsstrecke
    Zone 1 „Wiese“     Etage 1–10   (Grün/Gelb, Tageslicht)
             ├── Lager E5 (erster Funkenschrein)
-            └── Etage 0: Turmfuß = Spawn-Plaza (Startpad, Tutorial-Lager, „Neuer Lauf“-Tor nach 1. Gipfel)
+            └── Etage 0: Turmfuß, „Neuer Lauf“-Tor (nach dem 1. Gipfel)
+   Spawn-Plaza ~40 Studs neben dem Turm, freie Sichtachse zum Gipfel-Leuchtfeuer
 ```
 
-- **Turmform:** Etagen spiralen um eine zentrale, leuchtende Säule (Orientierung: „innen = Turm, oben = Ziel“). Grundfläche ~64 × 64 Studs, Etagenhöhe 16 Studs (Tech Notes §6.2).
-- **Sichtachse:** Vom Spawn ist der leuchtende Gipfel sichtbar (Ziel ohne Text, Säule S1). Jede Zone hat eine eigene Farbe; die nächste Zone ist von unten als Farbschimmer erkennbar.
-- **Fallschutz:** Unter jedem Abschnitt liegt eine unsichtbare Auffangzone. Wer hineinfällt, wird mit „Plopp“ und kurzer Partikelwolke (≤ 1,5 s) zum letzten Lager zurückgesetzt. Kein Charaktertod, keine Gewalt-Darstellung.
-- **Lager:** breite, sichere Plattform mit Funkenschrein (pulsierender Kristall aus Neon-Parts, ProximityPrompt), Lagerfeuer-Licht, „Etage X“-Schild aus Zahlen-Parts/Icon (keine Freitexte).
+- **Turmform (Helix):** Jede Etage liegt im nächsten 90°-Sektor um eine zentrale, leuchtende Säule. Erst nach 4 Etagen ist der Luftraum wieder überbaut, das gibt Kopffreiheit und Kamerafreiheit (P-04).
+- **Sichtachse:** Das Gipfel-Leuchtfeuer ist vom Spawn aus sichtbar, unabhängig vom Streaming (Ziel ohne Text, S1). Jede Zone hat eine eigene Farbe.
+- **Fallschutz:** Unter jeder Etage liegt eine unsichtbare Auffangzone. Wer unter die Etagenbasis − 4 Studs fällt, steht nach ≤ 1,5 s mit „Plopp“ und kurzer Partikelwolke **am Anfang derselben Etage**. Das zählt als 1 Fehlversuch. Kein Charaktertod, keine Gewalt-Darstellung.
+- **Lager:** breite, sichere Plattform mit Funkenschrein (pulsierender Kristall aus Neon-Parts, ProximityPrompt), **Lager-Lift** (Plattform mit Pfeilsymbolen, zweiter ProximityPrompt), Lagerfeuer-Licht und Etagennummer als Zahlen-Icon (keine Freitexte).
+
+### B1a. Kamera
+- Eigene Verfolgerkamera: feste Neigung ~35°, Abstand 14–22 Studs, Zoom-Untergrenze. Verdeckende Teile (Säule, Etagen darüber) werden per `LocalTransparencyModifier` ausgeblendet statt heranzuzoomen. Feinabstimmung im Owner-Gerätetest (Sprint 1).
+- Fremde Avatare im Umkreis von 6 Studs werden einheitlich halbtransparent (alle Teile gleich, inkl. Layered Clothing) oder als neutrale Geist-Silhouette dargestellt, damit sie keine Kanten verdecken. Das Erscheinungsbild prüft der Owner in Studio (C-A32).
 
 ### B2. HUD (Querformat, Touch)
 
@@ -124,8 +129,11 @@ Evidenz: Alles in diesem Dokument ist Planung. Ohne Studio/Geräte-Emulator ist 
 |---|---|---|---|
 | Funken-Zähler | oben links unter der Topbar | Höhe ≈ 6 % | +n fliegt von der Welt in den Zähler; Zahl „poppt“ |
 | Etagen-Leiste | oben Mitte | Breite ≈ 35 % | Fortschritt 0–30 mit Zonen-Farben; Lager als Kerben |
-| Optionen | oben rechts unter der Topbar | ≥ 44 px | öffnet Optionen (Hilfe an/aus, Musik, Effekte, Sprache folgt Roblox) |
+| Optionen | oben rechts unter der Topbar | ≥ 44 px | öffnet Optionen (Hilfe an/aus, Spuren anderer an/aus, Signale: alle / nur Freunde / aus, Musik, Effekte; die Sprache folgt Roblox) |
 | Dash-Knopf | im Daumenbogen links-oberhalb des Sprungknopfs, 80 % seiner Größe | ≥ 44 px | sichtbar erst nach Freischaltung; Abklingzeit als Kreis-Füllung **und** Ziffer (nicht nur Farbe) |
+| „2×“-Hinweis | am Sprungknopf | – | pulsiert in der Luft, solange ein Doppelsprung möglich ist |
+| Signal-Knopf | über dem Dash-Knopf (klein) | ≥ 44 px | öffnet einen Fächer mit 3 Symbolen: Winken, Daumen hoch, „Hier!“ (Ping auf den anvisierten Ort) |
+| Freundes-Marker | in der Welt über Freunden | – | farbiger Ring + Icon **ohne Namenstext**, durch Wände sichtbar; Pfeil am Bildschirmrand, wenn außerhalb (C-A32) |
 | Gleiter | kein eigener Knopf: Sprung halten | – | Gleiter-Symbol am Sprungknopf, wenn verfügbar |
 | Hilfe-Hinweis | über der Plattform in der Welt (BillboardGui) | – | Leuchtspur + Pfeil, keine Textpflicht |
 
@@ -141,11 +149,15 @@ Maus/Tastatur: Dash = `Shift`/`Q`, Optionen = `Esc`-unabhängig über Icon bzw. 
 │  │ ●●○     │  │ ●○○     │  │ 🔒      │        │
 │  │ ✦ 120   │  │ ✦ 70    │  │ (E20)   │        │
 │  └─────────┘  └─────────┘  └─────────┘        │
-│             [ ✓ Kaufen ]     [ ✕ ]            │
+│   Gleiter: ✦ 96/150 ▓▓▓▓▓▓░░░░                │
+│             [ ✦ Tauschen ]   [ ✕ ]            │
 └───────────────────────────────────────────────┘
 ```
 
 - Öffnen: ProximityPrompt am Schrein (Touch: Prompt antippen; Tastatur `E`; Gamepad `Y`). Modal, mittig, max. 60 % Bildbreite; die Spielwelt läuft weiter (Lager ist sicher).
+- Der Knopf heißt **„Tauschen“** mit ✦-Symbol (Schlüssel `shrine.trade`), nicht „Kaufen“, um keine Echtgeld-Assoziation zu wecken (P-19).
+- Der Schrein pulsiert nur für das **empfohlene nächste Ziel**. Für den Gleiter gibt es eine Spar-Leiste (P-12).
+- Eine **Messlatte** neben dem Schrein zeigt mit einem Geist-Sprung „vorher/nachher“, was ein Sprung-Upgrade bewirkt.
 - Karten zeigen Symbol, Stufe als **gefüllte Punkte**, Preis. Ist ein Upgrade nicht leistbar, zeigt die Karte **Schloss-/Grau-Muster plus fehlende Funken als Zahl**, nicht nur eine andere Farbe.
 - Kauf: Karte wählen → „Kaufen“ → Server bestätigt → Effekt (Partikel + Ton) und Zähler sinkt. Doppeltipp-Schutz: Der Knopf ist bis zur Server-Antwort gesperrt.
 - **Kein** Robux-Bezug, keine Rabatt-Optik, keine Countdown-Elemente (Compliance HR-MON).
@@ -155,19 +167,23 @@ Maus/Tastatur: Dash = `Shift`/`Q`, Optionen = `Esc`-unabhängig über Icon bzw. 
 
 **Erster Start (≤ 60 s, siehe GDD §7):** Spawn → Kamera-Schwenk zum Gipfel (2 s, überspringbar durch jede Eingabe) → Leuchtpfad zur Treppe → Funken auf dem Pfad → Etage 1 mit Tor-Effekt.
 
-**Fehlsprung:** Fall in die Auffangzone → Bildschirm-Vignette 0,3 s → „Plopp“ am Lager → Pfad zur nächsten Plattform blinkt einmal auf. Nach 5 Fehlversuchen auf derselben Etage: Leuchtspur (Geist-Pfad). Nach 10: Hilfsstufen erscheinen mit Funkel-Effekt.
+**Fehlsprung:** Fall in die Auffangzone → Bildschirm-Vignette 0,3 s → „Plopp“ **am Anfang derselben Etage** → die Chevrons zur nächsten Plattform blinken einmal auf. Nach **3** Fehlversuchen auf derselben Etage erscheinen goldene Führungs-Chevrons (Geist-Pfad). Nach **6** erscheinen Hilfsstufen mit Funkel-Effekt, nur lokal für diesen Spieler.
 
-**Fähigkeit freigeschaltet (E10/E20):** Lager wird zur „Bühne“: Lichtsäule, Symbol der Fähigkeit schwebt zum Spieler, Knopf erscheint mit Puls-Animation. Direkt danach eine **Übungsstrecke** (2–3 Sprünge), die genau diese Fähigkeit verlangt. Keine Weiterreise ohne geschaffte Übung, aber unbegrenzt viele Versuche mit sofortigem Respawn auf der Übungsstrecke.
+**Fähigkeit freigeschaltet (E10/E20):** Lager wird zur „Bühne“: Lichtsäule, Symbol der Fähigkeit schwebt zum Spieler, Knopf erscheint mit Puls-Animation. Ein **Geist-Avatar** führt die Fähigkeit einmal vor (beim DJ mit sichtbarem „2×“-Puls). Direkt danach kommt eine **Übungsstrecke**, die genau die Kombination verlangt, die die nächste Zone braucht. Beim Dash ist sie zweistufig: erst Dash allein, dann Sprung + Dash. Es gibt unbegrenzt viele Versuche mit sofortigem Respawn, nach 3 Fehlversuchen eine erneute Vorführung und nach 6 eine Hilfsplattform. **Nie eine Sackgasse.** Eine absolvierte Übung wird gespeichert.
 
 **Gipfel:** Leuchtfeuer entzündet sich, Konfetti aus Parts, Laufzeit als große Zahl, erspielte Leuchtspur wird angelegt. Optionen danach: „Neuer Lauf“ (Tor) oder frei herumklettern.
 
-**Rejoin:** Spieler erscheint am letzten Lager des laufenden Laufs (`run.checkpointFloor`), bereits gesammelte Funken bleiben verschwunden (keine Doppelvergabe).
+**Rejoin:** Der Spieler erscheint am letzten erreichten Lager des laufenden Laufs (`run.campFloor`). Die Chevrons leuchten 3 s lang zur nächsten Plattform. Bereits gesammelte Funken bleiben verschwunden (keine Doppelvergabe). Die Kamerafahrt gibt es nur beim allerersten Join.
+
+**Lager-Lift / Freund helfen:** Am Lager den Lift-Prompt wählen → Liste der **selbst erreichten** Lager als große Zahlen-Kacheln; Lager mit einem Freund tragen dessen Marker-Icon → antippen → „Plopp“-Teleport. Nach oben geht es nie über das eigene höchste Lager hinaus.
+
+**Signale:** Signal-Knopf → Fächer mit 3 Symbolen → antippen. Beim „Hier!“-Ping erscheint 3 s lang ein Marker am anvisierten **Ort** (nie an einem Avatar). Freunde sehen ihn überall, Nicht-Freunde nur in ±1 Etage. Unsichtbar für Spieler, die den Absender stummgeschaltet oder blockiert haben oder „nur Freunde“ gewählt haben. Höchstens 1 Signal pro 2 s (C-A30).
 
 ### B5. Feedback-Katalog (Spaß ohne Art-Content)
 
 | Ereignis | Visuell | Audio [Owner-Freigabe für Sounds offen] | Haptik (Mobile) |
 |---|---|---|---|
-| Landung | kleiner Staubring aus Parts | dumpfer Tap | – |
+| Landung | kleiner Staubring aus Parts (nur eigene) | dumpfer Tap | – |
 | Funke | Partikelstoß + Zahl fliegt zum Zähler | heller „Pling“ mit steigender Tonhöhe in Serie | leicht |
 | Etage geschafft | Tor-Bogen leuchtet, Leiste springt | kurzer Akkord | – |
 | Lager | Lagerfeuer flammt auf, Kamera-Punch | Fanfare kurz | mittel |
@@ -175,8 +191,11 @@ Maus/Tastatur: Dash = `Shift`/`Q`, Optionen = `Esc`-unabhängig über Icon bzw. 
 | Upgrade gekauft | Lichtring um den Spieler | „Power-up“-Klang | mittel |
 
 Keine Effekte mit > 3 Blitzen pro Sekunde. Die Takt-Plattformen in Zone 3 pulsieren ≤ 1 Hz.
+**Fremd-Effekte** (andere Spieler) sind gedrosselt (≤ 1/s je Spieler) und auf Low-End-Geräten reduziert. Lager-Feiern gibt es nur beim **ersten** Erreichen pro Lauf, nicht bei jedem Respawn. Erreichen mehrere Spieler ein Lager innerhalb von 20 s, gibt es eine **gemeinsame Feier** (größerer Lichtring).
 
 ### B6. Offene UX-Punkte (Owner-Gerätetest Sprint 1)
-1. Kamera: Standard-Verfolgerkamera oder leicht erhöht/weiter weg für bessere Sicht nach unten?
+1. Kamera-Parameter (Neigung, Abstand, Ausblenden) auf dem kleinsten Android-Gerät feinjustieren (B1a).
 2. Ist der Dash-Knopf im Daumenbogen auf kleinen Telefonen ohne Fehlgriffe erreichbar (H6)?
-3. Erkennbarkeit der nächsten Plattform bei Nebel (Zone 2) auf schwachen Displays.
+3. Erkennbarkeit der nächsten Plattform in Zone 2 (dunkle Konturen) auf schwachen Displays.
+4. Touch-Hilfe „Dash am Boden = Hüpfer + Dash“: hilft sie oder verwirrt sie?
+5. AutoJump: Zone 1 an, ab Zone 2 aus. Fühlt sich das konsistent an?

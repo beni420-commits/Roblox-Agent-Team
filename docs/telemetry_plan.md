@@ -1,6 +1,6 @@
 # Telemetrie-Plan – „Schwungturm“
 
-Rolle: Data Analyst · Stand: 2026-10-12 (Sprint 0) · Status: **Entwurf zur Owner-Freigabe**; wird mit dem Vertical Slice umgesetzt.
+Rolle: Data Analyst · Stand: 2026-10-12 (Sprint 0) · **Version 0.2** (an GDD v0.2 angepasst) · Status: **Entwurf zur Owner-Freigabe**; wird mit dem Vertical Slice umgesetzt.
 
 API-Fakten aus `docs/research_tech_facts_2026-10-12.md` (§3), dort im Original gelesen (creator-docs @af5f853), sowie `creator-docs production/experiments.md` und `configs.md` (gelesen 2026-10-12).
 
@@ -33,7 +33,7 @@ Kombinationen bleiben weit unter der „Other“-Schwelle von 8 000.
 | Gipfelquote | Anteil neuer Spieler mit Gipfel in der 1. Woche | Custom `SummitReached` | – | ≥ 15 % |
 | D1 / D7 / D30 | Roblox-Retention-Dashboard (Kohorte nach Erstbesuch) | Roblox Analytics | – | D1 ≥ 20 %, D7 ≥ 6 % |
 | Sessiondauer | Median Sessiondauer | Roblox Engagement + Custom `SessionEnded` | Owner-Test ≥ 12 min | Median ≥ 10 min |
-| Funken-Fluss | Quellen und Senken je Spieler, Guthaben-Verteilung | Economy-Events | Simulation laut GDD §6.2 | Median-Guthaben bei Etage 30 zwischen 100 und 300 |
+| Funken-Fluss | Quellen und Senken je Spieler, Guthaben-Verteilung | Economy-Events | Simulation laut GDD §6.2 | Median-Guthaben bei Erreichen von Etage 30 im **ersten** Lauf, gemessen **vor** Gipfel-Bonus und vor Käufen am Gipfel: 100–200 |
 | Frust-Hotspots | Fehlversuche und Abbrüche je Etage | `FloorSummary`, `SessionEnded` | – | keine Etage mit Abbruchrate > 2× Median |
 | Stabilität | Daten-Lade-/Speicherfehler, Remote-Ablehnungen, Plausibilitäts-Flags | Custom-Gesundheitsevents | 0 im Owner-Test | Ladefehler < 0,1 % der Joins |
 | Performance | Client-FPS-Median je Plattform, Server-Heartbeat | Custom `ClientPerf`, `ServerHealth` | Gate §5 am Owner-Gerät | FPS-Median Touch ≥ 30 |
@@ -74,15 +74,17 @@ Einmaliger Funnel, keine Session-ID nötig; Schritte beginnen bei 1. Wiederholun
 ### 3.4 Custom Events – `LogCustomEvent(player, eventName, value, customFields?)`
 | Event | `value` | F03 | Wann | Zweck |
 |---|---|---|---|---|
-| `FloorSummary` | Fehlversuche auf der Etage | Etage `F01`…`F30` | beim Verlassen nach oben | Frust-Hotspots, H2 |
+| `FloorSummary` | Fehlversuche (Rücksetzungen an den Etagenanfang) auf der Etage | Etage `F01`…`F30` | beim Verlassen nach oben | Frust-Hotspots, H2 |
 | `HelpShown` | 1 | `trail_Fxx` / `helper_Fxx` | Hilfe eingeblendet | H2 |
 | `SummitReached` | Laufzeit in s | Lauf-Nr.-Bündel | Gipfel | Gipfelquote, H4 |
 | `RunStarted` | Lauf-Nr. | `after_summit` / `manual` | neuer Lauf | H4 |
 | `AbilityUnlocked` | 1 | Fähigkeit | Freischaltung | H3 |
-| `AbilityResult` | Erfolgsquote in % (0–100) | `<ability>` | Session-Ende, je benutzter Fähigkeit | H6 (mit F01 = Eingabe) |
-| `SessionEnded` | Sessiondauer in s | letzte Etage gebündelt (`F00-05` …) | `PlayerRemoving` | Sessiondauer, Abbruchpunkte, H2/H7 |
+| `AbilityResult` | Erfolgsquote in % (0–100), **vom Server bestimmt** (Landung auf der Zielplattform laut Positionsproben) | `<ability>` | Session-Ende, je benutzter Fähigkeit | H6 (mit F01 = Eingabe) |
+| `SessionEnded` | Sessiondauer in s | letzte Etage gebündelt (`F00-05` …) + Freundesstatus (`_f` = mit Freund im Server) | `PlayerRemoving` | Sessiondauer, Abbruchpunkte, H2/H7/H8 |
+| `CampLiftUsed` | 1 | `down` / `up` / `friend` | Lager-Lift genutzt | Social-Nutzung (S5) |
+| `SignalSent` | Anzahl in der Session | Signal-Art | Session-Ende, nur wenn > 0 | Social-Nutzung, Missbrauchs-Monitoring (C-A30) |
 | `SettingChanged` | 1 | `<key>_<on/off>` | Option geändert | Akzeptanz der Hilfe |
-| `ClientPerf` | FPS-Median der Session | Qualitätsstufe gebündelt | Session-Ende (Client meldet, validiert, Bereich 0–240) | Performance-Gate |
+| `ClientPerf` | FPS-Median der Session (Clientwert, auf 0–240 gekappt, als clientgemeldet markiert) | Qualitätsstufe gebündelt | Session-Ende | Performance-Gate |
 | `ServerHealth` | Heartbeat-Mittel (Hz) der letzten 5 min | `players_<n>` gebündelt | alle 5 min (über den ersten Spieler im Server) | Performance-Gate |
 | `RemoteRejected` | Anzahl Ablehnungen in der Session | Remote-Name | Session-Ende, nur wenn > 0 | Sicherheit/Exploit-Monitoring |
 | `MovementFlagged` | 1 | Verstoßart (`speed`, `height`, `skip`) | erster Verstoß im Lauf | Cheat-Monitoring, Fehlalarm-Quote |
@@ -90,7 +92,7 @@ Einmaliger Funnel, keine Session-ID nötig; Schritte beginnen bei 1. Wiederholun
 | `DailyTowerStarted` *(Should)* | 1 | – | Tagesturm-Start | H5 |
 | `MomentumPeak` *(Should)* | max. Schwung-Stufe im Lauf | – | Lauf-Ende | H7 |
 
-Gesamt: 15 Custom-Event-Namen (≤ 20 geplant).
+Gesamt: 17 Custom-Event-Namen (≤ 20 geplant).
 
 ## 4. Hypothesen → Messung → Entscheidungsregel
 
@@ -99,12 +101,13 @@ A/B-Tests laufen über **Roblox Experiments**: In-Game-Experiment über einen Co
 | ID | Messgröße | Mindeststichprobe / Laufzeit | Entscheidungsregel |
 |---|---|---|---|
 | H1 | Anteil `Floor1` mit F03 ∈ {`≤30`, `31-60`} unter allen `Spawned` | ≥ 500 neue Spieler **und** ≥ 14 Tage | bestätigt, wenn die untere Grenze des 95-%-Konfidenzintervalls ≥ 80 % liegt; widerlegt, wenn die obere Grenze < 80 % liegt; sonst unklar |
-| H2 | Abbruchrate auf Etagen mit ≥ 5 Fehlversuchen (Session endet auf dieser Etage) | Experiment, ≥ 400 Spieler je Variante, ≥ 14 Tage | bestätigt bei signifikanter Senkung (α = 0,05) **und** relativ ≥ 30 % |
+| H2 | Abbruchrate auf Etagen mit ≥ 3 Fehlversuchen (Session endet auf dieser Etage); Experiment Hilfe nach 3 vs. nach 6 Fehlversuchen | Experiment, ≥ 400 Spieler je Variante, ≥ 14 Tage | bestätigt bei signifikanter Senkung (α = 0,05) **und** relativ ≥ 30 % |
 | H3 | Anteil Etage 15 unter Spielern mit Etage 10 | ≥ 300 Spieler mit Etage 10 | bestätigt bei unterer KI-Grenze ≥ 70 % |
 | H4 | Anteil `RunStarted` (Lauf 2) in derselben Session unter `SummitReached` (Lauf 1) | ≥ 200 Gipfel-Erreicher, ≥ 21 Tage | bestätigt bei unterer KI-Grenze ≥ 35 % |
 | H5 | D1 der Gipfel-Erreicher, Experiment (Tagesturm an/aus) | ≥ 300 je Gruppe, ≥ 21 Tage | bestätigt bei signifikanter Steigerung ≥ 5 Prozentpunkte |
 | H6 | `AbilityResult` (Dash) Touch vs. Maus/Tastatur | ≥ 200 Spieler je Eingabeart, ≥ 14 Tage | bestätigt, wenn die Differenz ≤ 10 Prozentpunkte ist (Obergrenze des 95-%-KI) |
 | H7 | Median `SessionEnded`, Experiment (Schwung an/aus) | ≥ 400 je Variante, ≥ 14 Tage | bestätigt bei signifikanter Steigerung ≥ 10 % |
+| H8 | Median `SessionEnded` mit Freund vs. ohne (beobachtend, kein Kausalurteil) | ≥ 150 Spieler mit Freund, ≥ 21 Tage | „Indikator positiv“, wenn das 95-%-KI des Verhältnisses über 1,2 liegt; sonst „unklar“ |
 
 **Regeln:**
 - Unter der Mindeststichprobe gibt es **kein Urteil**; die Hypothese bleibt „unklar (zu wenig Daten)“.
