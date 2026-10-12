@@ -50,5 +50,11 @@
 1. Veröffentlichungskosten 1.000 R$ bzw. Plus/Premium (§8.2), spätestens vor dem öffentlichen Release
 2. Offene Fragen: Publisher-Konto oder -Gruppe; Studio- und Handy-Test pro Sprint möglich?
 
+## Sprint-1-Stand
+- **Gebaut:** Zone 1 (Etagen 1–10) mit Generator, Erreichbarkeitsprüfer, Funken, Lagern, Rücksetzpunkt, Hilfe 3/6, Führung, Coyote-Time, Sprungpads, HUD (EN/DE), Telemetrie, Remote-Guard, Reset-Knopf ohne Tod.
+- **Geprüft:** `scripts/check.sh` grün, 76/76 Tests [GETESTET]; Code-Review mit 30 Befunden, Fixes in `c7f81b1`.
+- **Nicht geprüft:** alles in der Engine. Owner-Test P0 nach `reports/owner_test_template.md` steht aus.
+- **Bewusst offen (Sprint 2):** MovementCheck vor dem Speicherstand (CR-14), Feedback-Katalog (CR-29), Avatar-Transparenz (C-A32).
+
 ## Nächster Schritt
-Sprint 1 umsetzen (Logik → Tests → Roblox-Schicht → Reports). Danach testet der Owner Zone 1 nach der Checkliste.
+Owner-Test P0 (Studio und Handy). Danach Sprint-2-Planung: MovementCheck → Speicherstand → Zonen 2–3, Fähigkeiten, Schrein, Social.

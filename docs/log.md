@@ -71,3 +71,19 @@
 
 ### Orchestrator – Sprintstart
 - Sprintziel, Erfolgskriterium und Umfang stehen in `state.md`.
+
+### Systems Engineer / QA – Logik und Tests
+- Util-Module (Prng, Validator, RateLimiter, Trove) mit 25 Tests [GETESTET].
+- Movement + Reachability: Flugbahn-Simulation mit Referenzcharakter. Befund: DJ-Pflicht über Weite ist nicht fair → Höhe (D-026).
+- TowerGenerator Zone 1 (Helix, Funken, Lager, Hilfsstufen, Pads). 200 Seeds × 10 Etagen lösbar [GETESTET]. Mutationstests bestätigen die Aussagekraft der Tests.
+- RunState, LandingLocator, Net-Definitions und Guard samt Exploit-Suite [GETESTET].
+
+### Systems Engineer – Roblox-Schicht
+- Server (WorldSetup, TowerBuilder, NetService, PlayerService, TelemetryService) und Client (HUD, Funken, Führung, Bewegung, Sturz, Eingabe, Kamera-Intro).
+- Nur typgeprüft (luau-lsp mit Roblox-Typen); nicht in der Engine ausgeführt.
+
+### QA – Code-Review (unabhängig)
+- 30 Befunde, kein Blocker, 1 kritischer Verdacht (Sprungpad-Impuls). Die Fixes für CR-01 bis CR-28 stehen in `c7f81b1`; CR-14, CR-29 und CR-30 sind für Sprint 2 im Backlog.
+
+### Orchestrator – Infrastruktur und Compliance-Vorbereitung
+- CI-Workflow angelegt (nicht auf GitHub ausgeführt, D-029). Fragebogen-Entwurf. Owner-Testvorlage P0.
