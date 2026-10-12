@@ -5,4 +5,8 @@ local TestRunner = require("./TestRunner")
 
 TestRunner.run({
 	require("./shared/BuildInfo.spec"),
+	require("./shared/Util/Prng.spec"),
+	require("./shared/Util/Validator.spec"),
+	require("./shared/Util/RateLimiter.spec"),
+	require("./shared/Util/Trove.spec"),
 })
