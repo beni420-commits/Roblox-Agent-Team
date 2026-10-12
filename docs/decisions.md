@@ -103,4 +103,27 @@ Der Owner hat in §0.1 keine Werte ausgefüllt. Es gelten die Defaults:
 ### D-025 · Offen · Veröffentlichungskosten (§8 Punkt 2)
 - Noch keine Owner-Entscheidung. Sie wird spätestens vor dem öffentlichen Release gebraucht (Owner-Bericht Sprint 0 §4). Bis dahin gilt Budget 0.
 
+## Sprint 1
+
+### D-026 · 2026-10-12 · Game Designer · Doppelsprung-Pflicht über Höhe statt Weite
+- **Entscheidung:** In Zone 2 verlangen Kanten mit 8–9,5 Studs Anstieg den Doppelsprung, nicht weite Lücken (GDD v0.3 §13a).
+- **Evidenz:** [GETESTET] Die Simulation zeigt, dass ein weitenbasiertes Fenster nicht existiert (Referenz-DJ ≈ 7,2 < großzügiger Einzelsprung ≈ 9,7).
+
+### D-027 · 2026-10-12 · Systems Engineer · Kamera in Sprint 1: Roblox-Standard mit Invisicam
+- **Entscheidung:** Statt einer eigenen Kamera nutzen wir in Sprint 1 die Standardkamera mit `DevCameraOcclusionMode = Invisicam`: Verdeckende Teile werden durchsichtig statt heranzuzoomen. Zoom 8–30 Studs.
+- **Begründung:** Damit ist das P-04-Ziel (Ausblenden statt Heranzoomen) mit Bordmitteln erfüllt; eine eigene Kamera ist ohne Studio nicht abstimmbar. Neubewertung nach dem Owner-Test.
+- **Evidenz:** [ANNAHME]; Rojo-Build setzt die Eigenschaft [GETESTET].
+
+### D-028 · 2026-10-12 · Systems Engineer · Funken, Führung und Hilfsstufen clientseitig aus demselben Seed
+- **Entscheidung:** Der Server baut nur die gemeinsamen Bauteile. Jeder Client erzeugt den Turm mit dem Generator aus `workspace.TowerSeed` selbst und baut seine Funken, Chevrons und Hilfsstufen lokal. Gewertet wird nur auf dem Server (Reichweite 10 Studs, einmalig je Lauf).
+- **Begründung:** Funken und Hilfe sind pro Spieler verschieden; so entsteht kein Replikationsverkehr. Der Generator ist deterministisch [GETESTET], weil er nur bit32-Zufall und exakte Arithmetik nutzt.
+
+### D-029 · 2026-10-12 · Orchestrator · CI-Workflow nur bei Push auf `main`, PRs und manuell
+- **Entscheidung:** `.github/workflows/ci.yml` läuft nicht bei Pushes auf den Arbeitsbranch.
+- **Begründung:** Der Workflow ist hier nicht auf GitHub-Runnern testbar. Die Schritte zum Holen und Bauen sind identisch zu denen, die hier liefen [GETESTET lokal], aber ein ungetesteter roter Lauf wäre nur Rauschen. Der Owner kann ihn manuell starten.
+
+### D-030 · 2026-10-12 · Orchestrator · Keine Sounds in Sprint 1
+- **Entscheidung:** Sprint 1 hat keine Sounds. Die Pfade der Engine-Sounds (Kat. 0) sind in der Doku nicht belegt und hier nicht prüfbar; Kat. 1 bräuchte Asset-IDs aus dem Creator Store (nicht erreichbar).
+- **Folge:** Feedback läuft nur visuell. Sounds folgen in Sprint 2, nachdem der Owner Pfade bzw. IDs in Studio geprüft hat (Asset-Register).
+
 <!-- Weitere Entscheidungen werden unten angehängt. -->

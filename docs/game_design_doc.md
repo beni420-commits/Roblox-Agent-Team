@@ -1,6 +1,6 @@
 # Game Design Document – „Schwungturm“ (EN: „Momentum Tower“)
 
-Rolle: Game Designer · Stand: 2026-10-12 (Sprint 0) · **Version 0.2**: überarbeitet nach Persona-Playtest · Status: **Entwurf zur Owner-Freigabe** · Arbeitstitel (Markenprüfung offen)
+Rolle: Game Designer · Stand: 2026-10-12 (Sprint 1) · **Version 0.3**: v0.2 vom Owner freigegeben (D-022), v0.3 ergänzt Simulationsbefunde aus Sprint 1 (§13a) · Arbeitstitel (Markenprüfung offen)
 
 Grundlage: `docs/research_report.md` (Konzept A, Empfehlung), `reports/compliance_check_sprint0.md` v1.1 (Auflagen in §11), `reports/playtest_report_sprint0.md` (Befunde P-01 bis P-29, Umsetzung in §13), `docs/telemetry_plan.md`, `docs/ux_spec.md`, `docs/tech_notes.md`.
 Evidenz: Alle Spielspaß-, Zeit- und Balancing-Angaben sind `[ANNAHME]` bzw. `[SIMULIERT]`, bis Playtests (`[GETESTET]`) und Live-Daten (`[GEMESSEN]`) vorliegen.
@@ -52,7 +52,7 @@ Evidenz: Alle Spielspaß-, Zeit- und Balancing-Angaben sind `[ANNAHME]` bzw. `[S
 - **Ein Turm, 3 Zonen à 10 Etagen** (30 Etagen) plus Gipfelplattform. **Lauf 1** nutzt einen festen Seed pro Spielversion (alle haben denselben ersten Turm, vergleichbar und besprechbar). Ab Lauf 2 wird neu gemischt (§3.3).
 - **Turmform: Helix.** Jede Etage liegt im nächsten 90°-Sektor um eine zentrale Säule. Der Luftraum über einem Pfad ist erst nach 4 Etagen (64 Studs) wieder überbaut, das gibt Kopffreiheit für den Doppelsprung (P-04). Der Prüfer verlangt ≥ 20 Studs Kopffreiheit über jeder Sprungbahn.
 - **Zone 1 „Wiese“** (Etage 1–10): Tutorial-Zone. Breite Plattformen, kleine Lücken, Treppen, langsame Förderbänder (Sprünge nur in Bandrichtung), Sprungpads. Lager auf Etage 5 und 10. Ende: **Doppelsprung** plus Übungsstrecke.
-- **Zone 2 „Wolken“** (Etage 11–20): Doppelsprung-Lücken (10,5–11,5 Studs Weite, ≤ 3 Studs Anstieg). Wolkenplattformen verschwinden kurz nach Betreten und kommen wieder (Wartefenster ≥ 1,5 s). Dazu bewegliche Plattformen. Plattformen haben eine dunkle Unterseite bzw. Kontur, Nebel beginnt erst ab ~120 Studs (Lesbarkeit). Ende: **Dash** plus Übungsstrecke (zweistufig: erst Dash, dann Sprung + Dash).
+- **Zone 2 „Wolken“** (Etage 11–20): **Doppelsprung-Pflicht über hohe Kanten** (Anstieg 8–9,5 Studs bei ≤ 3,5 Studs Lücke) statt über Weite (§13a). Wolkenplattformen verschwinden kurz nach Betreten und kommen wieder (Wartefenster ≥ 1,5 s). Dazu bewegliche Plattformen. Plattformen haben eine dunkle Unterseite bzw. Kontur, Nebel beginnt erst ab ~120 Studs (Lesbarkeit). Ende: **Dash** plus Übungsstrecke (zweistufig: erst Dash, dann Sprung + Dash).
 - **Zone 3 „Gewitter“** (Etage 21–30): Die Dash-Pflicht entsteht **über die Form**: niedrige Tunnel, in denen Springen nicht hilft, und Windwände, die nur ein Dash durchbricht. Lücken mit Sprung + Dash kommen zusätzlich vor. Dazu Kippblöcke und „Blitzplatten“ (Takt-Plattformen ≤ 1 Hz, sichtbarer Rhythmus, kein Schaden, nur Wegfallen). Zwischen zwei Dash-Pflichtstellen liegt mindestens die Basis-Abklingzeit plus 1 s.
 - **Optionale Funkenrouten:** 3 pro Zone, je 4 Bonusfunken, erreichbar mit dem Gleiter (ab Lauf 2) oder mit hohem Können.
 - **Etagen-Module** (Generator-Bausteine): Plattform, Stufe, Lücke, Förderband, Sprungpad, bewegliche Plattform, Wolkenplattform, Kippblock, Taktplatte, Tunnel, Windwand, Gleitstrecke. Der Wandsprung-Schacht ist Should.
@@ -272,3 +272,12 @@ Keine Namen von Referenzspielen in Titel, Beschreibung, Tags oder Thumbnails.
 | P-29 KPI-Messpunkt | gering | im Telemetrie-Plan festgelegt |
 
 Status nach v0.2: Alle „hoch“-Befunde sind **im Design adressiert**. Das ist `[SIMULIERT]`, nicht `[GETESTET]`, und das Gate „Spielspaß“ bleibt offen, bis ein Owner-Playtest vorliegt.
+
+## 13a. Änderungen v0.2 → v0.3 (Simulation des Erreichbarkeitsprüfers, Sprint 1)
+
+| Befund | Evidenz | Änderung |
+|---|---|---|
+| Doppelsprung-Pflicht **über Weite** ist nicht fair möglich: Ohne DJ reicht ein flacher Sprung im großzügigen Modell bis ≈ 9,7 Studs; mit DJ schafft der Referenzcharakter (Faktor 0,85, Latenz 0,1 s, DJ-Zeitpunkt Scheitel ± 0,1 s) nur ≈ 7,2 Studs. | [GETESTET] Test „Befund P-03: DJ-Pflicht allein über Weite ist nicht fair möglich“ | Zone 2 verlangt den DJ über **Höhe**: Kanten mit 8–9,5 Studs Anstieg sind ohne DJ unerreichbar (max. Sprunghöhe 7,2), mit DJ für den Referenzcharakter lösbar (Lücke ≤ 3,5). |
+| Dash-Pflicht über Weite ist praktisch nicht fair abgrenzbar (Fenster < 1 Stud). Über **Form** funktioniert sie: Tunnel (Decke 6,5 Studs) und Windwand. | [GETESTET] Test „Dash-Pflicht über Form“ | bestätigt GDD v0.2 §4 Zone 3 |
+| Zone-1-Lücken liegen beim Referenzcharakter (Faktor 0,75) bei höchstens ≈ 3,4 Studs (flach) bzw. ≈ 2,9 Studs (2 Studs Anstieg). | [GETESTET] Generator-Tests, 200 Seeds | Zone 1 ist bewusst sehr leicht (Tutorial). Feinjustierung über den Zonenfaktor nach dem Owner-Test. |
+

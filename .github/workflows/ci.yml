@@ -1,0 +1,57 @@
+# Qualitätsprüfung: Format, Lint, Rojo-Build, Typprüfung (luau-lsp mit Roblox-Typen), Logik-Tests.
+# Die Werkzeuge werden wie in der Agenten-Umgebung gebaut (cargo bzw. CMake) und gecacht.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      LUAU_LSP_COMMIT: 6f90396fa8f6ac253deb3c7e2c11458c2e67227d
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Werkzeug-Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/tools
+          key: tools-${{ runner.os }}-stylua2.6.0-selene0.31.0-rojo7.7.1-lsp-6f90396fa8f6ac253deb3c7e2c11458c2e67227d
+
+      - name: StyLua, Selene, Rojo installieren
+        run: |
+          command -v stylua || cargo install stylua --version 2.6.0 --features luau --locked
+          command -v selene || cargo install selene --version 0.31.0 --locked
+          command -v rojo || cargo install rojo --version 7.7.1 --locked
+
+      - name: luau-lsp und Luau-CLI bauen
+        run: |
+          if [ ! -x "$HOME/tools/luau-lsp" ]; then
+            git init luau-lsp-src
+            cd luau-lsp-src
+            git remote add origin https://github.com/JohnnyMorganz/luau-lsp
+            git fetch --depth 1 origin "$LUAU_LSP_COMMIT"
+            git checkout FETCH_HEAD
+            git submodule update --init --depth 1
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DLSP_WERROR=OFF -DLUAU_BUILD_TESTS=OFF
+            cmake --build build --target Luau.LanguageServer.CLI Luau.Repl.CLI Luau.Analyze.CLI -j 4
+            mkdir -p "$HOME/tools"
+            cp build/luau-lsp build/luau/luau build/luau/luau-analyze "$HOME/tools/"
+          fi
+          echo "$HOME/tools" >> "$GITHUB_PATH"
+
+      - name: Roblox-Typdefinitionen laden
+        run: LUAU_LSP_COMMIT="$LUAU_LSP_COMMIT" scripts/setup_tools.sh
+
+      - name: Prüfungen
+        run: scripts/check.sh

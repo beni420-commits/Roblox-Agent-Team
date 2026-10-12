@@ -22,7 +22,7 @@ Fakten-Kennzeichnung nach §0.2. Externe Fakten stammen aus `docs/research_tech_
 
 **Testbarkeits-Prinzip:** Die gesamte Spiellogik, die „zählt“ (Economy, Validierung, Rate-Limiting, Progression, Datenschema/Migration, Session-Lock-Zustandsmaschine), wird **Roblox-unabhängig** geschrieben. Engine-Dienste (DataStore, Players, Zeit, Zufall) werden als Parameter übergeben (Dependency Injection). Dadurch laufen diese Module im Luau-CLI mit Mocks und erreichen `[GETESTET]`. Die Roblox-„Klebeschicht“ (Instanzen, Remotes, UI) bleibt dünn und wird über die Owner-Studio-Checkliste geprüft. Bis dahin gilt sie als **nicht geprüft**.
 
-**Requires:** Logik-Module in `src/shared` nutzen relative String-Requires (`require("./Module")`). Diese funktionieren im Luau-CLI und laut luau-lsp-Changelog auch im Roblox-Modus (relative Requires laufen über den DataModel-Baum) [QUELLE: luau-lsp CHANGELOG.md, Commit 6f90396, gelesen 2026-10-12]. Dass die Laufzeit in Roblox selbst so auflöst, ist `[VORWISSEN, nicht aktuell]` und gehört deshalb zur ersten Owner-Studio-Prüfung.
+**Requires:** Logik-Module in `src/shared` nutzen relative String-Requires (`require("./Module")`, `require("../Util/X")`); Server- und Client-Code lädt Shared-Module über `@game/ReplicatedStorage/Shared/...`. Roblox löst String-Requires laut API-Referenz so auf: `./` ab `script.Parent`, `../` ab `script.Parent.Parent`, `@game/` ab `game`. Die Auflösung blockiert nicht (das Modul muss schon existieren) [QUELLE: creator-docs reference/engine/globals/LuaGlobals.yaml, require, @af5f853]. Deshalb wartet der Client vor dem ersten Require auf `game.Loaded` und `ReplicatedStorage.Shared`.
 
 ## 2. Architektur
 
@@ -122,8 +122,9 @@ Mechanik (Entwurf):
 |---|---|---|---|
 | `Logic/TowerGenerator` | shared | Seed + Zonen-Konfiguration → Liste von Bauteil-Beschreibungen (reine Daten: Typ, Position, Größe, Bewegung, Funken-IDs) | **ja** (Determinismus, Bauteil-Budget) |
 | `Logic/Reachability` | shared | prüft jede Etage gegen das Bewegungsmodell (6.3) mit Sicherheitsfaktoren; liefert Hilfsstufen-Variante | **ja** (jede Etage aller Seeds im Test lösbar) |
-| `Logic/Economy` | shared | Funken-Gutschrift, Upgrade-Kauf (Kosten, Max-Stufe), reine Transaktionsfunktionen `(state, action) -> (ok, newState, delta)` | **ja** |
-| `Logic/Progression` | shared | Etagen-/Lager-Fortschritt, Lauf-Zustand, Fähigkeits-Freischaltung, Plausibilitäts-Mindestzeiten | **ja** |
+| `Logic/Economy` (Sprint 2) | shared | Upgrade-Kauf (Kosten, Max-Stufe), reine Transaktionsfunktionen; die Funken-Gutschrift liegt seit Sprint 1 in `RunState` | **ja** |
+| `Logic/RunState` (Sprint 1, ersetzt „Progression“) | shared | Lauf-Zustand: Etagen lückenlos, Lager-Bonus einmalig, Funken einmalig, Hilfestufen 3/6, Onboarding-Bitmaske | **ja** [GETESTET] |
+| `Logic/LandingLocator` (Sprint 1) | shared | Position → Etagenplattform; Fall-Schwelle | **ja** [GETESTET] |
 | `Logic/MovementCheck` | shared | Positionsproben → Verstoß ja/nein (Geschwindigkeit, Höhengewinn, Fähigkeiten, Toleranz) | **ja** (mit synthetischen Spuren) |
 | `Data/Schema`, `Data/Migrations` | shared | Default-Datensatz v1, Validierung, Migrationen | **ja** |
 | `Util/Validator`, `Util/RateLimiter`, `Util/Trove`, `Util/Signal` | shared | Remote-Validierung, Token Bucket, Cleanup, Signale | **ja** |
@@ -249,10 +250,20 @@ Eigene CollisionGroup `Players`, die mit sich selbst nicht kollidiert (`PhysicsS
 
 ## 7. Owner-Studio-Checkliste (Engine-Prüfungen, die hier nicht möglich sind)
 
-Wird pro Sprint gepflegt. Sprint 0:
-1. `rojo serve` + Rojo-Plugin oder `build/place.rbxlx` in Studio öffnen. Erwartung: Der Place öffnet ohne Fehler in der Ausgabe-Konsole.
-2. Play-Test (F5): keine Fehler/Warnungen aus `Server.Main`/`Client.Main`.
-3. Prüfen, ob relative String-Requires (`require("./X")`) in einem ModuleScript unter `ReplicatedStorage.Shared` funktionieren (wichtig für die Testbarkeit, §1).
+Wird pro Sprint gepflegt. Ergebnisse bitte in `reports/owner_test_sprint<N>.md` eintragen (Vorlage: `reports/owner_test_template.md`).
+
+**Sprint 1 (Zone 1 spielbar):** Die vollständige Checkliste mit Erwartungswerten steht in `reports/owner_test_template.md`. Kurzfassung:
+1. `rojo build default.project.json -o build/place.rbxlx` → in Studio öffnen → Play (F5). Erwartung: keine roten Fehler in der Ausgabe.
+2. Turm sichtbar: Säule, Gipfel-Leuchtfeuer, Zone 1 (10 Etagen), Lichtsäule über Etage 1, goldene Chevrons.
+3. Etage 1 in ≤ 60 s ohne Text? Funken einsammeln (Zähler steigt, „+1“-Popup).
+4. Fallen → nach ≤ 1,5 s am Etagenanfang, kurze Vignette. Nach 3 Stürzen Chevrons, nach 6 Hilfsstufen.
+5. Sprungpad (ab Etage 3) schleudert hoch; Förderband schiebt in Laufrichtung.
+6. Etage 5 und 10: Lager größer, Funken +5. Etage 10: Banner „Wiese geschafft!“ (DE) bzw. „Meadow cleared!“ (EN).
+7. Geräte-Emulator: Telefon klein und groß, Tablet. HUD nicht unter Topbar, Joystick oder Sprungknopf.
+8. Gamepad-Emulation bzw. Controller: bewegen und springen.
+9. Zwei Spieler (Test → Clients and Servers, 2 Spieler): keine Kollision zwischen Spielern.
+10. Ausgabe: `[Telemetry]`-Zeilen erscheinen bei Etage 1 (Onboarding 5), bei Funken (3) und bei Lagern.
+11. Leistung: MicroProfiler bzw. Developer Console auf einem echten, schwachen Handy, ≥ 30 FPS.
 
 ## 8. Bekannte Grenzen
 
