@@ -56,19 +56,29 @@ end)
 TestRunner.it(suite, "Hilfe: Chevrons ab 3, Hilfsstufen ab 6 Fehlversuchen; neue Etage startet bei 0", function()
 	local state = RunState.new()
 	climbTo(state, 2)
-	expect(RunState.helpLevel(state, true)):toBe(0)
+	expect(RunState.helpLevel(state, true, BUILT)):toBe(0)
 	for _ = 1, 3 do
-		RunState.registerFail(state)
+		RunState.registerFail(state, BUILT)
 	end
-	expect(RunState.helpLevel(state, true)):toBe(1)
+	expect(RunState.helpLevel(state, true, BUILT)):toBe(1)
 	for _ = 1, 3 do
-		RunState.registerFail(state)
+		RunState.registerFail(state, BUILT)
 	end
-	expect(RunState.helpLevel(state, true)):toBe(2)
-	expect(RunState.helpLevel(state, false)):toBe(0) -- in den Optionen abgeschaltet
+	expect(RunState.helpLevel(state, true, BUILT)):toBe(2)
+	expect(RunState.failsOnTarget(state)):toBe(6)
+	expect(RunState.helpLevel(state, false, BUILT)):toBe(0) -- in den Optionen abgeschaltet
 	local event = RunState.reachLanding(state, 3, BUILT)
 	expect(event.failsOnSegment):toBe(6)
-	expect(RunState.helpLevel(state, true)):toBe(0)
+	expect(RunState.helpLevel(state, true, BUILT)):toBe(0)
+end)
+
+TestRunner.it(suite, "Oberste Etage: keine Fehlversuche, keine Hilfe (keine Falle, CR-06)", function()
+	local state = RunState.new()
+	climbTo(state, BUILT)
+	expect(RunState.isAtTop(state, BUILT)):toBe(true)
+	expect(RunState.registerFail(state, BUILT)):toBe(0)
+	expect(state.failsByFloor[BUILT + 1]):toBe(nil)
+	expect(RunState.helpLevel(state, true, BUILT)):toBe(0)
 end)
 
 TestRunner.it(suite, "Funken: jeder genau einmal, nur bis zur nächsten Etage, IDs geprüft", function()
@@ -87,15 +97,15 @@ TestRunner.it(suite, "Funken: jeder genau einmal, nur bis zur nächsten Etage, I
 	expect(RunState.isSparkCollected(state, 102)):toBe(false)
 end)
 
-TestRunner.it(suite, "Onboarding: jeder Schritt einmal; Client darf nur Schritt 4 und erst nach Schritt 1", function()
+TestRunner.it(suite, "Onboarding: jeder Schritt einmal; Client darf nur Schritt 3 und erst nach Schritt 1", function()
 	local state = RunState.new()
-	expect(RunState.markOnboarding(state, 4, true)):toBe(false) -- vor „Spawned“
+	expect(RunState.markOnboarding(state, 3, true)):toBe(false) -- vor „Spawned“
 	expect(RunState.markOnboarding(state, 1, false)):toBe(true)
 	expect(RunState.markOnboarding(state, 1, false)):toBe(false)
-	expect(RunState.markOnboarding(state, 4, true)):toBe(true)
-	expect(RunState.markOnboarding(state, 4, true)):toBe(false)
-	expect(RunState.markOnboarding(state, 5, true)):toBe(false) -- Server-Schritt vom Client
-	expect(RunState.markOnboarding(state, 9, false)):toBe(false)
+	expect(RunState.markOnboarding(state, 3, true)):toBe(true)
+	expect(RunState.markOnboarding(state, 3, true)):toBe(false)
+	expect(RunState.markOnboarding(state, 4, true)):toBe(false) -- Server-Schritt vom Client
+	expect(RunState.markOnboarding(state, 8, false)):toBe(false)
 end)
 
 TestRunner.it(suite, "Reichweite: 10 Studs mit Toleranz", function()

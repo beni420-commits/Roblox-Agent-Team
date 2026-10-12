@@ -3,16 +3,20 @@
 
 local Events = {}
 
+-- Reihenfolge = natürlicher Ablauf. Roblox wertet übersprungene Schritte als erledigt; der Funnel misst
+-- daher „mindestens bis Schritt n gekommen“ (Code-Review CR-10). Upgrades zählen nicht zum Onboarding.
 Events.ONBOARDING_STEPS = table.freeze({
 	[1] = "Spawned",
 	[2] = "FirstMove",
-	[3] = "FirstSpark",
-	[4] = "FirstJump",
+	[3] = "FirstJump",
+	[4] = "FirstSpark",
 	[5] = "Floor1",
 	[6] = "FirstCamp",
-	[7] = "FirstUpgrade",
-	[8] = "Zone1Done",
+	[7] = "Zone1Done",
 })
+
+-- Zweiter Funnel: Etagenfortschritt je Lauf (Progression-Events erscheinen in keinem Roblox-Chart, CR-13).
+Events.TOWER_FUNNEL = "TowerRun"
 
 Events.PROGRESSION_MAIN = "MainTower"
 Events.CURRENCY = "Sparks"

@@ -1,5 +1,5 @@
 --!strict
--- Steuerungs-Komfort (GDD v0.2 §5): Coyote-Time 0,12 s, Sprungpuffer 0,1 s, Sprungpads.
+-- Steuerungs-Komfort (GDD v0.3 §5): Coyote-Time 0,12 s, Sprungpuffer 0,1 s, Sprungpads.
 -- Charakterphysik läuft clientseitig (Roblox-Standard); der Server prüft Plausibilität (ab Sprint 2).
 
 local CollectionService = game:GetService("CollectionService")
@@ -14,6 +14,52 @@ local MovementController = {}
 
 local JUMP_PAD_TAG = "JumpPad"
 local PAD_DEBOUNCE = 0.25
+local REQUEST_DEBOUNCE = 0.2 -- JumpRequest feuert mehrfach pro Druck (UserInputService-Doku, CR-15)
+
+type CharacterState = {
+	humanoid: Humanoid,
+	root: BasePart,
+	character: Model,
+	lastPadAt: number,
+}
+
+local current: CharacterState? = nil
+
+-- Sprungpad: nur die Geschwindigkeit setzen und in den Fall-Zustand wechseln. Kein Wechsel nach
+-- „Jumping“, sonst überschreibt der normale Sprungimpuls den Pad-Impuls (Code-Review CR-01).
+local function launch(state: CharacterState, velocity: number)
+	local now = os.clock()
+	if now - state.lastPadAt < PAD_DEBOUNCE then
+		return
+	end
+	state.lastPadAt = now
+	local function apply()
+		local v = state.root.AssemblyLinearVelocity
+		if v.Y < velocity * 0.9 then
+			state.root.AssemblyLinearVelocity = Vector3.new(v.X, velocity, v.Z)
+		end
+	end
+	apply()
+	state.humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
+	-- Im nächsten Physikschritt sicherstellen, dass der Impuls nicht verloren ging.
+	RunService.PreSimulation:Once(apply)
+end
+
+local function bindPad(pad: Instance)
+	if not pad:IsA("BasePart") then
+		return
+	end
+	pad.Touched:Connect(function(hit: BasePart)
+		local state = current
+		if not state or not hit:IsDescendantOf(state.character) then
+			return
+		end
+		local velocity = pad:GetAttribute("LaunchVelocity")
+		if type(velocity) == "number" and velocity > 0 and velocity < 200 then
+			launch(state, velocity)
+		end
+	end)
+end
 
 local function bindCharacter(context: Context.Context, character: Model)
 	local humanoid = character:WaitForChild("Humanoid", 10)
@@ -21,17 +67,15 @@ local function bindCharacter(context: Context.Context, character: Model)
 	if not humanoid or not humanoid:IsA("Humanoid") or not root or not root:IsA("BasePart") then
 		return
 	end
+	local state: CharacterState = { humanoid = humanoid, root = root, character = character, lastPadAt = -math.huge }
+	current = state
 
 	local lastGroundedAt = os.clock()
 	local jumpedSinceGround = false
 	local bufferedAt = -math.huge
-	local lastPadAt = -math.huge
+	local lastRequestAt = -math.huge
 	local reportedJump = false
 	local connections: { RBXScriptConnection } = {}
-
-	local function jumpVelocity(): number
-		return Movement.jumpVelocity(humanoid.JumpHeight, workspace.Gravity)
-	end
 
 	table.insert(
 		connections,
@@ -55,7 +99,7 @@ local function bindCharacter(context: Context.Context, character: Model)
 				jumpedSinceGround = true
 				if not reportedJump then
 					reportedJump = true
-					context.fire("ReportOnboardingStep", 4)
+					context.fire("ReportOnboardingStep", 3)
 				end
 			end
 		end)
@@ -64,15 +108,24 @@ local function bindCharacter(context: Context.Context, character: Model)
 	table.insert(
 		connections,
 		UserInputService.JumpRequest:Connect(function()
-			if humanoid.FloorMaterial ~= Enum.Material.Air then
-				return -- normaler Sprung, macht der Humanoid selbst
-			end
 			local now = os.clock()
+			if humanoid.FloorMaterial ~= Enum.Material.Air then
+				-- Normaler Sprung (macht der Humanoid). Sofort merken, damit ein zweites Feuern derselben
+				-- Anfrage im nächsten Frame keinen Coyote-Sprung auslöst.
+				jumpedSinceGround = true
+				lastRequestAt = now
+				return
+			end
+			if now - lastRequestAt < REQUEST_DEBOUNCE then
+				return -- dieselbe Anfrage feuert mehrfach
+			end
+			lastRequestAt = now
 			if not jumpedSinceGround and now - lastGroundedAt <= Movement.CONTROL.coyoteTime then
 				-- Coyote-Time: knapp nach der Kante noch springen dürfen.
 				jumpedSinceGround = true
 				local velocity = root.AssemblyLinearVelocity
-				root.AssemblyLinearVelocity = Vector3.new(velocity.X, jumpVelocity(), velocity.Z)
+				root.AssemblyLinearVelocity =
+					Vector3.new(velocity.X, Movement.jumpVelocity(humanoid.JumpHeight, workspace.Gravity), velocity.Z)
 				humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 			else
 				bufferedAt = now
@@ -80,42 +133,30 @@ local function bindCharacter(context: Context.Context, character: Model)
 		end)
 	)
 
-	table.insert(
-		connections,
-		humanoid.Touched:Connect(function(hit: BasePart)
-			if not CollectionService:HasTag(hit, JUMP_PAD_TAG) then
-				return
-			end
-			local now = os.clock()
-			if now - lastPadAt < PAD_DEBOUNCE then
-				return
-			end
-			lastPadAt = now
-			local launch = hit:GetAttribute("LaunchVelocity")
-			if type(launch) == "number" and launch > 0 and launch < 200 then
-				local velocity = root.AssemblyLinearVelocity
-				humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-				root.AssemblyLinearVelocity = Vector3.new(velocity.X, launch, velocity.Z)
-				jumpedSinceGround = true
-			end
-		end)
-	)
-
-	humanoid.Died:Once(function()
+	local function cleanup()
 		for _, connection in connections do
 			connection:Disconnect()
 		end
-	end)
+		table.clear(connections)
+		if current == state then
+			current = nil
+		end
+	end
+	humanoid.Died:Once(cleanup)
 	character.AncestryChanged:Connect(function()
 		if not character.Parent then
-			for _, connection in connections do
-				connection:Disconnect()
-			end
+			cleanup()
 		end
 	end)
 end
 
 function MovementController.start(context: Context.Context)
+	-- Pads streamingfest binden: vorhandene und später gestreamte (CR-27).
+	for _, pad in CollectionService:GetTagged(JUMP_PAD_TAG) do
+		bindPad(pad)
+	end
+	CollectionService:GetInstanceAddedSignal(JUMP_PAD_TAG):Connect(bindPad)
+
 	context.player.CharacterAdded:Connect(function(character: Model)
 		bindCharacter(context, character)
 	end)

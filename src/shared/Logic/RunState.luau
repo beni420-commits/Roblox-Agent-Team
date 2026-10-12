@@ -34,8 +34,8 @@ RunState.HELP_TRAIL_FAILS = 3
 RunState.HELP_HELPER_FAILS = 6
 RunState.CAMP_BONUS = 5
 RunState.MAX_SPARKS_PER_FLOOR = 16
-RunState.ONBOARDING_STEPS = 8
-RunState.CLIENT_ONBOARDING_STEPS = table.freeze({ [4] = true }) -- nur „FirstJump“ meldet der Client
+RunState.ONBOARDING_STEPS = 7
+RunState.CLIENT_ONBOARDING_STEPS = table.freeze({ [3] = true }) -- nur „FirstJump“ meldet der Client
 
 function RunState.new(runIndex: number?): RunState
 	return {
@@ -101,17 +101,29 @@ function RunState.reachLanding(state: RunState, floor: number, builtFloors: numb
 	return event
 end
 
+-- Ist die oberste gebaute Etage erreicht, gibt es kein Ziel mehr: keine Fehlversuche, keine Hilfe (CR-06).
+function RunState.isAtTop(state: RunState, builtFloors: number): boolean
+	return state.currentFloor >= builtFloors
+end
+
 -- Ein Fall: zählt als Fehlversuch auf der Etage, die gerade erklettert wird.
-function RunState.registerFail(state: RunState): number
+function RunState.registerFail(state: RunState, builtFloors: number): number
+	if RunState.isAtTop(state, builtFloors) then
+		return 0
+	end
 	local target = state.currentFloor + 1
 	local fails = (state.failsByFloor[target] or 0) + 1
 	state.failsByFloor[target] = fails
 	return fails
 end
 
+function RunState.failsOnTarget(state: RunState): number
+	return state.failsByFloor[state.currentFloor + 1] or 0
+end
+
 -- Hilfestufe für die aktuell erkletterte Etage: 0 keine, 1 Führungs-Chevrons, 2 zusätzlich Hilfsstufen.
-function RunState.helpLevel(state: RunState, helpersEnabled: boolean): number
-	if not helpersEnabled then
+function RunState.helpLevel(state: RunState, helpersEnabled: boolean, builtFloors: number): number
+	if not helpersEnabled or RunState.isAtTop(state, builtFloors) then
 		return 0
 	end
 	local fails = state.failsByFloor[state.currentFloor + 1] or 0

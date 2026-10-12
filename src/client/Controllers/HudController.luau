@@ -140,13 +140,19 @@ function HudController.start(context: Context.Context)
 	banner.TextTransparency = 1
 	banner.TextColor3 = rgb(Palette.REACHED)
 
+	-- Vignette in eigener, nicht interaktiver ScreenGui ohne Insets: deckt den ganzen Bildschirm (CR-26).
+	local overlay = Instance.new("ScreenGui")
+	overlay.Name = "FallOverlay"
+	overlay.ResetOnSpawn = false
+	overlay.ScreenInsets = Enum.ScreenInsets.None
+	overlay.DisplayOrder = -1
 	local frame = Instance.new("Frame")
 	frame.Name = "Vignette"
 	frame.BackgroundColor3 = Color3.new(0, 0, 0)
 	frame.BackgroundTransparency = 1
 	frame.Size = UDim2.fromScale(1, 1)
-	frame.ZIndex = 0
-	frame.Parent = gui
+	frame.Active = false
+	frame.Parent = overlay
 	vignette = frame
 
 	local function render(state: ClientState.Snapshot, old: ClientState.Snapshot?)
@@ -174,7 +180,12 @@ function HudController.start(context: Context.Context)
 
 	render(ClientState.get(), nil)
 	ClientState.onChanged(render)
-	gui.Parent = context.player:WaitForChild("PlayerGui")
+	Strings.onReady(function()
+		render(ClientState.get(), nil)
+	end)
+	local playerGui = context.player:WaitForChild("PlayerGui")
+	overlay.Parent = playerGui
+	gui.Parent = playerGui
 end
 
 return HudController

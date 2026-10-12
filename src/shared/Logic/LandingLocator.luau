@@ -8,7 +8,8 @@ local LandingLocator = {}
 
 LandingLocator.ABOVE = 8
 LandingLocator.BELOW = 0.5
-LandingLocator.MARGIN = 1
+LandingLocator.MARGIN_ACROSS = 1 -- quer zur Laufrichtung großzügig
+LandingLocator.MARGIN_ALONG = 0.3 -- in Laufrichtung knapp: erst wer auf der Plattform steht, hat sie erreicht
 
 function LandingLocator.landingAt(tower: TowerGenerator.TowerSpec, x: number, y: number, z: number): number?
 	-- Kandidat über die Höhe bestimmen, dann die Grundfläche prüfen.
@@ -19,8 +20,8 @@ function LandingLocator.landingAt(tower: TowerGenerator.TowerSpec, x: number, y:
 			local along = dx * landing.fx + dz * landing.fz
 			local across = dx * landing.fz - dz * landing.fx
 			if
-				math.abs(along) <= landing.halfLength + LandingLocator.MARGIN
-				and math.abs(across) <= landing.halfWidth + LandingLocator.MARGIN
+				math.abs(along) <= landing.halfLength + LandingLocator.MARGIN_ALONG
+				and math.abs(across) <= landing.halfWidth + LandingLocator.MARGIN_ACROSS
 			then
 				return floor
 			end
@@ -29,9 +30,15 @@ function LandingLocator.landingAt(tower: TowerGenerator.TowerSpec, x: number, y:
 	return nil
 end
 
--- Ab welcher Höhe gilt ein Spieler auf dem Weg zur nächsten Etage als gefallen?
-function LandingLocator.fallThreshold(tower: TowerGenerator.TowerSpec, currentFloor: number, depth: number): number
-	return tower.landings[currentFloor].y - depth
+-- Ab welcher Höhe der HumanoidRootPart-Mitte gilt ein Spieler als gefallen? (Füße `depth` unter der Plattform.)
+-- Ob er wirklich fällt (und nicht auf einer tieferen Plattform zurückgeht), prüft der Aufrufer per Raycast.
+function LandingLocator.fallThreshold(
+	tower: TowerGenerator.TowerSpec,
+	currentFloor: number,
+	depth: number,
+	rootHeight: number
+): number
+	return tower.landings[currentFloor].y - depth + rootHeight
 end
 
 return table.freeze(LandingLocator)

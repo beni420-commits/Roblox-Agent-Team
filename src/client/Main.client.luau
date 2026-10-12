@@ -4,6 +4,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
 
 if not game:IsLoaded() then
 	game.Loaded:Wait()
@@ -38,6 +39,11 @@ end
 local seed = waitForAttribute("TowerSeed")
 local builtFloors = waitForAttribute("BuiltFloors")
 local tower = TowerGenerator.generate(seed, builtFloors)
+local serverHash = waitForAttribute("TowerHash")
+if TowerGenerator.fingerprint(tower) ~= serverHash then
+	-- Client und Server haben verschiedene Türme erzeugt (CR-23): Funken würden in der Luft hängen.
+	warn("[Client] Turm-Fingerabdruck weicht vom Server ab – bitte melden")
+end
 
 local fxFolder = Instance.new("Folder")
 fxFolder.Name = "ClientFx"
@@ -57,7 +63,7 @@ local context: Context.Context = {
 	fxFolder = fxFolder,
 }
 
-Strings.init(player)
+task.spawn(Strings.init, player) -- nicht blockieren: HUD und Führung starten sofort (CR-18)
 
 local stateSync = remotes:WaitForChild("StateSync")
 if stateSync:IsA("RemoteEvent") then
@@ -70,6 +76,23 @@ GuidanceController.start(context)
 MovementController.start(context)
 FallController.start(context)
 InputController.start(context)
+
+-- Roblox-Reset-Knopf: kein Charaktertod, sondern Rücksetzen an den Etagenanfang (CR-17).
+local resetEvent = Instance.new("BindableEvent")
+resetEvent.Event:Connect(function()
+	fire("RequestReset")
+end)
+task.spawn(function()
+	for _ = 1, 10 do
+		local ok = pcall(function()
+			StarterGui:SetCore("ResetButtonCallback", resetEvent)
+		end)
+		if ok then
+			return
+		end
+		task.wait(1) -- SetCore ist erst verfügbar, wenn die Core-Skripte geladen sind
+	end
+end)
 
 -- Kamera-Schwenk nur beim ersten Klettern dieses Laufs (noch keine Etage erreicht).
 task.spawn(function()

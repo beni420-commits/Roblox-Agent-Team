@@ -8,6 +8,7 @@
 local TweenService = game:GetService("TweenService")
 
 local Palette = require("@game/ReplicatedStorage/Shared/Visual/Palette")
+local TowerConfig = require("@game/ReplicatedStorage/Shared/Logic/TowerConfig")
 local TowerGenerator = require("@game/ReplicatedStorage/Shared/Logic/TowerGenerator")
 
 local ClientState = require("./ClientState")
@@ -37,12 +38,12 @@ local function fxPart(name: string, size: Vector3, cframe: CFrame, rgb: Palette.
 	return part
 end
 
--- Pfeilspitze („>“) aus zwei flachen Leisten auf einer Plattform, zeigt in Laufrichtung.
+-- Pfeilspitze („>“) aus zwei flachen Leisten, zeigt in Laufrichtung. Groß genug für kleine Telefone (CR-09).
 local function chevron(parent: Instance, position: Vector3, forward: Vector3)
 	local base = CFrame.lookAt(position, position + forward)
 	for side = -1, 1, 2 do
-		local arm = base * CFrame.Angles(0, math.rad(35) * side, 0) * CFrame.new(0, 0, 0.6)
-		fxPart("Chevron", Vector3.new(0.35, 0.15, 1.6), arm, Palette.GUIDANCE_GOLD, 0).Parent = parent
+		local arm = base * CFrame.Angles(0, math.rad(35) * side, 0) * CFrame.new(0, 0, 1.1)
+		fxPart("Chevron", Vector3.new(0.7, 0.2, 2.8), arm, Palette.GUIDANCE_GOLD, 0).Parent = parent
 	end
 end
 
@@ -75,6 +76,23 @@ function GuidanceController.start(context: Context.Context)
 	local guideUntil = 0
 	local shownGuideFloor = -1
 	local shownHelperFloor = -1
+
+	-- Weg von der Plaza zur ersten Etagenplattform (nur vor dem ersten Klettern, GDD §7, CR-09).
+	local plazaFolder = Instance.new("Folder")
+	plazaFolder.Name = "PlazaPath"
+	plazaFolder.Parent = context.fxFolder
+	do
+		local spawnAt = TowerConfig.SPAWN_POSITION
+		local start = Vector3.new(spawnAt.x, 0.2, spawnAt.z)
+		local landing0 = tower.landings[0]
+		local finish = Vector3.new(landing0.x, 0.2, landing0.z)
+		local direction = (finish - start).Unit
+		local count = 6
+		for index = 1, count do
+			local position = start:Lerp(finish, index / (count + 1))
+			chevron(plazaFolder, position, direction)
+		end
+	end
 
 	local function showChevrons(targetFloor: number)
 		guideFolder:ClearAllChildren()
@@ -147,6 +165,9 @@ function GuidanceController.start(context: Context.Context)
 		end
 
 		local firstClimb = state.runIndex == 1 and state.highestFloor == 0
+		if not firstClimb and #plazaFolder:GetChildren() > 0 then
+			plazaFolder:ClearAllChildren()
+		end
 		local wantGuide = firstClimb or state.helpLevel >= 1 or os.clock() < guideUntil
 		if wantGuide and landing then
 			if shownGuideFloor ~= target then
@@ -179,7 +200,11 @@ function GuidanceController.start(context: Context.Context)
 		if new.currentFloor > old.currentFloor then
 			celebrate(new.currentFloor)
 		end
-		update(new)
+		if new.fails > old.fails then
+			guideBriefly() -- nach einem Sturz die Chevrons kurz aufleuchten lassen (UX B4, CR-08)
+		else
+			update(new)
+		end
 	end)
 	context.player.CharacterAdded:Connect(guideBriefly)
 	guideBriefly()

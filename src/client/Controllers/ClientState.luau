@@ -6,6 +6,7 @@ export type Snapshot = {
 	currentFloor: number,
 	highestFloor: number,
 	helpLevel: number,
+	fails: number,
 	collected: { [string]: number },
 	runIndex: number,
 }
@@ -19,6 +20,7 @@ local snapshot: Snapshot = {
 	currentFloor = 0,
 	highestFloor = 0,
 	helpLevel = 0,
+	fails = 0,
 	collected = {},
 	runIndex = 1,
 }
@@ -69,6 +71,7 @@ function ClientState.apply(payload: unknown)
 		currentFloor = number(data.currentFloor, old.currentFloor),
 		highestFloor = number(data.highestFloor, old.highestFloor),
 		helpLevel = number(data.helpLevel, old.helpLevel),
+		fails = number(data.fails, old.fails),
 		collected = collected,
 		runIndex = number(data.runIndex, old.runIndex),
 	}

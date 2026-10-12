@@ -1,6 +1,7 @@
 --!strict
 -- Lokalisierte Texte über die LocalizationTable „GameStrings“ (EN Quelle, DE Übersetzung).
--- Fallback auf Englisch, falls der Translator nicht verfügbar ist.
+-- Der Translator lädt asynchron (kann warten, bis die Cloud-Tabelle geladen ist, CR-18);
+-- bis dahin gilt der englische Fallback, danach werden Beobachter benachrichtigt.
 
 local LocalizationService = game:GetService("LocalizationService")
 
@@ -8,11 +9,14 @@ local Strings = {}
 
 local FALLBACK: { [string]: string } = {
 	["zone.1.name"] = "Meadow",
+	["zone.2.name"] = "Clouds",
+	["zone.3.name"] = "Thunder",
 	["zone.cleared"] = "{1} cleared!",
 	["hud.floor"] = "{1}/{2}",
 }
 
 local translator: Translator? = nil
+local readyCallbacks: { () -> () } = {}
 
 function Strings.init(player: Player)
 	local ok, result = pcall(function()
@@ -20,7 +24,14 @@ function Strings.init(player: Player)
 	end)
 	if ok then
 		translator = result
+		for _, callback in readyCallbacks do
+			task.spawn(callback)
+		end
 	end
+end
+
+function Strings.onReady(callback: () -> ())
+	table.insert(readyCallbacks, callback)
 end
 
 function Strings.format(key: string, args: { any }?): string

@@ -23,8 +23,14 @@ local Definitions: { [string]: Definition } = {
 		perSecond = 1,
 		burst = 2,
 	},
+	RequestReset = {
+		-- Roblox-Reset-Knopf: zurück an den Etagenanfang, ohne Fehlversuch und ohne Charaktertod (CR-17).
+		check = Validator.args({}),
+		perSecond = 0.5,
+		burst = 1,
+	},
 	ReportOnboardingStep = {
-		check = Validator.args({ Validator.integer(1, 8) }),
+		check = Validator.args({ Validator.integer(1, 7) }),
 		perSecond = 2,
 		burst = 4,
 	},

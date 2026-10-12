@@ -13,11 +13,13 @@ TestRunner.it(suite, "Katalog bleibt unter 20 Custom-Event-Namen (Limit 100, Pla
 	expect(count <= 20):toBeTruthy()
 end)
 
-TestRunner.it(suite, "Onboarding-Funnel hat lückenlose Schritte 1–8", function()
-	for step = 1, 8 do
+TestRunner.it(suite, "Onboarding-Funnel hat lückenlose Schritte 1–7 in natürlicher Reihenfolge", function()
+	for step = 1, 7 do
 		expect(type(Events.ONBOARDING_STEPS[step])):toBe("string")
 	end
-	expect(Events.ONBOARDING_STEPS[9]):toBe(nil)
+	expect(Events.ONBOARDING_STEPS[8]):toBe(nil)
+	expect(Events.ONBOARDING_STEPS[3]):toBe("FirstJump")
+	expect(Events.ONBOARDING_STEPS[5]):toBe("Floor1")
 end)
 
 TestRunner.it(suite, "Bündel begrenzen die Kardinalität", function()

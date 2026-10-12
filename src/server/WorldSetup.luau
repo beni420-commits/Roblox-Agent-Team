@@ -2,7 +2,6 @@
 -- Licht, Atmosphäre, Spawn und Kollisionsgruppen (GDD v0.2 §4/§8, C-A13).
 
 local Lighting = game:GetService("Lighting")
-local PhysicsService = game:GetService("PhysicsService")
 
 local TowerConfig = require("@game/ReplicatedStorage/Shared/Logic/TowerConfig")
 
@@ -11,11 +10,12 @@ local WorldSetup = {}
 WorldSetup.PLAYER_GROUP = "Players"
 
 local function setupCollisionGroups()
-	if not PhysicsService:IsCollisionGroupRegistered(WorldSetup.PLAYER_GROUP) then
-		PhysicsService:RegisterCollisionGroup(WorldSetup.PLAYER_GROUP)
+	-- WorldRoot-Methoden ersetzen die veralteten PhysicsService-Varianten (CR-16).
+	if not workspace:IsCollisionGroupRegistered(WorldSetup.PLAYER_GROUP) then
+		workspace:RegisterCollisionGroup(WorldSetup.PLAYER_GROUP)
 	end
 	-- Spieler kollidieren nicht miteinander: niemand kann andere herunterschubsen (Anti-Griefing).
-	PhysicsService:CollisionGroupSetCollidable(WorldSetup.PLAYER_GROUP, WorldSetup.PLAYER_GROUP, false)
+	workspace:CollisionGroupSetCollidable(WorldSetup.PLAYER_GROUP, WorldSetup.PLAYER_GROUP, false)
 end
 
 local function setupLighting()

@@ -35,8 +35,10 @@ Movement.CONTROL = table.freeze({
 	dashCooldown = 2.5,
 })
 
--- Unter dieser Höhe (relativ zur aktuellen Etagenplattform) gilt ein Spieler als gefallen.
+-- Unter dieser Höhe der Füße (relativ zur aktuellen Etagenplattform) gilt ein Spieler als gefallen.
 Movement.FALL_RESET_DEPTH = 4
+-- Abstand HumanoidRootPart-Mitte ↔ Füße (R15, ungefähr) [VORWISSEN, nicht aktuell → Owner prüft].
+Movement.ROOT_HEIGHT = 3
 
 function Movement.jumpVelocity(height: number, gravity: number): number
 	return math.sqrt(2 * gravity * height)

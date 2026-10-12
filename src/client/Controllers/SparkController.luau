@@ -47,15 +47,18 @@ function SparkController.start(context: Context.Context)
 		end
 	end
 
+	-- Verpasste Funken bereits passierter Etagen bleiben einsammelbar, sind aber abgedunkelt (CR-07).
 	local function refresh()
 		local now = os.clock()
+		local state = ClientState.get()
 		for id, part in parts do
 			local collected = ClientState.isCollected(id)
 			if collected then
 				pending[id] = nil
 			end
 			local waiting = pending[id] ~= nil and now - (pending[id] :: number) < CONFIRM_TIMEOUT
-			part.Transparency = if collected or waiting then 1 else 0
+			local passed = id // 100 <= state.currentFloor
+			part.Transparency = if collected or waiting then 1 elseif passed then 0.6 else 0
 		end
 	end
 
@@ -71,24 +74,30 @@ function SparkController.start(context: Context.Context)
 			return
 		end
 		local now = os.clock()
-		local target = ClientState.get().currentFloor + 1
-		local ids = byFloor[target]
-		if not ids then
-			return
-		end
-		for _, id in ids do
-			local since = pending[id]
-			if since and now - since >= CONFIRM_TIMEOUT then
-				pending[id] = nil -- keine Bestätigung: wieder sichtbar
-				parts[id].Transparency = 0
-			end
-			if not pending[id] and not ClientState.isCollected(id) then
-				if (root.Position - positions[id]).Magnitude <= PICKUP_RADIUS then
-					pending[id] = now
-					parts[id].Transparency = 1
-					context.fire("CollectSpark", id)
+		-- Wie der Server: alle Etagen bis highestFloor + 1 (bei 60 Funken billig).
+		local maxFloor = ClientState.get().highestFloor + 1
+		local expired = false
+		for floorIndex = 1, maxFloor do
+			local ids = byFloor[floorIndex]
+			if ids then
+				for _, id in ids do
+					local since = pending[id]
+					if since and now - since >= CONFIRM_TIMEOUT then
+						pending[id] = nil -- keine Bestätigung: wieder sichtbar
+						expired = true
+					end
+					if not pending[id] and not ClientState.isCollected(id) then
+						if (root.Position - positions[id]).Magnitude <= PICKUP_RADIUS then
+							pending[id] = now
+							parts[id].Transparency = 1
+							context.fire("CollectSpark", id)
+						end
+					end
 				end
 			end
+		end
+		if expired then
+			refresh()
 		end
 	end)
 end

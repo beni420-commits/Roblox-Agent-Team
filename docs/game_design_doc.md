@@ -57,7 +57,7 @@ Evidenz: Alle Spielspaß-, Zeit- und Balancing-Angaben sind `[ANNAHME]` bzw. `[S
 - **Optionale Funkenrouten:** 3 pro Zone, je 4 Bonusfunken, erreichbar mit dem Gleiter (ab Lauf 2) oder mit hohem Können.
 - **Etagen-Module** (Generator-Bausteine): Plattform, Stufe, Lücke, Förderband, Sprungpad, bewegliche Plattform, Wolkenplattform, Kippblock, Taktplatte, Tunnel, Windwand, Gleitstrecke. Der Wandsprung-Schacht ist Should.
 - **Spawn und Sichtachse:** Die Spawn-Plaza liegt ~40 Studs neben dem Turm und hat freie Sicht auf das **persistente Gipfel-Leuchtfeuer** (wird nie ausgestreamt, P-13).
-- **Art-Stil:** nur Primitive. **Neon ausschließlich für Ziele und Führung**, Deko in SmoothPlastic, Glass und ForceField sparsam. Eine Palette pro Zone (Wiese Grün/Gelb, Wolken Weiß/Hellblau mit dunklen Konturen, Gewitter Violett/Orange). Für Führung und Hilfe ist eine eigene Sprache reserviert: **goldene Chevron-Pfeile am Boden**, sonst nirgends Gold (P-09). Es werden nur Engine-Inhalte genutzt (Asset-Kategorie 0); Sounds erst nach Owner-Entscheidung (§12).
+- **Art-Stil:** nur Primitive. **Neon ausschließlich für Ziele, Führung und interaktive Elemente (Sprungpads)**, Deko in SmoothPlastic, Glass und ForceField sparsam. Eine Palette pro Zone (Wiese Grün/Gelb, Wolken Weiß/Hellblau mit dunklen Konturen, Gewitter Violett/Orange). Für Führung und Hilfe ist eine eigene Sprache reserviert: **goldene Chevron-Pfeile am Boden**, sonst nirgends Gold (P-09). Es werden nur Engine-Inhalte genutzt (Asset-Kategorie 0); Sounds erst nach Owner-Entscheidung (§12).
 
 ## 5. Fähigkeiten, Steuerung und Upgrades
 

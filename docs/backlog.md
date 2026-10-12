@@ -31,13 +31,21 @@ Stand: 2026-10-12 (Sprint 0, nach GDD v0.2). Sprint-Zuordnung ist ein Vorschlag 
 | A-008 | Zonen 2–3, Doppelsprung, Schwebe-Dash, Tunnel/Windwand, Übungsstrecken mit Hilfe, Gipfel-Abschluss | 9 | 5 | 5 | 225 | SIMULIERT (P-03, P-05) | 2 |
 | A-009 | Funkenschrein + Upgrades + Gleiter (Economy-Logik + UI), Hilfe-System 3/6 | 8 | 5 | 6 | 240 | SIMULIERT (P-12, H2, H4) | 2 |
 | A-010 | Lokalisierung EN/DE (LocalizationTable, Key-Konstanten) | 7 | 7 | 7 | 343 | QUELLE | 2 |
-| A-011 | MovementCheck (Fensterbudget, Fähigkeiten-Grenzen, Luftzeit, lückenlose Etagenfolge) + Tests mit synthetischen Spuren | 8 | 5 | 5 | 200 | SIMULIERT (P-06) | 2 |
+| A-011 | MovementCheck (Fensterbudget, Fähigkeiten-Grenzen, Luftzeit, lückenlose Etagenfolge) + Tests mit synthetischen Spuren. **Muss vor dem Speicherstand (A-007) fertig sein** (Code-Review CR-14: sequenzielles Hochteleportieren) | 9 | 6 | 5 | 270 | SIMULIERT + Review (P-06, CR-14) | 2 (zuerst) |
 | A-017 | Social ohne Chat: Freundes-Marker, Lager-Lift, 3 Signale (C-A30), gemeinsame Lager-Feier | 8 | 4 | 6 | 192 | SIMULIERT (P-07) | 2 |
 | A-018 | Neu gemischter Turm ab Lauf 2 + Lebenszeit-Meilensteine (5 Leuchtspur-Farben) | 7 | 4 | 7 | 196 | SIMULIERT (P-08) | 2 |
 | A-012 | Tagesturm mit Normwerten + Bestmarke (Bestenliste nur über Roblox-PlayerList, C-A16) | 7 | 3 | 5 | 105 | ANNAHME (H5) | 3 (Should) |
 | A-013 | Wandsprung (Should); optionale Funkenrouten sind mit dem Gleiter Teil von A-009 | 5 | 4 | 5 | 100 | ANNAHME | 3 (Should) |
 | A-014 | Schwung-Leiste | 5 | 3 | 7 | 105 | ANNAHME (H7) | 3 (Should) |
 | A-015 | Seilschaft-Bonus (C-A31) | 5 | 3 | 6 | 90 | ANNAHME | nach MVP (Could) |
+
+## Aus dem Code-Review Sprint 1 (offen)
+
+| ID | Eintrag | I | C | E | ICE | Evidenz | Sprint |
+|---|---|---|---|---|---|---|---|
+| A-019 | Feedback-Katalog vervollständigen (UX B5): „Plopp“-Partikel beim Rücksetzen, Landungsring, „+n“ fliegt aus der Welt in den Zähler, Förderband-Richtungsstreifen (CR-29) | 6 | 4 | 7 | 168 | Review | 2 |
+| A-020 | Fremde Avatare im 6-Studs-Umkreis halbtransparent bzw. Geist-Silhouette (C-A32, CR-30) | 5 | 5 | 6 | 150 | Review | 2 (mit A-017) |
+| A-021 | Debug-Overlay im Testbuild (FPS, Ping, Etage, Fehlversuche) für Owner-Tests | 6 | 6 | 8 | 288 | Playtest-Plan §6.4 | 2 |
 
 ## Verworfene bzw. zurückgestellte Ideen
 - Monetarisierung jeder Art: im MVP ausgeschlossen (D-005). Später höchstens kosmetische Game Passes, nur mit Owner-Freigabe (§8.2).

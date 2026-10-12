@@ -60,7 +60,7 @@ TowerConfig.ZONES = table.freeze({
 		conveyorSpeed = 6,
 		padChance = 0.4,
 		padFromFloor = 3,
-		padRise = { min = 6, max = 8 },
+		padRise = { min = 5.5, max = 6.5 }, -- ≤ 6,5: auch ohne Pad-Impuls für geübte Spieler lösbar (CR-01)
 		padHeight = 13,
 		palette = "meadow",
 	} :: ZoneConfig),

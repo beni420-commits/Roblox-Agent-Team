@@ -427,8 +427,9 @@ local function buildFloor(seed: number, floor: number): FloorSpec
 				end
 
 				-- Hilfsstufe (nur lokal beim Spieler sichtbar): halbiert die Lücke bzw. den Anstieg.
+				-- Auch Sprungpad-Verbindungen bekommen eine (Sicherheitsnetz, falls das Pad nicht greift, CR-02).
 				local helperId: string? = nil
-				if i ~= plan.padIndex and (gap >= 2 or rise >= 2.5) then
+				if isPad or gap >= 1 or rise >= 1.5 then
 					local helperLength = 3
 					local mid = s + gap / 2
 					local helperTop = y + rise / 2
@@ -566,6 +567,20 @@ function TowerGenerator.generate(seed: number, builtFloors: number?): TowerSpec
 	local statics = staticParts()
 	table.insert(statics, landingPart(landings[0], 1))
 	return { seed = seed, builtFloors = count, landings = landings, floors = floors, statics = statics }
+end
+
+-- Fingerabdruck der Struktur (Client/Server-Abgleich, CR-23). Nutzt nur Werte, die rein aus
+-- Zufallszahlen und exakter Arithmetik entstehen (keine Winkelfunktionen).
+function TowerGenerator.fingerprint(tower: TowerSpec): number
+	local hash = tower.seed % 4294967296
+	for _, floor in tower.floors do
+		hash = Prng.combine(hash, floor.attempt * 1000 + #floor.connections * 10 + #floor.helpers)
+		for _, spec in floor.connections do
+			hash = Prng.combine(hash, math.floor(spec.connection.gap * 1000 + 0.5))
+			hash = Prng.combine(hash, math.floor(spec.connection.rise * 1000 + 0.5))
+		end
+	end
+	return hash
 end
 
 -- Seed eines Laufs: Lauf 1 fest, ab Lauf 2 neu gemischt (GDD v0.2 §3.3).

@@ -17,6 +17,7 @@ WorldSetup.apply()
 TowerBuilder.build(tower, workspace)
 workspace:SetAttribute("TowerSeed", seed)
 workspace:SetAttribute("BuiltFloors", tower.builtFloors)
+workspace:SetAttribute("TowerHash", TowerGenerator.fingerprint(tower))
 
 local handlers = PlayerService.init(tower, NetService)
 NetService.init(handlers)

@@ -64,6 +64,60 @@ TestRunner.it(suite, "Hilfsstufen sind mit dem Hilfe-Faktor (0,6) lösbar", func
 	end
 end)
 
+TestRunner.it(
+	suite,
+	"Sprungpad-Verbindungen sind auch ohne Pad-Impuls lösbar (großzügig) und haben eine Hilfsstufe",
+	function()
+		local generous = Reachability.generousProfile()
+		local pads = 0
+		for seed = 1, SEEDS do
+			local tower = TowerGenerator.generate(seed)
+			for _, floor in tower.floors do
+				for _, spec in floor.connections do
+					local c = spec.connection
+					if c.launchVelocity then
+						pads += 1
+						local withoutPad: Reachability.Connection = { gap = c.gap, rise = c.rise, ceiling = c.ceiling }
+						expect((Reachability.canReach(withoutPad, generous, {}))):toBe(true)
+						expect(spec.helperId ~= nil):toBeTruthy()
+					end
+				end
+			end
+		end
+		expect(pads > 50):toBeTruthy() -- es gibt genug Pads, damit der Test etwas aussagt
+	end
+)
+
+TestRunner.it(
+	suite,
+	"Hilfe ist nie leer: jede Verbindung mit Lücke ≥ 1 oder Anstieg ≥ 1,5 hat eine Hilfsstufe",
+	function()
+		for seed = 1, 50 do
+			local tower = TowerGenerator.generate(seed)
+			for _, floor in tower.floors do
+				local nontrivial = 0
+				for _, spec in floor.connections do
+					local c = spec.connection
+					if c.gap >= 1 or c.rise >= 1.5 or c.launchVelocity then
+						nontrivial += 1
+						expect(spec.helperId ~= nil):toBeTruthy()
+					end
+				end
+				expect(#floor.helpers):toBe(nontrivial)
+				expect(#floor.helpers >= 1):toBeTruthy()
+			end
+		end
+	end
+)
+
+TestRunner.it(suite, "Fingerabdruck: stabil je Seed, verschieden zwischen Seeds", function()
+	local a = TowerGenerator.fingerprint(TowerGenerator.generate(TowerConfig.FIRST_RUN_SEED))
+	local b = TowerGenerator.fingerprint(TowerGenerator.generate(TowerConfig.FIRST_RUN_SEED))
+	local c = TowerGenerator.fingerprint(TowerGenerator.generate(TowerConfig.FIRST_RUN_SEED + 1))
+	expect(a):toBe(b)
+	expect(a ~= c):toBeTruthy()
+end)
+
 TestRunner.it(suite, "Funken: genau 6 je Etage, eindeutige IDs (Etage·100 + i), über Plattformen", function()
 	local tower = TowerGenerator.generate(TowerConfig.FIRST_RUN_SEED)
 	local seen: { [number]: boolean } = {}

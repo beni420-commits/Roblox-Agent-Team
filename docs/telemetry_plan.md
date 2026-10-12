@@ -1,6 +1,6 @@
 # Telemetrie-Plan – „Schwungturm“
 
-Rolle: Data Analyst · Stand: 2026-10-12 (Sprint 0) · **Version 0.2** (an GDD v0.2 angepasst) · Status: **Entwurf zur Owner-Freigabe**; wird mit dem Vertical Slice umgesetzt.
+Rolle: Data Analyst · Stand: 2026-10-12 (Sprint 1) · **Version 0.3** (Code-Review Sprint 1 eingearbeitet) · Status: **Entwurf zur Owner-Freigabe**; wird mit dem Vertical Slice umgesetzt.
 
 API-Fakten aus `docs/research_tech_facts_2026-10-12.md` (§3), dort im Original gelesen (creator-docs @af5f853), sowie `creator-docs production/experiments.md` und `configs.md` (gelesen 2026-10-12).
 
@@ -44,19 +44,27 @@ Roblox-Performance-Charts gibt es erst ab ≥ 100 DAU. Deshalb messen wir Perfor
 
 ### 3.1 Onboarding-Funnel – `AnalyticsService:LogOnboardingFunnelStepEvent(player, step, stepName, customFields?)`
 Einmaliger Funnel, keine Session-ID nötig; Schritte beginnen bei 1. Wiederholungen zählen nicht, kosten aber Budget. Deshalb merkt sich der Server erledigte Schritte in `onboarding.stepsDone` und sendet jeden Schritt nur einmal.
+**Wichtig (Code-Review CR-10/CR-11, im Original belegt):**
+- Roblox wertet übersprungene Schritte als erledigt. Der Funnel misst also „mindestens bis Schritt n gekommen“; die Reihenfolge folgt dem natürlichen Ablauf.
+- Aufschlüsselungen (z. B. nach Eingabegerät) nutzen nur die Werte von Schritt 1. Schritt 1 wird deshalb erst gesendet, wenn der Client sein Eingabegerät gemeldet hat (Timeout 10 s, sonst „Unknown“).
+- Die Zeit bis „Floor1“ zählt ab diesem Moment, nicht ab dem Beitritt (ohne Ladezeit, CR-12).
 
 | Step | `stepName` | Erkannt durch | Hypothese |
 |---|---|---|---|
-| 1 | `Spawned` | Server: erster Charakter-Spawn eines neuen Spielers | H1 |
-| 2 | `FirstMove` | Server: Charakter > 4 Studs vom Spawn entfernt | H1 |
-| 3 | `FirstSpark` | Server: erstes validiertes `CollectSpark` | H1 |
-| 4 | `FirstJump` | Client → `ReportOnboardingStep(4)` (validiert) | H1 |
-| 5 | `Floor1` | Server: Etage 1 erreicht; `CustomField03` = Sekunden seit Spawn (gebündelt: `≤30`, `31-60`, `61-120`, `>120`) | **H1** |
+| 1 | `Spawned` | Server: Client bereit (Eingabegerät gemeldet oder 10-s-Timeout) | H1 |
+| 2 | `FirstMove` | Server: Charakter > 4 Studs von der Position nach dem Platzieren am Spawn entfernt | H1 |
+| 3 | `FirstJump` | Client → `ReportOnboardingStep(3)` (validiert, nur nach Schritt 1) | H1 |
+| 4 | `FirstSpark` | Server: erstes validiertes `CollectSpark` | H1 |
+| 5 | `Floor1` | Server: Etage 1 erreicht; `CustomField03` = Sekunden seit Schritt 1 (gebündelt: `<=30`, `31-60`, `61-120`, `>120`) | **H1** |
 | 6 | `FirstCamp` | Server: Lager Etage 5 | Funnel |
-| 7 | `FirstUpgrade` | Server: erster Upgrade-Kauf | H4 (indirekt) |
-| 8 | `Zone1Done` | Server: Etage 10 + Doppelsprung freigeschaltet | H3 |
+| 7 | `Zone1Done` | Server: Etage 10 | H3 |
 
-### 3.2 Progression – `LogProgressionStartEvent` / `LogProgressionCompleteEvent` (player, progressionPathName, level, levelName, customFields?)
+Upgrade-Käufe (ab Sprint 2) laufen über Economy-Senken, nicht über den Onboarding-Funnel.
+
+### 3.2a Etagen-Funnel – `LogFunnelStepEvent(player, "TowerRun", funnelSessionId = Laufnummer, step = Etage, "Fxx")`
+Progression-Events erscheinen laut API-Referenz in keinem Roblox-Chart (CR-13). Für den KPI „Zone-1-Abschluss“ und Abbruch-Etagen gibt es deshalb einen wiederkehrenden Funnel je Lauf (max. 10 Funnels, 100 Schritte; die letzten 10 Session-IDs je Spieler zählen).
+
+### 3.2 Progression – `LogProgressionStartEvent` / `LogProgressionCompleteEvent` (player, progressionPathName, level, levelName, customFields?) – Rohdaten
 | Pfad | Level | Wann | Felder |
 |---|---|---|---|
 | `MainTower` | 0 | Start eines Laufs (`ProgressionStart`) | F03 = Lauf-Nr. gebündelt (`1`, `2`, `3-5`, `6+`) |
@@ -80,13 +88,13 @@ Einmaliger Funnel, keine Session-ID nötig; Schritte beginnen bei 1. Wiederholun
 | `RunStarted` | Lauf-Nr. | `after_summit` / `manual` | neuer Lauf | H4 |
 | `AbilityUnlocked` | 1 | Fähigkeit | Freischaltung | H3 |
 | `AbilityResult` | Erfolgsquote in % (0–100), **vom Server bestimmt** (Landung auf der Zielplattform laut Positionsproben) | `<ability>` | Session-Ende, je benutzter Fähigkeit | H6 (mit F01 = Eingabe) |
-| `SessionEnded` | Sessiondauer in s | letzte Etage gebündelt (`F00-05` …) + Freundesstatus (`_f` = mit Freund im Server) | `PlayerRemoving` | Sessiondauer, Abbruchpunkte, H2/H7/H8 |
+| `SessionEnded` | Sessiondauer in s | letzte Etage gebündelt (`F00-04`, `F05-09` …) + Freundesstatus (`_f` = mit Freund im Server) | `PlayerRemoving` | Sessiondauer, Abbruchpunkte, H2/H7/H8 |
 | `CampLiftUsed` | 1 | `down` / `up` / `friend` | Lager-Lift genutzt | Social-Nutzung (S5) |
 | `SignalSent` | Anzahl in der Session | Signal-Art | Session-Ende, nur wenn > 0 | Social-Nutzung, Missbrauchs-Monitoring (C-A30) |
 | `SettingChanged` | 1 | `<key>_<on/off>` | Option geändert | Akzeptanz der Hilfe |
 | `ClientPerf` | FPS-Median der Session (Clientwert, auf 0–240 gekappt, als clientgemeldet markiert) | Qualitätsstufe gebündelt | Session-Ende | Performance-Gate |
 | `ServerHealth` | Heartbeat-Mittel (Hz) der letzten 5 min | `players_<n>` gebündelt | alle 5 min (über den ersten Spieler im Server) | Performance-Gate |
-| `RemoteRejected` | Anzahl Ablehnungen in der Session | Remote-Name | Session-Ende, nur wenn > 0 | Sicherheit/Exploit-Monitoring |
+| `RemoteRejected` | Anzahl Ablehnungen in der Session | Remote-Name bzw. `Remote:Grund` (z. B. `CollectSpark:reach`, ≤ 40 Werte) | Session-Ende, nur wenn > 0 | Sicherheit/Exploit-Monitoring |
 | `MovementFlagged` | 1 | Verstoßart (`speed`, `height`, `skip`) | erster Verstoß im Lauf | Cheat-Monitoring, Fehlalarm-Quote |
 | `DataError` | 1 | `load_fail`, `save_fail`, `lock_conflict`, `throttled_server`, `throttled_experience` | bei Fehler | Daten-Gate |
 | `DailyTowerStarted` *(Should)* | 1 | – | Tagesturm-Start | H5 |

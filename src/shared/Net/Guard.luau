@@ -7,6 +7,7 @@ local RateLimiter = require("../Util/RateLimiter")
 
 export type Guard = {
 	check: (playerKey: string, remoteName: string, args: { any }, count: number) -> (boolean, string),
+	note: (playerKey: string, key: string) -> (),
 	rejections: (playerKey: string) -> { [string]: number },
 	forgetPlayer: (playerKey: string) -> (),
 }
@@ -47,6 +48,16 @@ function Guard.new(clock: () -> number): Guard
 		return true, "ok"
 	end
 
+	-- Fachliche Ablehnung durch den Handler (z. B. „CollectSpark:reach“), CR-20.
+	local function note(playerKey: string, key: string)
+		local perPlayer = rejected[playerKey]
+		if perPlayer == nil then
+			perPlayer = {}
+			rejected[playerKey] = perPlayer
+		end
+		perPlayer[key] = (perPlayer[key] or 0) + 1
+	end
+
 	local function rejections(playerKey: string): { [string]: number }
 		return rejected[playerKey] or {}
 	end
@@ -58,7 +69,7 @@ function Guard.new(clock: () -> number): Guard
 		end
 	end
 
-	return { check = check, rejections = rejections, forgetPlayer = forgetPlayer }
+	return { check = check, note = note, rejections = rejections, forgetPlayer = forgetPlayer }
 end
 
 return table.freeze(Guard)

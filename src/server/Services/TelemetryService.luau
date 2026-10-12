@@ -5,11 +5,12 @@
 local AnalyticsService = game:GetService("AnalyticsService")
 local RunService = game:GetService("RunService")
 
+local BuildInfo = require("@game/ReplicatedStorage/Shared/BuildInfo")
 local Events = require("@game/ReplicatedStorage/Shared/Telemetry/Events")
 
 local TelemetryService = {}
 
-local BUILD = "s1"
+local BUILD = "s" .. tostring(BuildInfo.sprint) -- Custom Field 02 aus BuildInfo (CR-28)
 local IS_STUDIO = RunService:IsStudio()
 local inputByPlayer: { [Player]: string } = {}
 
@@ -73,6 +74,20 @@ function TelemetryService.floorCompleted(player: Player, floor: number, zone: nu
 			floor,
 			string.format("F%02d", floor),
 			fields(player, "Z" .. zone)
+		)
+	end)
+end
+
+-- Etagenfortschritt je Lauf als wiederkehrender Funnel (erscheint im Funnel-Chart, CR-13).
+function TelemetryService.towerFunnel(player: Player, runIndex: number, floor: number)
+	send(string.format("funnel %s run %d floor %d", Events.TOWER_FUNNEL, runIndex, floor), function()
+		AnalyticsService:LogFunnelStepEvent(
+			player,
+			Events.TOWER_FUNNEL,
+			tostring(runIndex),
+			floor,
+			string.format("F%02d", floor),
+			fields(player, nil)
 		)
 	end)
 end

@@ -7,7 +7,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Definitions = require("@game/ReplicatedStorage/Shared/Net/Definitions")
 local Guard = require("@game/ReplicatedStorage/Shared/Net/Guard")
 
-export type Handler = (player: Player, ...any) -> ()
+-- Ein Handler gibt bei fachlicher Ablehnung einen kurzen Grund zurück (wird als „Remote:Grund“ gezählt, CR-20).
+export type Handler = (player: Player, ...any) -> string?
 
 local NetService = {}
 
@@ -34,9 +35,11 @@ function NetService.init(handlers: { [string]: Handler })
 			if not ok then
 				return
 			end
-			local success, err = pcall(handler, player, ...)
+			local success, result = pcall(handler, player, ...)
 			if not success then
-				warn(string.format("[Net] handler %s failed: %s", name, tostring(err)))
+				warn(string.format("[Net] handler %s failed: %s", name, tostring(result)))
+			elseif type(result) == "string" then
+				guard.note(playerKey(player), name .. ":" .. result)
 			end
 		end)
 		remote.Parent = folder
