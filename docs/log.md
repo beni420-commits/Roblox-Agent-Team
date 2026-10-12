@@ -28,3 +28,12 @@
 - Market Researcher → `docs/research_report.md`
 - Compliance-Officer → `reports/compliance_rules_digest_2026-10-12.md` (Regelgrundlage)
 - Systems Engineer (Recherche) → `docs/research_tech_facts_2026-10-12.md`
+
+### Compliance-Officer – Regelgrundlage (Teil A)
+- `reports/compliance_rules_digest_2026-10-12.md`: 73 Regeln mit IDs, Konzept-Checkliste K01–K23, Release-Checkliste R01–R20 und 20 nicht verifizierte Punkte. Grundlage sind nur Websuche-Zusammenfassungen; kein Regeltext wurde im Original gelesen.
+- Launch-relevant: Spiele ohne Content-Label sind seit 30.09.2025 nicht spielbar. Kids-/Select-Konten gibt es seit Juni 2026. Die Publishing Requirements 2026 verlangen zunächst eine 16+-Sichtbarkeitsphase. Chat erfordert seit 07.01.2026 eine Altersprüfung.
+
+### Orchestrator – Toolchain abgeschlossen
+- Luau-CLI (`luau`, `luau-analyze`) und luau-lsp 1.70.1 gebaut. `scripts/check.sh` ist vollständig grün [GETESTET].
+- luau-lsp fand einen echten Typfehler (eingefrorene Tabelle vs. Lese-/Schreib-Typ) in `BuildInfo.luau`; behoben.
+- Gegenprobe: Ein absichtlich fehlschlagender Test liefert Exit-Code 1, ein absichtlicher Typfehler lässt `luau-analyze` mit Exit-Code 1 scheitern [GETESTET].
