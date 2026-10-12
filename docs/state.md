@@ -2,9 +2,16 @@
 
 > Jede Rolle liest diese Datei zu Beginn jeder Sitzung zuerst. Max. 1 Seite.
 
-**Datum:** 2026-10-12 · **Sprint:** 0 (Research & Konzept) · **Status:** ⏸ **abgeschlossen – wartet auf Owner-Freigabe** (`reports/owner_report_sprint0.md`)
+**Datum:** 2026-10-12 · **Sprint:** 1 (Vertical Slice Zone 1) · **Status:** ▶ in Arbeit
 
-## Sprint-0-Ergebnis
+## Sprint 1
+- **Owner-Freigaben** (D-022–D-024): Konzept A, Compliance-Auflagen, Asset-Regel „ohne Copyright“ (Kat. 0 frei; Kat. 1 nur Roblox-eigen ohne Rechte Dritter, keine Musik). **Offen:** Veröffentlichungskosten (D-025).
+- **Primärziel:** Zone 1 (Etagen 1–10) ist in Studio spielbar: Generator und Erreichbarkeitsprüfer `[GETESTET]` (200 Seeds), Etagen-Rücksetzpunkt, Lager, Funken (serverseitig validiert), Onboarding ohne Text, Steuerung für Touch, Maus/Tastatur und Gamepad.
+- **Erfolgskriterium:** `scripts/check.sh` grün, alle Logik-Tests ausgeführt. Der Owner-Test in Studio und auf dem Handy zeigt: Etage 1 in ≤ 60 s, Zone 1 ohne Frust-Stelle „hoch“. Der Owner-Test liegt außerhalb dieser Umgebung und wird als **offen** gemeldet, bis Ergebnisse vorliegen.
+- **Nebenziele:** (1) Remote-Sicherheitsschicht mit Exploit-Tests, (2) CI-Workflow, (3) Entwurf der Fragebogen-Antworten (C-A1).
+- **Nicht im Umfang** (Sprint 2): Speicherstand, Zonen 2–3, Fähigkeiten, Schrein, Social-Funktionen.
+
+## Sprint-0-Ergebnis (abgeschlossen)
 - **Primärziel** „freigabefähiges MVP-Konzept“: **erreicht.** Empfehlung ist Konzept A **„Schwungturm“** (GDD v0.2), Plan B ist „Formwächter“.
 - **Gate Spielspaß:** offen. Bisher nur `[SIMULIERT]`; die 8 „hoch“-Befunde sind im Design behoben, ungetestet.
 - **Compliance:** Freigabe mit Auflagen (C-A1–C-A18, C-A29–C-A32), Label Minimal.
@@ -32,7 +39,7 @@
 | `reports/compliance_rules_digest_2026-10-12.md` | Compliance | fertig (v1.1, Abgleich mit dem Original) |
 | `reports/compliance_check_sprint0.md` | Compliance | fertig (v1.1 + Nachtrag zu GDD v0.2) |
 | `reports/playtest_report_sprint0.md` | Playtest-Simulator | fertig `[SIMULIERT]` |
-| `docs/game_design_doc.md` | Game Designer | **v0.2** (Entwurf zur Freigabe) |
+| `docs/game_design_doc.md` | Game Designer | **v0.2** (vom Owner freigegeben, D-022) |
 | `docs/telemetry_plan.md` | Data Analyst | v0.2 |
 | `docs/ux_spec.md` | UX-Designer | v0.2 |
 | `docs/tech_notes.md` | Systems Engineer | fertig (inkl. Schema v1, Remotes, Budgets) |
@@ -40,10 +47,8 @@
 | `reports/owner_report_sprint0.md` | Orchestrator | fertig |
 
 ## Offene Freigaben an den Owner
-1. Konzept A als MVP (GDD v0.2)
-2. Compliance-Auflagen als verbindlich (§8.6)
-3. Asset-Regel Kat. 0/1 (§8.5)
-4. Veröffentlichungskosten 1.000 R$ bzw. Plus/Premium (§8.2), spätestens vor öffentlichem Release
+1. Veröffentlichungskosten 1.000 R$ bzw. Plus/Premium (§8.2), spätestens vor dem öffentlichen Release
+2. Offene Fragen: Publisher-Konto oder -Gruppe; Studio- und Handy-Test pro Sprint möglich?
 
 ## Nächster Schritt
-**Warten auf den Owner.** Nach der Freigabe startet Sprint 1 (Vertical Slice Zone 1) laut Owner-Bericht §6. Vorher erledigt der Owner idealerweise B-001 (Studio-Smoke-Test).
+Sprint 1 umsetzen (Logik → Tests → Roblox-Schicht → Reports). Danach testet der Owner Zone 1 nach der Checkliste.

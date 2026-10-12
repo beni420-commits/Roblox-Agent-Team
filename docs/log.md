@@ -63,3 +63,11 @@
 
 ### Orchestrator – Sprint-0-Abschluss
 - Owner-Bericht geschrieben, state.md aktualisiert, `scripts/check.sh` grün. **Stopp: Warten auf Owner-Freigabe.**
+
+## 2026-10-12 – Sprint 1, Sitzung 1
+
+### Owner – Freigaben
+- Konzept A freigegeben, Compliance-Auflagen verbindlich, Asset-Regel „solange ohne Copyright“ (D-022 bis D-024). Veröffentlichungskosten noch offen (D-025).
+
+### Orchestrator – Sprintstart
+- Sprintziel, Erfolgskriterium und Umfang stehen in `state.md`.

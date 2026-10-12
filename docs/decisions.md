@@ -82,4 +82,25 @@ Der Owner hat in §0.1 keine Werte ausgefüllt. Es gelten die Defaults:
 - **Entscheidung:** A/B-Hypothesen (H2, H5, H7) laufen über Roblox Experiments (Config-Key, `ConfigService:GetConfigForPlayerAsync`, 14–60 Tage, max. 2 Varianten). Die Variante wird beim ersten Kontakt im Datensatz gespeichert.
 - **Evidenz:** [QUELLE: creator-docs production/experiments.md, configs.md]
 
+## Owner-Freigaben
+
+### D-022 · Owner-Freigabe · Konzept A „Schwungturm“ als MVP
+- **Freigabe:** Der Owner hat Konzept A auf Basis von GDD v0.2 freigegeben (Antwort auf den Owner-Bericht Sprint 0). D-018 ist damit entschieden.
+- **Folge:** Sprint 1 (Vertical Slice Zone 1) startet.
+
+### D-023 · Owner-Freigabe · Compliance-Auflagen verbindlich (§8 Punkt 6)
+- **Freigabe:** Die Auflagen C-A1 bis C-A18 und C-A29 bis C-A32 gelten verbindlich und sind Teil der Definition of Done.
+
+### D-024 · Owner-Freigabe · Asset-Regel „solange ohne Copyright“ (§8 Punkt 5)
+- **Freigabe (Wortlaut sinngemäß):** „Freigabe erteilt, solange ohne Copyright.“
+- **Auslegung (die strengere, Compliance):**
+  - **Kat. 0** (Engine-Inhalte, `rbxasset://`) ist frei.
+  - **Kat. 1** gilt **nur** für Assets, die Roblox selbst erstellt hat und an denen **keine Urheberrechte Dritter** bestehen. Lizenzierte Partner-/Label-Musik (z. B. aus Musikbibliotheken) ist **ausgeschlossen**, auch wenn sie auf Roblox nutzbar wäre.
+  - Kat. 2–4 brauchen weiterhin eine Einzelfreigabe.
+- **Begründung:** Im Zweifel gilt „ohne Copyright“ als „keine Inhalte mit Rechten Dritter“.
+- **Folge:** Im MVP gibt es keine Musik. Soundeffekte kommen zunächst nur aus Kat. 0, die Asset-Pfade prüft der Owner in Studio.
+
+### D-025 · Offen · Veröffentlichungskosten (§8 Punkt 2)
+- Noch keine Owner-Entscheidung. Sie wird spätestens vor dem öffentlichen Release gebraucht (Owner-Bericht Sprint 0 §4). Bis dahin gilt Budget 0.
+
 <!-- Weitere Entscheidungen werden unten angehängt. -->
