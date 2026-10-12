@@ -29,6 +29,9 @@ fi
 luau-lsp analyze --platform=roblox --sourcemap=sourcemap.json \
 	--definitions=@roblox="$ROBLOX_DEFS" --flag:LuauSolverV2=true src
 
+step "Typprüfung Tests (luau-analyze)"
+luau-analyze tests/
+
 step "Logik-Tests (Luau-CLI)"
 "$LUAU_BIN" tests/run.luau
 
