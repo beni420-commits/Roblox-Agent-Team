@@ -1,8 +1,9 @@
 # Game Design Document – „Lantern Line – Der Nachtzug“
 
-Rolle: Game Designer · Stand: 2026-10-13 · **Version 0.2**
+Rolle: Game Designer · Stand: 2026-10-13 · **Version 0.3**
 - v0.1 war der Konzeptentwurf.
 - v0.2 setzt die Recherche (`docs/lantern-line/research_doors.md`) und die Compliance-Vorprüfung (`reports/lantern-line/compliance_check_concept.md`, Auflagen H-A1 bis H-A15) um und beschreibt den gebauten Stand.
+- v0.3 übernimmt die Compliance-Nachprüfung (H-A16 bis H-A18, D-040), den simulierten Spielertest (LP-01 bis LP-17) und das Code-Review (LL-01 bis LL-24, D-041).
 
 **Arbeitstitel:** Der Titel ist bewusst kein einzelnes Pluralwort in Versalien (H-A15). Die Markenrecherche ist offen.
 **Owner-Auftrag:** steht in `docs/decisions.md` (D-032).
@@ -82,7 +83,9 @@ Das Spiel nutzt bekannte Prinzipien des Raum-für-Raum-Horrors. Gestaltung, Name
 - **Auslöser:** Betreten von Wagen *k*.
 - **Warnung:** 2,5–3,5 s.
 - **Fahrt:** Start 140 Studs hinter Wagen *k−1*, 70 Studs/s, bis zur Vordertür von *k*.
-- **Garantie:** Von jedem erreichbaren Punkt in *k−1* und *k* ist ein Versteck rechtzeitig erreichbar (Weg/16 + 1,0 s Reaktion + 0,5 s Einsteigen ≤ Ankunft). Zusammen gibt es ≥ 4 Verstecke.
+- **Garantie:**
+  - Von jedem erreichbaren Punkt in *k−1* und *k* ist ein Versteck rechtzeitig erreichbar (Weg/16 + 1,0 s Reaktion + 0,5 s Einsteigen ≤ Ankunft). Dasselbe gilt für die älteren Wagen *k−2* und *k−3*, soweit sie auf der Fahrbahn liegen (LL-03).
+  - Eine Vierergruppe an der Tür zwischen *k−1* und *k* findet je ein eigenes Versteck rechtzeitig (LP-02).
 
 ### 6.2 Gegenzug
 - **Ablauf:** 3–4 s Warnung, 1,6 s Licht auf der Seite `side`.
@@ -95,8 +98,9 @@ Das Spiel nutzt bekannte Prinzipien des Raum-für-Raum-Horrors. Gestaltung, Name
 - **Auslöser:** Die Augen werden über die Nähe ausgelöst, nicht über Blicke.
 
 ### 6.4 Kontrolleur
-- **Phasen:** Einleitung 2 s → Gehen 3,5–5,5 s → Achtung 1,2 s (Laterne wechselt weich die Farbe, Kelle pulsiert) → Halt 2–3 s.
-- **Messung bei Halt:** Erst nach 0,35 s Gnadenzeit misst der Server die Bewegung; mehr als 1,5 Studs in 0,3 s gilt als bewegt.
+- **Phasen:** Einleitung 2 s → Gehen 3,5–5,5 s → Achtung 1,2 s (Laterne wechselt weich die Farbe, Kelle wird zur Halbscheibe, HUD „Gleich stillstehen“ mit Ablaufbalken) → Halt 2–3 s.
+- **Messung bei Halt:** Erst nach 0,7 s Gnadenzeit (Reaktion + Latenz, LP-01/LL-04) misst der Server die Bewegung, und nur in einem festen Fenster danach; mehr als 1,5 Studs in 0,3 s gilt als bewegt.
+- **Zeitlimit:** Er geht spätestens nach 40 s ab, auch wenn nicht alle kontrolliert sind (H-A18).
 - **Kontrolliert:** ab 8 Studs Abstand zu ihm.
 - **Tür:** Sie bleibt zu, bis alle lebenden Spieler im Wagen kontrolliert sind.
 
@@ -116,9 +120,18 @@ Das Spiel nutzt bekannte Prinzipien des Raum-für-Raum-Horrors. Gestaltung, Name
 ## 7. Interaktionen
 - **Türen:** Sie öffnen sich, wenn ein Spieler auf 6 Studs herankommt. Gebaut ist immer der nächste Wagen; behalten werden 4 Wagen dahinter.
 - **Verschlossene Türen** ab Wagen 3 (20 %): Der Schlüssel liegt im selben Wagen (Garantie) und gehört der Gruppe, deshalb gibt es keine Sackgasse, wenn jemand ausscheidet.
-- **Verstecke:** genau 1 Person; Sicht durch die Schlitze; „Aussteigen“ per E, Gamepad B oder Knopf. Kälte: Warnung nach 14 s, nach 20 s wird man hinausgeschoben. Solange ein Wesen aktiv ist, beginnt die Zeit neu.
-- **Schleichen:** Umschalten mit C, Strg, Gamepad B oder Touch-Knopf.
-- **Ausscheiden:** Die Figur verblasst. Danach kommt die Hinweis-Notiz, dann Zuschauen bei Mitreisenden (ohne Namen, H-A12). Es gibt keine Wiederbelebung, auch nicht kaufbar (H-A13).
+- **Verstecke:**
+  - Genau 1 Person. Der eigene Schrank ist lokal durchsichtig, die Sehschlitze kommen aus der UI; andere sehen den geschlossenen Schrank, die Figur ist ausgeblendet (LL-02, LL-08).
+  - „Aussteigen“ per E, Gamepad B oder Knopf; fremde Prompts sind im Versteck aus (LL-09).
+  - Kälte: Warnung nach 14 s, nach 20 s wird man hinausgeschoben. Solange ein Wesen aktiv ist, beginnt die Zeit neu.
+  - Während der Kofferlawine sind Verstecke in ihrer Bahn gesperrt (LL-15).
+- **Schleichen:** Umschalten mit C, Gamepad L3 oder Touch-Knopf (nicht mehr Strg/B, LP-10). Schaltet sich bei Express und Kofferlawine selbst aus.
+- **Ausscheiden:** Die Figur verblasst. Danach kommt die Hinweis-Notiz (nach 8 s automatisch weiter), dann Zuschauen bei Mitreisenden mit ruhiger Kamera in Fahrtrichtung (ohne Namen, H-A12, H-A18). Es gibt keine Wiederbelebung, auch nicht kaufbar (H-A13).
+- **Robustheit:**
+  - Wer seine Figur verliert (Roblox-Tod, Verbindung), scheidet nach 5 s aus (Ursache „lost“, eigener Hinweis; LL-05).
+  - Fällt jemand aus dem Zug, kommt er ohne Schaden an den Anfang des höchsten offenen Wagens zurück.
+  - Ein Lauf ohne neue Tür endet nach 5 min (LL-06).
+  - Bewegungsprüfung: Wer über ca. 1 s schneller als 24 Studs/s ist, kommt zurück auf die letzte gültige Position (LL-10).
 - **Ende:** Gewonnen ist, wenn ein Spieler nach dem Lösen durchs Tor geht; verloren, wenn niemand mehr lebt. Die Ergebnis-Fahrkarte zeigt Wagen, Abrisse und Zeit. Nach 15 s geht es zurück zum Bahnsteig.
 
 ## 8. Bahnsteig und Mehrspieler
@@ -150,11 +163,11 @@ Alle sind durch Tests über 150 Seeds geprüft.
   - Warnleiste
   - Notizzettel im Postwagen
   - Raureif bei Kälte
-- **Einstellungen** über Knopf oder Taste M:
+- **Einstellungen** über Knopf, Taste M oder Gamepad Y (Select gehört der Roblox-UI-Navigation, LL-24):
   - Flackern reduzieren: keine Pulse, sanftes Abdunkeln ≥ 0,3 s.
   - Sanfter Modus: kein Wackeln, kein Blitz, gedämpfte Lichtwesen; schließt „Flackern reduzieren“ ein.
   - Bewegung reduzieren: Startwert aus der Roblox-Einstellung `ReducedMotionEnabled`.
-- **Sprache:** EN und DE (59 Textschlüssel). ProximityPrompts werden automatisch über die Source-Texte übersetzt.
+- **Sprache:** EN und DE (74 Textschlüssel; englischer Fallback im Client für alle Client-Schlüssel, LL-20). ProximityPrompts werden automatisch über die Source-Texte übersetzt.
 
 ## 11. Kinderschutz und Compliance
 Verbindlich ist der Compliance-Bericht.

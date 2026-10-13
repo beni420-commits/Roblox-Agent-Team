@@ -205,4 +205,32 @@ Der Owner hat in §0.1 keine Werte ausgefüllt. Es gelten die Defaults:
   - [GETESTET] Logik: Zeitlimit, Kupplung (Freigabe nur, wenn alle vorbei sind; Anhalten), Hörradius ≤ Sicht.
   - Lichtwirkung in der Engine nicht geprüft (Owner-Test E1, E2). D-034 („eigene Kernmechanik“) ist erst damit erfüllt.
 
+### D-041 · 2026-10-13 · Systems Engineer / Game Designer · Umsetzung des Code-Reviews Lantern Line (LL-01 bis LL-24)
+- **Anlass:** `reports/lantern-line/code_review_sprint1.md` mit 24 Befunden (1 Blocker, 1 kritisch, 10 mittel, 12 gering). Alle sind im Code umgesetzt (Commits `7e147c9`, `ee3a813`).
+- **Entscheidungen mit Wirkung aufs Spiel:**
+  - **Verstecke (LL-01, LL-02, LL-08, LL-09):**
+    - Prompts sitzen an der Schranktür.
+    - Der eigene Schrank ist lokal durchsichtig; die Sehschlitze kommen aus der UI.
+    - Die versteckte Figur ist für andere unsichtbar.
+    - Im Versteck sind fremde Prompts aus.
+  - **Express-Fairness (LL-03):** Die Garantie gilt jetzt für alle Wagen, die der Express trifft (k−3 bis k), nicht nur k−1/k, und für eine Vierergruppe gemeinsam. Unfaire Pläne verwirft der Generator.
+  - **Kontrolleur (LL-04):**
+    - Er misst nur in einem Fenster nach dem Stillstand plus 0,7 s Gnadenzeit.
+    - Das HUD zeigt in der Achtungsphase „Gleich stillstehen“ mit Ablaufbalken.
+    - Er geht spätestens nach 40 s ab.
+  - **Robustheit (LL-05, LL-06, LL-21):**
+    - Eine verlorene Figur gilt nach 5 s als ausgeschieden (Ursache „lost“ mit eigenem Hinweis).
+    - Ein Lauf ohne neue Tür endet nach 5 min.
+    - Figuren werden mit Wiederholung geladen.
+  - **Bewegungsprüfung (LL-10):**
+    - Wer über ca. 1 s schneller als 24 Studs/s ist, kommt zurück auf die letzte gültige Position.
+    - Nach Server-Teleports gilt eine Beruhigungszeit (0,3 s ohne Proben, Urteil erst ab 0,8 s Probenspanne).
+    - Damit ist die Folge aus D-035 („Bewegungsprüfung vor dem Speicherstand“) für Lantern Line erledigt.
+  - **Kofferlawine (LL-15):** Verstecke in ihrer Bahn sind während der Lawine gesperrt, denn ein Schrank schützt nicht vor der Kofferwand.
+  - **Gamepad (LL-24):** Die Einstellungen liegen auf **Y** statt Select, weil Select in Roblox die UI-Navigation schaltet.
+- **Evidenz:**
+  - [GETESTET] Prüfkette: Selene 0/0, luau-lsp sauber, 78/78 Logik-Tests, Compliance-Prüfung OK.
+  - Neue Tests: Express k−2/k−3, Kontrolleur-Messfenster und Zeitlimit, Ursache „lost“, Leerlauf-Abbruch, Schaffner-Revision, Probenspanne.
+  - [ANNAHME] Wirkung in der Engine ungeprüft. Die Prüfpunkte S-01 bis S-24 im Review sind Teil des Owner-Tests.
+
 <!-- Weitere Entscheidungen werden unten angehängt. -->

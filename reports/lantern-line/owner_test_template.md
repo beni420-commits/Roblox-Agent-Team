@@ -13,7 +13,7 @@ Ziel: herausfinden, ob das Spiel in Roblox Studio läuft, verständlich ist und 
 |---|---|---|---|
 | A1 | Du erscheinst am Bahnsteig in Ich-Perspektive; die Abfahrtstafel zeigt „LANTERN LINE“ und „Der Nachtzug“ | | |
 | A2 | Output ohne rote Fehler | | |
-| A3 | Der Knopf „Einstellungen [M]“ pulsiert; mit M öffnet sich die Fahrkarte mit 3 Schaltern | | |
+| A3 | Der Knopf „Einstellungen [M]“ pulsiert; mit M (Gamepad Y) öffnet sich die Fahrkarte mit 3 Schaltern | | |
 | A4 | Auf die Pfeile vor der Zugtür stellen: Die Tafel zählt „Abfahrt in …“ herunter und zeigt „1/2 bereit“. Danach sind alle Spieler im Zug (Wagen 0), auch wer nicht auf den Pfeilen stand | | |
 | A5 | Wagen 0: An der Wand hängt die Fahrgastinformation mit 6 Zeichen. Ist sie lesbar und verständlich? | | |
 
@@ -24,7 +24,8 @@ Ziel: herausfinden, ob das Spiel in Roblox Studio läuft, verständlich ist und 
 | B2 | Draußen ziehen Lichter vorbei; die Kamera schwankt leicht (mit „Bewegung reduzieren“ nicht) | | |
 | B3 | Durchsuchen (E) an Ablage, Koffer, Schublade und Kiste geht; danach ist der Behälter dunkler und nicht mehr nutzbar | | |
 | B4 | Verschlossene Tür (Lampe neben der Tür leuchtet): Den Schlüssel im Wagen finden; das HUD zeigt „Schlüssel“, die Tür geht dann auf | | |
-| B5 | Verstecken (E am Schrank): Die Sicht geht durch die Schlitze, „Aussteigen [E]“ funktioniert, du stehst danach vor dem Schrank | | |
+| B5 | Verstecken (E am Schrank): „Verstecken“ erscheint direkt an der Schranktür. Drinnen siehst du durch zwei Sehschlitze den Wagen (nicht nur Holz). „Aussteigen [E]“ funktioniert, du stehst danach vor dem Schrank und kannst sofort normal loslaufen (kein Zurückspringen) | | |
+| B5b | Mit 2 Spielern: Spieler A versteckt sich, Spieler B sieht nur den geschlossenen Schrank, nichts ragt heraus | | |
 | B6 | Nach ca. 14 s im Versteck: Raureif. Nach 20 s wirst du hinausgeschoben (ohne Schaden) | | |
 | B7 | Schleichen (C, Gamepad L3): langsamer, Anzeige „Schleichen“; schaltet sich bei Express und Kofferlawine selbst aus | | |
 | B8 | Ältere Wagen verschwinden hinter dir; zurücklaufen geht nur bis 4 Wagen zurück | | |
@@ -63,6 +64,15 @@ Mit z. B. `30` testest du die Kofferlawine bzw. die mittleren Wagen. Danach das 
 | E2 | „Sanfter Modus“: Beim Ausscheiden gibt es keinen farbigen Blitz, die Lichtwesen sind gedämpft und es wackelt nichts | | |
 | E3 | Nichts wirkt für Kinder zu brutal (kein Blut, keine Gesichter, kein Ragdoll) | | |
 | E4 | Einmal **ohne Ton** spielen: Sind alle Gefahren am Licht erkennbar? | | |
+
+## E2. Technische Prüfpunkte (optional, für Fortgeschrittene)
+Die vollständige Liste S-01 bis S-24 steht in `reports/lantern-line/code_review_sprint1.md` §6. Am wichtigsten:
+| # | Prüfen | ok? | Notiz |
+|---|---|---|---|
+| T1 | Nach dem Ausscheiden (2 Spieler): Die Zuschauer-Kamera bleibt im Zug, schaut in Fahrtrichtung und dreht nicht hart (S-09) | | |
+| T2 | Ein Spieler scheidet aus, der andere bleibt 5 min stehen: Der Lauf endet, alle kommen zum Bahnsteig (S-20) | | |
+| T3 | Gamepad: Y öffnet die Einstellungen; B im Versteck heißt nur „Aussteigen“ (S-19, S-24) | | |
+| T4 | Game Settings vor dem Teilen: Servergröße 4, R15 (S-23) | | |
 
 ## F. Gesamteindruck (1–5)
 - Gruselfaktor: __ · Fairness: __ · Spaß: __ · Verständlichkeit ohne Erklärung: __

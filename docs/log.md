@@ -142,3 +142,21 @@
 - **`scripts/check.sh`** prüft jetzt beide Spiele: 81 + 71 Logik-Tests, Typprüfung, Lint, Build, Compliance-Checks, Installer-Tests.
 - **Installer:** `-Game LanternLine` (D-039), 18 Tests.
 
+### Compliance – Nachprüfung der Umsetzung (`reports/lantern-line/compliance_check_sprint1_ll.md`)
+- Owner allein in Studio: **Freigabe**. Privater Test-Place: **Freigabe mit Auflagen** T-1 bis T-5. Öffentlich: **aufschiebendes Veto** bis zu den Owner-Freigaben (§9 dort).
+- Neue Auflagen H-A16 bis H-A18 (Gegenzug-Flackern, bildfüllende Express-Kugel, Kofferlawine ohne eigenen Kern, Hörradius, Zuschauer-Kamera). Umgesetzt in `dd5abc5` (D-040).
+
+### Playtest-Simulator (`reports/lantern-line/playtest_report_sim.md`, [SIMULIERT])
+- 4 Personas, 18 Befunde LP-01 bis LP-18. Behoben in `b39aecc`: LP-01, LP-02, LP-04 bis LP-14, LP-16, LP-17.
+- Offen als Owner-Fragen: LP-03 (Laufdauer ~25 min, kein Wiedereinstieg) und LP-15 (Zweck der Fahrkarten-Abrisse). LP-18 (Zuschauen ohne Namen) bleibt bewusst so (H-A12).
+
+### Code-Reviewer (`reports/lantern-line/code_review_sprint1.md`)
+- 24 Befunde: 1 Blocker (LL-01: Versteck-Prompts bis 1.800 Studs neben dem Schrank, weil das Attachment vor dem Parenten positioniert wurde), 1 kritisch (LL-02: im Versteck nur Holz zu sehen), 10 mittel, 12 gering.
+- Der Bericht widerspricht dem Simulationsbericht beim Verstecken; der Simulationsbericht war dort zu optimistisch.
+- Alle 24 umgesetzt (`7e147c9`, D-041). Eigene Nachprüfung fand einen weiteren Fehler in der neuen Bewegungsprüfung: Fehlalarm direkt nach Server-Teleports durch zu kurze Probenfenster. Behoben in `ee3a813` (Mindestspanne 0,8 s, 0,3 s Beruhigung), mit Test.
+
+### QA
+- [GETESTET] `scripts/check.sh` grün: Selene 0/0, luau-lsp sauber, 81 + 78 Logik-Tests, Compliance-Prüfung OK (74 Textschlüssel), 18 Installer-Tests.
+- [GEMESSEN] Generator (Luau-CLI, 60 Seeds): Median 48 ms, p90 69 ms, Maximum 119 ms. Läuft am Bahnsteig (LL-23), nicht während der Fahrt.
+- Nicht geprüft: alles in der Engine. Berichte: `reports/lantern-line/qa_report.md`, `reports/lantern-line/owner_report.md`.
+

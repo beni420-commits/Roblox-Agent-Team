@@ -28,7 +28,8 @@ Wenn du nur die fertige Spieldatei hast (`LanternLine.rbxlx` oder `Schwungturm.r
 - **Bewegen:** WASD bzw. linker Stick oder Touch-Joystick. Springen ist bewusst aus.
 - **Aktionen:** Durchsuchen, Verstecken, Lesen und den Entwerter benutzen mit **E** (Gamepad X, Touch: Knopf antippen)
 - **Schleichen:** **C**, Gamepad **L3** (linken Stick drücken), Touch-Knopf „Schleichen“
-- **Einstellungen:** **M** oder Gamepad **Select**: Flackern reduzieren, Sanfter Modus, Bewegung reduzieren
+- **Einstellungen:** **M** oder Gamepad **Y**: Flackern reduzieren, Sanfter Modus, Bewegung reduzieren
+- **Verstecken:** Am Schrank **E**. Du schaust durch die Sehschlitze in den Wagen.
 - **Versteck verlassen:** **E** oder Gamepad **B**
 - **Zuschauen nach dem Ausscheiden:** **Q**/**E** bzw. Schultertasten zum Wechseln
 - **Losfahren:** Am Bahnsteig auf die markierten Pfeile vor der Zugtür stellen. Der Countdown läuft 15 s, mit allen Spielern 3 s. Bei Abfahrt steigen alle Spieler am Bahnsteig ein.

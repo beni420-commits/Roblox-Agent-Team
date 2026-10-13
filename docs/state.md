@@ -2,9 +2,21 @@
 
 > Jede Rolle liest diese Datei zu Beginn jeder Sitzung zuerst. Max. 1 Seite.
 
-**Datum:** 2026-10-12 · **Sprint:** 1 (Vertical Slice Zone 1) · **Status:** ⏸ Build fertig – **wartet auf Owner-Test P0** (`reports/owner_report_sprint1.md`)
+**Datum:** 2026-10-13 · **Zwei Spiele im Repo**, beide ⏸ **warten auf Owner-Test P0**:
 
-## Sprint 1
+| Spiel | Ordner | Stand | Owner-Bericht | Checkliste |
+|---|---|---|---|---|
+| **Lantern Line – Der Nachtzug** (Horror, 1–4 Spieler, Owner-Auftrag D-032) | `games/lantern-line/` | erste vollständige Fassung (51 Wagen, 6 Wesen, Finale); Review umgesetzt (D-041) | `reports/lantern-line/owner_report.md` | `reports/lantern-line/owner_test_template.md` |
+| **Schwungturm** (Klettern, Konzept A) | Repo-Wurzel (`src/`) | Sprint 1: Zone 1 | `reports/owner_report_sprint1.md` | `reports/owner_test_template.md` |
+
+## Lantern Line – Stand
+- **Geprüft** [GETESTET]: `scripts/check.sh` grün (78 Logik-Tests, luau-lsp, Selene, Compliance-Textprüfung mit 74 Schlüsseln, Build). Code-Review: 24 Befunde, alle umgesetzt. Playtest [SIMULIERT]: 15 von 18 Befunden behoben.
+- **Nicht geprüft:** alles in der Engine (Prüfpunkte S-01 bis S-24 in `reports/lantern-line/code_review_sprint1.md` §6).
+- **Compliance:** Owner in Studio: frei. Privater Test-Place: Freigabe mit Auflagen T-1 bis T-5. Öffentlich: aufschiebendes Veto bis zu den Owner-Freigaben (`reports/lantern-line/compliance_check_sprint1_ll.md` §9).
+- **Offene Owner-Fragen:** Kids 5–8 ja/nein, eigenes Universe, Zugang Dritter, Titel/Marke, Sounds, Konzeptdokumente im öffentlichen Repo, LP-03 (Laufdauer/Wiedereinstieg), LP-15 (Zweck der Abrisse).
+- **Nächster Schritt:** Owner-Test P0, danach Befunde (L-002) und Owner-Antworten umsetzen.
+
+## Schwungturm – Sprint 1
 - **Owner-Freigaben** (D-022–D-024): Konzept A, Compliance-Auflagen, Asset-Regel „ohne Copyright“ (Kat. 0 frei; Kat. 1 nur Roblox-eigen ohne Rechte Dritter, keine Musik). **Offen:** Veröffentlichungskosten (D-025).
 - **Primärziel:** Zone 1 (Etagen 1–10) ist in Studio spielbar: Generator und Erreichbarkeitsprüfer `[GETESTET]` (200 Seeds), Etagen-Rücksetzpunkt, Lager, Funken (serverseitig validiert), Onboarding ohne Text, Steuerung für Touch, Maus/Tastatur und Gamepad.
 - **Erfolgskriterium:** `scripts/check.sh` grün, alle Logik-Tests ausgeführt. Der Owner-Test in Studio und auf dem Handy zeigt: Etage 1 in ≤ 60 s, Zone 1 ohne Frust-Stelle „hoch“. Der Owner-Test liegt außerhalb dieser Umgebung und wird als **offen** gemeldet, bis Ergebnisse vorliegen.
@@ -31,33 +43,19 @@
 
 **Werkzeuge in einer neuen Sitzung wiederherstellen:** `cargo install stylua --features luau && cargo install selene rojo`. luau-lsp und Luau-CLI aus dem Quellcode bauen: `git clone --recurse-submodules https://github.com/JohnnyMorganz/luau-lsp`, dann `cmake` + `ninja` mit den Zielen `Luau.LanguageServer.CLI`, `Luau.Repl.CLI` und `Luau.Analyze.CLI` (~25 min). Danach `scripts/setup_tools.sh`.
 
-## Artefakte Sprint 0
-| Artefakt | Rolle | Status |
-|---|---|---|
-| `docs/research_report.md` | Market Researcher | fertig |
-| `docs/research_tech_facts_2026-10-12.md` | Systems Engineer | fertig (überwiegend V1) |
-| `reports/compliance_rules_digest_2026-10-12.md` | Compliance | fertig (v1.1, Abgleich mit dem Original) |
-| `reports/compliance_check_sprint0.md` | Compliance | fertig (v1.1 + Nachtrag zu GDD v0.2) |
-| `reports/playtest_report_sprint0.md` | Playtest-Simulator | fertig `[SIMULIERT]` |
-| `docs/game_design_doc.md` | Game Designer | **v0.2** (vom Owner freigegeben, D-022) |
-| `docs/telemetry_plan.md` | Data Analyst | v0.2 |
-| `docs/ux_spec.md` | UX-Designer | v0.2 |
-| `docs/tech_notes.md` | Systems Engineer | fertig (inkl. Schema v1, Remotes, Budgets) |
-| `docs/backlog.md` | Live-Ops | fertig (ICE) |
-| `reports/owner_report_sprint0.md` | Orchestrator | fertig |
-| `reports/qa_report_sprint1.md`, `code_review_sprint1.md`, `compliance_check_sprint1.md`, `owner_report_sprint1.md` | QA / Compliance / Orchestrator | fertig (Sprint 1) |
-| `reports/owner_test_template.md`, `docs/compliance/questionnaire.md` | Orchestrator / Compliance | Vorlage bzw. Entwurf für den Owner |
+## Artefakte
+Schwungturm: `docs/` (GDD v0.2, Recherche, Telemetrie, UX, Tech Notes) und `reports/` (Sprint 0/1). Lantern Line: `docs/lantern-line/` und `reports/lantern-line/`. Entscheidungen: `docs/decisions.md`; Verlauf: `docs/log.md`; Backlog beider Spiele: `docs/backlog.md`.
 
-## Offene Freigaben an den Owner
+## Schwungturm – offene Freigaben
 1. Veröffentlichungskosten 1.000 R$ bzw. Plus/Premium (§8.2), spätestens vor dem öffentlichen Release
 2. Offene Fragen: Publisher-Konto oder -Gruppe; Studio- und Handy-Test pro Sprint möglich?
 
-## Sprint-1-Stand
+## Schwungturm – Sprint-1-Stand
 - **Gebaut:** Zone 1 (Etagen 1–10) mit Generator, Erreichbarkeitsprüfer, Funken, Lagern, Rücksetzpunkt je Etage, Hilfe 3/6, Führung, Coyote-Time, Sprungpads, HUD (EN/DE), Telemetrie (inkl. Etagen-Funnel), Remote-Guard, Reset-Knopf ohne Tod.
 - **Geprüft:** `scripts/check.sh` grün, 81/81 Tests [GETESTET]. Code-Review in 2 Runden: 38 Befunde, alle mittleren und kritischen behoben (Stand `0d9d440`), außer CR-14.
 - **Compliance:** Freigabe mit Auflagen T-1 bis T-4 für einen privaten Test-Place (`reports/compliance_check_sprint1.md`).
 - **Nicht geprüft:** alles in der Engine; die Fixes aus `0d9d440` noch nicht unabhängig nachgeprüft.
 - **Bewusst offen (Sprint 2):** MovementCheck vor dem Speicherstand (CR-14), Feedback-Katalog (CR-29), Avatar-Transparenz (C-A32), Sounds (D-030).
 
-## Nächster Schritt
+## Schwungturm – nächster Schritt
 **Owner-Test P0** (Studio und Handy) nach `reports/owner_test_template.md`. Danach Sprint 2 (Vorschlag im Owner-Bericht §6): Primärziel ist der sichere Fortschritt (MovementCheck → Speicherstand), Nebenziele sind Zone 2 mit DJ und Schrein/Upgrades/Gleiter.

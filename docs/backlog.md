@@ -52,15 +52,19 @@ Stand: 2026-10-12 (Sprint 0, nach GDD v0.2). Sprint-Zuordnung ist ein Vorschlag 
 | ID | Eintrag | I | C | E | ICE | Evidenz | Sprint |
 |---|---|---|---|---|---|---|---|
 | L-001 | Owner-Test P0 in Studio (allein und mit 2 Clients), Checkliste `reports/lantern-line/owner_test_template.md`; Studio-Abkürzung `DebugStartCarriage` | 10 | 7 | 9 | 630 | GETESTET (Logik) / Engine offen | jetzt (Owner) |
-| L-002 | Befunde aus Code-Review und Owner-Test beheben | 9 | 6 | 7 | 378 | Review | 2 |
+| L-002 | Befunde aus dem Owner-Test beheben (Code-Review LL-01–LL-24 erledigt, D-041) | 9 | 6 | 7 | 378 | Review umgesetzt / Owner-Test offen | nach Owner-Test |
 | L-003 | Sounds (Schienenrhythmus, Hupe Gegenzug, Rumpeln, Schritte des Schaffners) – erst nach Owner-Prüfung von Kat. 0/1 (D-030, H-A14) | 8 | 5 | 6 | 240 | ANNAHME | 2 (Freigabe) |
-| L-004 | Bewegungsprüfung (Teleport/Geschwindigkeit) vor jedem Speicherstand oder Ranking | 7 | 6 | 5 | 210 | Review (D-035) | vor Speicherstand |
+| L-004 | ~~Bewegungsprüfung~~ erledigt (LL-10, D-041). Vor Speicherstand oder Ranking die Schwellen (24 Studs/s, 0,8 s) mit echten Netzdaten nachjustieren | 7 | 6 | 5 | 210 | GETESTET (Logik) / Engine offen | vor Speicherstand |
 | L-005 | Harmlose Schreckmomente (Motten aus dem Schrank), im Sanften Modus aus (H-A9) | 5 | 4 | 7 | 140 | ANNAHME | 2 (Could) |
 | L-006 | Bahnsteig-Vorbeifahrt am Fenster (Atmosphäre S2) | 4 | 4 | 6 | 96 | ANNAHME | 2 (Could) |
 | L-007 | Linie 2 (Wagen 51–100) mit neuen Wesen – jedes neue Wesen braucht vorab einen Compliance-Check (H-A4) | 8 | 3 | 3 | 72 | ANNAHME | 3+ |
 | L-008 | Eigener Lobby-Place mit Matchmaking (TeleportService), Servergröße 4 | 6 | 5 | 4 | 120 | QUELLE (Recherche) | vor Release |
 | L-009 | Markenrecherche Titel (DPMA, EUIPO, USPTO, WIPO, Roblox-Suche), Thumbnails aus echten Aufnahmen (H-A15) | 7 | 6 | 6 | 252 | Compliance | vor Release (Owner) |
 | L-010 | „SettingChanged“-Telemetrie über einen Remote senden | 3 | 6 | 8 | 144 | Telemetrie-Plan | 2 |
+| L-011 | Laufdauer/Wiedereinstieg (LP-03): z. B. Bahnhof alle 10 Wagen, an dem Ausgeschiedene wieder zusteigen – Owner-Entscheidung | 8 | 5 | 5 | 200 | SIMULIERT | 2 (Owner) |
+| L-012 | Zweck der Fahrkarten-Abrisse (LP-15): rein kosmetische Sammlung ohne Kauf/Zufall, z. B. Stempel im Fahrtenbuch – Owner-Entscheidung | 6 | 5 | 6 | 180 | SIMULIERT | 2 (Owner) |
+| L-013 | Test, dass sich zwei Flackerpläne (Express vor Lawine) nie überlagern (H-A16 d, LL-22) | 4 | 7 | 9 | 252 | Review | 2 |
+| L-014 | Game Settings beim Veröffentlichen: Servergröße 4, R15 mit fester Skalierung (S-23) | 6 | 8 | 10 | 480 | Review | vor Test-Place |
 
 ## Verworfene bzw. zurückgestellte Ideen
 - Monetarisierung jeder Art: im MVP ausgeschlossen (D-005). Später höchstens kosmetische Game Passes, nur mit Owner-Freigabe (§8.2).
