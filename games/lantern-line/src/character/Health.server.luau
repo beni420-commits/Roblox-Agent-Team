@@ -1,0 +1,3 @@
+--!strict
+-- Ersetzt das Standard-Skript „Health“ der Roblox-Figur: keine Lebensregeneration (GDD §6).
+-- Ein leeres Skript gleichen Namens in StarterCharacterScripts überschreibt das Standardskript.
