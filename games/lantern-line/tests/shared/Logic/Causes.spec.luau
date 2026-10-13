@@ -10,7 +10,7 @@ TestRunner.it(suite, "Hinweisschlüssel je Ursache und Variante (Texte prüft sc
 	expect(Causes.hintKey("conductor", 9)):toBe("HINT_CONDUCTOR_2")
 	expect(Causes.hintKey("eyes", 0)):toBe("HINT_EYES_1")
 	expect(Causes.isValid("express")):toBe(true)
-	expect(Causes.isValid("rush")):toBe(false)
+	expect(Causes.isValid("unknown")):toBe(false)
 	expect(function()
 		Causes.hintKey("unknown", 1)
 	end):toThrow()

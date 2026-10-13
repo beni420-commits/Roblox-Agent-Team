@@ -86,7 +86,7 @@ function TrainGenerator.generate(seed: number): Plan
 
 	local carriages: { Carriage } = {}
 	local originX = 0
-	local lastRush, lastInspector = -100, -100
+	local lastSweep, lastInspector = -100, -100
 	local prevDark, prevLocked = false, false
 	local prev1: string?, prev2: string? = nil, nil
 	local sleepers = 0
@@ -168,7 +168,7 @@ function TrainGenerator.generate(seed: number): Plan
 				event.seed = rng.nextUInt32()
 				c.event = event
 				lastInspector = i
-			elseif i >= GameConfig.EXPRESS_MIN_INDEX and i - lastRush >= GameConfig.EXPRESS_GAP then
+			elseif i >= GameConfig.EXPRESS_MIN_INDEX and i - lastSweep >= GameConfig.EXPRESS_GAP then
 				local t = (i - GameConfig.EXPRESS_MIN_INDEX)
 					/ (GameConfig.EVENT_LAST_INDEX - GameConfig.EXPRESS_MIN_INDEX)
 				if rng.chance(lerp(GameConfig.EXPRESS_CHANCE_START, GameConfig.EXPRESS_CHANCE_END, t)) then
@@ -185,11 +185,11 @@ function TrainGenerator.generate(seed: number): Plan
 						event = newEvent("express")
 						event.delay = rng.nextRange(GameConfig.EXPRESS_DELAY_MIN, GameConfig.EXPRESS_DELAY_MAX)
 						event.speed = GameConfig.EXPRESS_SPEED
-						fair = Fairness.checkRush(prev, c, event)
+						fair = Fairness.checkExpress(prev, c, event)
 					end
 					if fair then
 						c.event = event
-						lastRush = i
+						lastSweep = i
 					end
 				end
 			end

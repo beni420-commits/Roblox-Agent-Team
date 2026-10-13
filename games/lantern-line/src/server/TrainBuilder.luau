@@ -2,7 +2,7 @@
 -- Baut Wagen aus dem Bauplan (nur Engine-Bauteile, Kat. 0, Compliance H-A14): Hülle mit Fenstern,
 -- Übergang, Türen mit Schablonennummer, Möbel, Verstecke, Behälter, Lampen, Augen, Postwagen-Rätsel.
 -- Interaktionen laufen über ProximityPrompts (automatisch lokalisiert über GameStrings).
--- Möbel sind schlichte Blöcke ohne `Seat` (Compliance H-A7).
+-- Möbel sind schlichte Blöcke ohne Sitz-Instanzen (Compliance H-A7).
 
 local CollectionService = game:GetService("CollectionService")
 local LocalizationService = game:GetService("LocalizationService")
@@ -248,10 +248,10 @@ local function buildObstacle(model: Model, c: Carriage, box: Types.Box)
 	end
 	local size = Vector3.new(box.sx, box.h, box.sz)
 	local cf = at(c, box.cx, box.h / 2, box.cz)
-	if box.kind == "seat" then
+	if box.kind == "chair" then
 		block(
 			model,
-			"SeatBase",
+			"ChairBase",
 			Vector3.new(box.sx, 1.6, box.sz),
 			at(c, box.cx, 0.8, box.cz),
 			Palette.fabric,
@@ -259,7 +259,7 @@ local function buildObstacle(model: Model, c: Carriage, box: Types.Box)
 		)
 		block(
 			model,
-			"SeatBack",
+			"ChairBack",
 			Vector3.new(0.4, box.h, box.sz),
 			at(c, box.cx - box.sx / 2 + 0.2, box.h / 2, box.cz),
 			Palette.fabric,

@@ -138,8 +138,8 @@ end
 
 -- Express in Wagen cur (Vorgänger prev): Von jedem erreichbaren Punkt in prev und cur ist das
 -- nächste Versteck desselben Wagens rechtzeitig erreichbar, und es gibt genug Verstecke.
-function Fairness.checkRush(prev: Carriage, cur: Carriage, event: Event): (boolean, string?)
-	if #prev.hidingSpots + #cur.hidingSpots < GameConfig.MIN_SPOTS_FOR_RUSH then
+function Fairness.checkExpress(prev: Carriage, cur: Carriage, event: Event): (boolean, string?)
+	if #prev.hidingSpots + #cur.hidingSpots < GameConfig.MIN_SPOTS_FOR_EXPRESS then
 		return false, "not enough hiding spots"
 	end
 	return checkReachInTime(

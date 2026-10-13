@@ -136,7 +136,7 @@ local function saloon(rng: Prng.Prng): Layout
 		for _, side in { 1, -1 } do
 			local blockedByLocker = middleLocker and side == 1 and math.abs(rowX - 28) < 3.5
 			if not blockedByLocker and rng.chance(0.85) then
-				addBox(layout, rowX, side * 4, 1.6, 4, 3.5, "seat")
+				addBox(layout, rowX, side * 4, 1.6, 4, 3.5, "chair")
 			end
 		end
 	end

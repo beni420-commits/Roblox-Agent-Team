@@ -7,7 +7,7 @@ TestRunner.run({
 	require("./shared/Logic/NavGrid.spec"),
 	require("./shared/Logic/Fairness.spec"),
 	require("./shared/Logic/TrainGenerator.spec"),
-	require("./shared/Logic/Rush.spec"),
+	require("./shared/Logic/Sweep.spec"),
 	require("./shared/Logic/Oncoming.spec"),
 	require("./shared/Logic/Eyes.spec"),
 	require("./shared/Logic/Inspector.spec"),

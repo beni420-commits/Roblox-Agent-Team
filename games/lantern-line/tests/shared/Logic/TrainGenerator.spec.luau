@@ -84,7 +84,7 @@ TestRunner.it(suite, "Garantie: Express und Gegenzug sind unabhängig nachgeprü
 				local ok, why
 				if event.kind == "express" then
 					express += 1
-					ok, why = Fairness.checkRush(prev, c, event)
+					ok, why = Fairness.checkExpress(prev, c, event)
 					if event.delay < GameConfig.EXPRESS_DELAY_MIN or event.delay > GameConfig.EXPRESS_DELAY_MAX then
 						fail(plan, c.index, "express delay out of range")
 					end
@@ -105,7 +105,7 @@ end)
 
 TestRunner.it(suite, "Regeln: Schonfrist, Abstände, Kontrolleur nur im Schlafwagen, ruhiges Ende", function()
 	for _, plan in allPlans() do
-		local lastRush, lastInspector = -100, -100
+		local lastSweep, lastInspector = -100, -100
 		for _, c in plan.carriages do
 			local event = c.event
 			local i = c.index
@@ -114,16 +114,16 @@ TestRunner.it(suite, "Regeln: Schonfrist, Abstände, Kontrolleur nur im Schlafwa
 					fail(plan, i, "event in grace period")
 				end
 				if event.kind == "express" or event.kind == "oncoming" then
-					if i - lastRush < GameConfig.EXPRESS_GAP then
-						fail(plan, i, "rush gap")
+					if i - lastSweep < GameConfig.EXPRESS_GAP then
+						fail(plan, i, "express gap")
 					end
 					if i < GameConfig.EXPRESS_MIN_INDEX or i > GameConfig.EVENT_LAST_INDEX then
-						fail(plan, i, "rush index")
+						fail(plan, i, "express index")
 					end
 					if event.kind == "oncoming" and i < GameConfig.ONCOMING_MIN_INDEX then
 						fail(plan, i, "oncoming too early")
 					end
-					lastRush = i
+					lastSweep = i
 				elseif event.kind == "inspector" then
 					if c.kind ~= "sleeper" or c.dark or c.locked then
 						fail(plan, i, "inspector placement")

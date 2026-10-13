@@ -17,7 +17,7 @@ local Inspector = require("@game/ReplicatedStorage/Shared/Logic/Inspector")
 local Lobby = require("@game/ReplicatedStorage/Shared/Logic/Lobby")
 local MotionTracker = require("@game/ReplicatedStorage/Shared/Logic/MotionTracker")
 local Oncoming = require("@game/ReplicatedStorage/Shared/Logic/Oncoming")
-local Rush = require("@game/ReplicatedStorage/Shared/Logic/Rush")
+local Sweep = require("@game/ReplicatedStorage/Shared/Logic/Sweep")
 local RunState = require("@game/ReplicatedStorage/Shared/Logic/RunState")
 local TrainGenerator = require("@game/ReplicatedStorage/Shared/Logic/TrainGenerator")
 local Types = require("@game/ReplicatedStorage/Shared/Logic/Types")
@@ -48,8 +48,8 @@ local participants: { [Player]: boolean } = {}
 local deathCounts: { [Player]: { [string]: number } } = {}
 local coldWarned: { [Player]: boolean } = {}
 
-local express: Rush.Schedule? = nil
-local chase: Rush.Schedule? = nil
+local express: Sweep.Schedule? = nil
+local chase: Sweep.Schedule? = nil
 local oncoming: Oncoming.Schedule? = nil
 local oncomingHit: { [Player]: boolean } = {}
 local inspector: InspectorRun? = nil
@@ -261,7 +261,7 @@ local function triggerEvent(k: number, event: Types.Event)
 	end
 	local t = now()
 	if event.kind == "express" then
-		local s = Rush.express(current, k, t)
+		local s = Sweep.express(current, k, t)
 		express = s
 		NetService.fireAll(WORLD, {
 			type = "express",
@@ -299,7 +299,7 @@ local function triggerEvent(k: number, event: Types.Event)
 		}
 	elseif event.kind == "chase" then
 		-- Nachzügler hinter dem Start der Lawine an das Heck von Wagen k − 1 holen.
-		local s = Rush.chase(current, k, t)
+		local s = Sweep.chase(current, k, t)
 		for _, player in aliveParticipants() do
 			local root = PlayerService.root(player)
 			local frame = rearFrame(k - 1)
@@ -558,7 +558,7 @@ local function updateEntities(t: number, dt: number)
 		for _, player in alive do
 			local root = PlayerService.root(player)
 			if root and not isHidden(player) and math.abs(root.Position.Z) <= HALF + 1 then
-				if Rush.expressHits(e, t - dt, t, root.Position.X) then
+				if Sweep.expressHits(e, t - dt, t, root.Position.X) then
 					eliminate(player, "express")
 				end
 			end
@@ -572,7 +572,7 @@ local function updateEntities(t: number, dt: number)
 	if ch then
 		for _, player in alive do
 			local root = PlayerService.root(player)
-			if root and Rush.chaseCatches(ch, t, root.Position.X) then
+			if root and Sweep.chaseCatches(ch, t, root.Position.X) then
 				eliminate(player, "chase")
 			end
 		end

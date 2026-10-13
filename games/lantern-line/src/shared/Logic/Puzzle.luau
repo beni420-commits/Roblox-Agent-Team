@@ -1,7 +1,7 @@
 --!strict
 -- Entwerter-Rätsel im Postwagen (Compliance H-A3 b): 3 × 3 Lochfelder.
 -- Jedes der drei Fahrkarten-Fragmente zeigt eine Reihe; das vollständige Muster öffnet das Tor.
--- Eingabe nur über Lochfelder (keine TextBox, H-A12). Maske: Reihe r, Spalte s → Bit 3·(r−1) + (s−1).
+-- Eingabe nur über Lochfelder (keine Texteingabe, H-A12). Maske: Reihe r, Spalte s → Bit 3·(r−1) + (s−1).
 
 local Types = require("./Types")
 

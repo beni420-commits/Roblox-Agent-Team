@@ -32,8 +32,8 @@ end)
 TestRunner.it(suite, "Augen sperren Fläche: Augen mitten im einzigen Gang machen den Wagen unfair", function()
 	-- Gang z ∈ [-2, 2] zwischen zwei Längswänden; Augen in der Mitte des Gangs.
 	local walls = {
-		{ cx = 20, cz = 4.25, sx = 20, sz = 3.5, h = 3, kind = "seat" },
-		{ cx = 20, cz = -4.25, sx = 20, sz = 3.5, h = 3, kind = "seat" },
+		{ cx = 20, cz = 4.25, sx = 20, sz = 3.5, h = 3, kind = "chair" },
+		{ cx = 20, cz = -4.25, sx = 20, sz = 3.5, h = 3, kind = "chair" },
 	}
 	local fine =
 		Fixtures.carriage({ length = 40, obstacles = walls, spots = { { 3, 4.7, 0, -1 }, { 37, -4.7, 0, 1 } } })
@@ -51,12 +51,12 @@ TestRunner.it(suite, "Express: weit entfernte Verstecke bei kurzer Warnzeit sind
 	local prev = twoSpots(4, 0, 40)
 	local cur = twoSpots(5, 44, 40)
 	local normal = Fixtures.event("express", GameConfig.EXPRESS_DELAY_MIN, GameConfig.EXPRESS_SPEED, 0)
-	expect((Fairness.checkRush(prev, cur, normal))):toBe(true)
+	expect((Fairness.checkExpress(prev, cur, normal))):toBe(true)
 	-- Nur Verstecke ganz vorn in einem 96 langen Wagen, sofortiger Start: unfair
 	local long = Fixtures.carriage({ index = 4, length = 96, spots = { { 93, 4.7, 0, -1 }, { 93, -4.7, 0, 1 } } })
 	local cur2 = twoSpots(5, 100, 40)
 	local instant = Fixtures.event("express", 0, 200, 0)
-	local ok, why = Fairness.checkRush(long, cur2, instant)
+	local ok, why = Fairness.checkExpress(long, cur2, instant)
 	expect(ok):toBe(false)
 	expect(string.find(why or "", "carriage 4", 1, true) ~= nil):toBe(true)
 end)
@@ -64,7 +64,7 @@ end)
 TestRunner.it(suite, "Express: zu wenige Verstecke in k−1 ∪ k", function()
 	local prev = Fixtures.carriage({ index = 4, length = 40, spots = { { 3, 4.7, 0, -1 } } })
 	local cur = Fixtures.carriage({ index = 5, originX = 44, length = 40, spots = { { 3, 4.7, 0, -1 } } })
-	local ok, why = Fairness.checkRush(prev, cur, Fixtures.event("express", 3, 70, 0))
+	local ok, why = Fairness.checkExpress(prev, cur, Fixtures.event("express", 3, 70, 0))
 	expect(ok):toBe(false)
 	expect(why):toBe("not enough hiding spots")
 end)

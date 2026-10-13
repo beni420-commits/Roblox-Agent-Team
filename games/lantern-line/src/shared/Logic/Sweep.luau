@@ -1,5 +1,5 @@
 --!strict
--- Kinematik der Wesen, die den Zug entlang fahren: Express (§6.1) und Kofferlawine (§6.6).
+-- Kinematik der Wesen, die den Zug entlang fegen (Sweep): Express (§6.1) und Kofferlawine (§6.6).
 -- Server und Client rechnen mit demselben Fahrplan: Der Server prüft Treffer, der Client zeichnet.
 -- Zeiten sind Serverzeit (workspace:GetServerTimeNow()), x ist Welt-x entlang des Zugs.
 
@@ -16,7 +16,7 @@ export type Schedule = {
 	x1: number,
 }
 
-local Rush = {}
+local Sweep = {}
 
 local function carriage(plan: Types.Plan, index: number): Types.Carriage
 	local c = plan.carriages[index + 1]
@@ -25,7 +25,7 @@ local function carriage(plan: Types.Plan, index: number): Types.Carriage
 end
 
 -- Express: startet EXPRESS_SPAWN_BEHIND hinter Wagen k−1 und endet an der Front von Wagen k.
-function Rush.express(plan: Types.Plan, k: number, triggerTime: number): Schedule
+function Sweep.express(plan: Types.Plan, k: number, triggerTime: number): Schedule
 	local prev, cur = carriage(plan, k - 1), carriage(plan, k)
 	local event = cur.event
 	assert(event and event.kind == "express", "carriage has no express event")
@@ -44,7 +44,7 @@ function Rush.express(plan: Types.Plan, k: number, triggerTime: number): Schedul
 end
 
 -- Kofferlawine: startet am Heck von Wagen c−1 und endet an der Vordertür von Wagen c+CHASE_LENGTH−1.
-function Rush.chase(plan: Types.Plan, c: number, triggerTime: number): Schedule
+function Sweep.chase(plan: Types.Plan, c: number, triggerTime: number): Schedule
 	local first = carriage(plan, c - 1)
 	local last = carriage(plan, c + GameConfig.CHASE_LENGTH - 1)
 	local x0 = first.originX
@@ -62,7 +62,7 @@ function Rush.chase(plan: Types.Plan, c: number, triggerTime: number): Schedule
 end
 
 -- Position der Front zum Zeitpunkt t (nil vor dem Start und nach dem Ende).
-function Rush.positionAt(s: Schedule, t: number): number?
+function Sweep.positionAt(s: Schedule, t: number): number?
 	if t < s.startAt or t > s.endAt then
 		return nil
 	end
@@ -70,22 +70,22 @@ function Rush.positionAt(s: Schedule, t: number): number?
 end
 
 -- Überstrichener Bereich zwischen ta und tb (nil, wenn das Wesen in dem Zeitraum nicht fährt).
-function Rush.sweep(s: Schedule, ta: number, tb: number): (number?, number?)
+function Sweep.sweep(s: Schedule, ta: number, tb: number): (number?, number?)
 	local a = math.max(ta, s.startAt)
 	local b = math.min(tb, s.endAt)
 	if a > b then
 		return nil, nil
 	end
-	return Rush.positionAt(s, a), Rush.positionAt(s, b)
+	return Sweep.positionAt(s, a), Sweep.positionAt(s, b)
 end
 
-function Rush.isActive(s: Schedule, t: number): boolean
+function Sweep.isActive(s: Schedule, t: number): boolean
 	return t >= s.warnAt and t <= s.endAt
 end
 
 -- Trifft der Express im Zeitraum [ta, tb] einen nicht versteckten Spieler an Welt-x px?
-function Rush.expressHits(s: Schedule, ta: number, tb: number, px: number): boolean
-	local lo, hi = Rush.sweep(s, ta, tb)
+function Sweep.expressHits(s: Schedule, ta: number, tb: number, px: number): boolean
+	local lo, hi = Sweep.sweep(s, ta, tb)
 	if lo == nil or hi == nil then
 		return false
 	end
@@ -94,12 +94,12 @@ function Rush.expressHits(s: Schedule, ta: number, tb: number, px: number): bool
 end
 
 -- Holt die Kofferlawine einen Spieler an Welt-x px ein? (Verstecke schützen nicht.)
-function Rush.chaseCatches(s: Schedule, t: number, px: number): boolean
-	local front = Rush.positionAt(s, t)
+function Sweep.chaseCatches(s: Schedule, t: number, px: number): boolean
+	local front = Sweep.positionAt(s, t)
 	if front == nil then
 		return false
 	end
 	return px <= front + GameConfig.CHASE_CATCH
 end
 
-return table.freeze(Rush)
+return table.freeze(Sweep)

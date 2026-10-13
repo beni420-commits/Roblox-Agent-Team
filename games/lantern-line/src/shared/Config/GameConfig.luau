@@ -45,7 +45,7 @@ local GameConfig = table.freeze({
 	EXPRESS_CHANCE_START = 0.15,
 	EXPRESS_CHANCE_END = 0.28,
 	EXPRESS_GAP = 4, -- Mindestabstand in Wagen zwischen Express und Gegenzug
-	MIN_SPOTS_FOR_RUSH = 4, -- Verstecke in k−1 ∪ k
+	MIN_SPOTS_FOR_EXPRESS = 4, -- Verstecke in k−1 ∪ k
 
 	-- Gegenzug (§6.2): Licht flutet eine Wagenseite
 	ONCOMING_MIN_INDEX = 10,
