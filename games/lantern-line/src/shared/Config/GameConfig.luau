@@ -82,6 +82,7 @@ local GameConfig = table.freeze({
 	INSPECTOR_DAMAGE = 40,
 	INSPECTOR_CHECK_DISTANCE = 8,
 	INSPECTOR_X_FROM_FRONT = 2.5,
+	INSPECTOR_MAX_DURATION = 40, -- danach geht er in jedem Fall ab (niemand blockiert die Gruppe, H-A18)
 	INSPECTOR_Z = -3.5,
 
 	-- Kofferlawine (§6.6, Verfolgungsjagd)
@@ -91,6 +92,8 @@ local GameConfig = table.freeze({
 	CHASE_WARN = 3,
 	CHASE_SPEED = 13,
 	CHASE_CATCH = 1.5,
+	CHASE_COUPLING_OFFSET = 2, -- Kupplung (H-A17): im Übergang vor Wagen c+3, Wagen c+2 ist der letzte davor
+	CHASE_COUPLING_WAGON = 2,
 
 	-- Schaffner (§6.5)
 	CONDUCTOR_WAKE = 6,
@@ -100,7 +103,7 @@ local GameConfig = table.freeze({
 	CONDUCTOR_FORGET = 5,
 	CONDUCTOR_VIEW_DISTANCE = 16,
 	CONDUCTOR_VIEW_ANGLE = 30, -- halber Öffnungswinkel des Laternenkegels in Grad
-	NOISE_WALK_RADIUS = 22,
+	NOISE_WALK_RADIUS = 16, -- nicht weiter als die Sichtweite (Geräusch nur Nebenfaktor, H-A17)
 	NOISE_SNEAK_RADIUS = 6,
 	NOISE_WALK_SPEED = 10, -- ab dieser Geschwindigkeit gilt man als „laufend“
 	NOISE_MIN_SPEED = 2,

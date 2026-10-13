@@ -28,6 +28,7 @@ local custom: { [string]: string } = {
 	PatternWrong = "PatternWrong",
 	PatternSolved = "PatternSolved",
 	RunEnded = "RunEnded", -- Wert = erreichter Wagen, Feld 03 = won/lost
+	Uncoupled = "Uncoupled", -- Wert = Startwagen der Kofferlawine
 	SettingChanged = "SettingChanged",
 	RemoteRejected = "RemoteRejected",
 }

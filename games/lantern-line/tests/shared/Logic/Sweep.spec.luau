@@ -82,4 +82,32 @@ TestRunner.it(suite, "Kofferlawine: langsamer als Laufen, fängt alles hinter ih
 	end
 end)
 
+TestRunner.it(suite, "Kupplung (H-A17): erst wenn alle Lebenden vorbei sind; Abkoppeln hält die Lawine an", function()
+	local plan = TrainGenerator.generate(4242)
+	local c = chaseStart(plan)
+	local s = Sweep.chase(plan, c, 10)
+	local cx = Sweep.couplingX(plan, c)
+	local wagon = plan.carriages[c + GameConfig.CHASE_COUPLING_WAGON + 1]
+	expect(cx):toBe(wagon.originX + wagon.length + GameConfig.CHASE_COUPLING_OFFSET)
+	local doorX = cx - GameConfig.CHASE_COUPLING_OFFSET
+	expect(Sweep.canUncouple(s, cx, 11, { doorX + 1, doorX + 3 })):toBe(true)
+	expect(Sweep.canUncouple(s, cx, 11, { doorX + 1, doorX - 5 })):toBe(false) -- einer ist noch dahinter
+	expect(Sweep.canUncouple(s, cx, 11, {})):toBe(false)
+	expect(Sweep.canUncouple(s, cx, 9, { doorX + 1 })):toBe(false) -- vor der Lawine
+	-- Abkoppeln mitten in der Fahrt: Front bleibt stehen, danach fängt sie niemanden mehr
+	local t = s.startAt + 3
+	local front = Sweep.positionAt(s, t) :: number
+	Sweep.stop(s, t)
+	expect(s.endAt):toBe(t)
+	expect(s.x1):toBeNear(front, 1e-9)
+	expect(Sweep.chaseCatches(s, t + 1, front - 10)):toBe(false)
+	expect(Sweep.positionAt(s, t + 0.5)):toBe(nil)
+	expect(Sweep.canUncouple(s, cx, t + 1, { doorX + 1 })):toBe(false) -- schon vorbei
+	-- Abkoppeln noch in der Warnzeit: Lawine startet gar nicht
+	local s2 = Sweep.chase(plan, c, 50)
+	Sweep.stop(s2, 51)
+	expect(Sweep.positionAt(s2, 52)):toBe(nil)
+	expect(Sweep.chaseCatches(s2, 60, s2.x0)):toBe(false)
+end)
+
 return suite

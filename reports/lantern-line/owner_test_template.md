@@ -37,6 +37,7 @@ Die Reihenfolge ist zufällig. Notiere, was dir begegnet.
 | C3 | **Dunkler Wagen**: Nur dein eigenes Licht leuchtet. Grüne Augenpaare werden in der Nähe heller; zu nah kostet Leben, danach verschwinden sie | | |
 | C4 | **Kontrolleur** (Schlafwagen): Bei runder Kelle darfst du gehen, bei Streifen-Kelle musst du stillstehen (oben erscheint ein Hinweis). Wer bei ihm ankommt, kommt weiter | | |
 | C5 | **Kofferlawine** (Wagen 25–42): Lampen hinten werden orange, eine Kofferwand rollt. Wenn du nach vorn läufst, entkommst du | | |
+| C5b | **Kupplung**: Im Übergang zwei Wagen weiter leuchtet ein Hebel orange, sobald alle vorbei sind. 1 s halten: Die Tür schließt sich, die Lawine fällt zurück | | |
 | C6 | **Ausscheiden**: Kurz wird es dunkel, dann erscheint die Fahrkarten-Notiz mit Hinweis. „OK“ startet das Zuschauen (nur mit 2 Spielern), Wechseln mit Q/E | | |
 
 ## D. Finale (Wagen 50) – Abkürzung zum Testen

@@ -5,10 +5,12 @@
 
 local ContextActionService = game:GetService("ContextActionService")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
 local Context = require("./Context")
 local Hud = require("./Hud")
 local Palette = require("@game/ReplicatedStorage/Shared/Visual/Palette")
+local Settings = require("./Settings")
 local Strings = require("./Strings")
 local UiKit = require("./UiKit")
 
@@ -33,6 +35,29 @@ local summary: Frame
 local summaryLines: { TextLabel } = {}
 local spectating = false
 local spectateIndex = 1
+local spectateTarget: Player? = nil
+
+-- Zuschauen mit Kamera hinter und über dem Mitreisenden statt in seinem Kopf (Compliance H-A18:
+-- fremde Kopfbewegung kann Übelkeit auslösen). Mit „Bewegung reduzieren“ ohne Nachziehen.
+local function spectateCamera(dt: number)
+	local target = spectateTarget
+	local character = if target then target.Character else nil
+	local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
+	if not spectating or root == nil or not root:IsA("BasePart") then
+		return
+	end
+	local camera = workspace.CurrentCamera
+	camera.CameraType = Enum.CameraType.Scriptable
+	local look = root.CFrame.LookVector
+	local flat = Vector3.new(look.X, 0, look.Z)
+	if flat.Magnitude < 1e-3 then
+		flat = Vector3.new(1, 0, 0)
+	end
+	local eye = root.Position - flat.Unit * 7 + Vector3.new(0, 3.5, 0)
+	local goal = CFrame.lookAt(eye, root.Position + Vector3.new(0, 1.5, 0))
+	local alpha = if Settings.motionAllowed() then math.clamp(dt * 4, 0, 1) else 1
+	camera.CFrame = camera.CFrame:Lerp(goal, alpha)
+end
 
 local function candidates(): { Player }
 	local list: { Player } = {}
@@ -62,13 +87,8 @@ local function showSpectate()
 		return
 	end
 	spectateIndex = ((spectateIndex - 1) % #list) + 1
-	local target = list[spectateIndex]
-	local character = target.Character
-	local humanoid = if character then character:FindFirstChildOfClass("Humanoid") else nil
-	if humanoid then
-		camera.CameraType = Enum.CameraType.Custom
-		camera.CameraSubject = humanoid
-	end
+	spectateTarget = list[spectateIndex]
+	camera.CameraType = Enum.CameraType.Scriptable
 	spectateBar.Visible = true
 	spectateLabel.Text = Strings.format("spectate.label", { spectateIndex, #list })
 end
@@ -126,6 +146,7 @@ end
 
 local function reset()
 	spectating = false
+	spectateTarget = nil
 	bindSpectateKeys(false)
 	note.Visible = false
 	spectateBar.Visible = false
@@ -173,6 +194,7 @@ function DeathController.init()
 		)
 	end
 
+	RunService.RenderStepped:Connect(spectateCamera)
 	Context.onPersonal("death", onDeath)
 	Context.onPersonal("summary", onSummary)
 	Context.onPersonal("damage", function()

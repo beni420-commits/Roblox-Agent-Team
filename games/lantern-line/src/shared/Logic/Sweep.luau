@@ -102,4 +102,41 @@ function Sweep.chaseCatches(s: Schedule, t: number, px: number): boolean
 	return px <= front + GameConfig.CHASE_CATCH
 end
 
+-- Kupplung der Kofferlawine (Compliance H-A17, eigene Kernmechanik): im Übergang an der Front von
+-- Wagen c + CHASE_COUPLING_WAGON. Sind alle Lebenden vorbei, kann die Gruppe abkoppeln.
+function Sweep.couplingX(plan: Types.Plan, c: number): number
+	local wagon = carriage(plan, c + GameConfig.CHASE_COUPLING_WAGON)
+	return wagon.originX + wagon.length + GameConfig.CHASE_COUPLING_OFFSET
+end
+
+-- Darf jetzt abgekoppelt werden? Lawine läuft (inkl. Warnzeit), alle Lebenden stehen hinter der Tür vor der Kupplung.
+function Sweep.canUncouple(s: Schedule, couplingX: number, t: number, alivePositions: { number }): boolean
+	if s.kind ~= "chase" or t < s.warnAt or t > s.endAt or #alivePositions == 0 then
+		return false
+	end
+	local doorX = couplingX - GameConfig.CHASE_COUPLING_OFFSET
+	for _, px in alivePositions do
+		if px <= doorX + 0.5 then
+			return false
+		end
+	end
+	return true
+end
+
+-- Hält die Lawine zum Zeitpunkt t an (sie bleibt mit den abgekoppelten Wagen zurück).
+function Sweep.stop(s: Schedule, t: number)
+	if t >= s.endAt then
+		return
+	end
+	if t <= s.startAt then
+		s.startAt = t
+		s.endAt = t
+		s.x1 = s.x0
+		return
+	end
+	local x = Sweep.positionAt(s, t) :: number
+	s.x1 = x
+	s.endAt = t
+end
+
 return table.freeze(Sweep)

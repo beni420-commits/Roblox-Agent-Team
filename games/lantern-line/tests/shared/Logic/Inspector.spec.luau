@@ -94,9 +94,20 @@ end)
 
 TestRunner.it(suite, "großer Zeitsprung durchläuft mehrere Phasen ohne Fehler", function()
 	local state = Inspector.new(11, 0)
-	local r = Inspector.update(state, 60, { view("a", 30, 0) })
+	local t = GameConfig.INSPECTOR_MAX_DURATION - 5
+	local r = Inspector.update(state, t, { view("a", 30, 0) })
 	expect(r.phaseChanged):toBe(true)
-	expect(state.phaseEndsAt > 60):toBe(true)
+	expect(state.phaseEndsAt > t):toBe(true)
+end)
+
+TestRunner.it(suite, "Zeitlimit: nach INSPECTOR_MAX_DURATION geht er auch ohne Kontrolle ab (H-A18)", function()
+	local state = Inspector.new(12, 100)
+	local laggard = { view("a", 30, 0) }
+	expect(Inspector.update(state, 100 + GameConfig.INSPECTOR_MAX_DURATION - 0.1, laggard).done):toBe(false)
+	local r = Inspector.update(state, 100 + GameConfig.INSPECTOR_MAX_DURATION, laggard)
+	expect(r.done):toBe(true)
+	expect(#r.hits):toBe(0)
+	expect(state.phase):toBe("gone")
 end)
 
 return suite

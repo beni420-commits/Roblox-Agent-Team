@@ -136,7 +136,10 @@ local function setSign(phase: string?)
 		signLabel.Text = Strings.format("hud.standstill")
 	else
 		-- runde Kelle (bei „warn“ pulsiert die Form langsam, ≤ 1 Hz)
-		local pulse = if phase == "warn" then 0.75 + 0.25 * math.cos(os.clock() * math.pi * 1.6) else 1
+		local pulse = if phase == "warn" and Settings.motionAllowed()
+			then 0.75 + 0.25 * math.cos(os.clock() * math.pi * 1.6)
+			elseif phase == "warn" then 0.8
+			else 1
 		signShape.Size = UDim2.fromOffset(40 * pulse, 40 * pulse)
 		signShape.Position = UDim2.new(0, 20 - 20 * pulse, 0.5, -20 * pulse)
 		signShape.BackgroundColor3 = Palette.inspectorGo

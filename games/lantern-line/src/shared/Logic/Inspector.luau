@@ -2,7 +2,8 @@
 -- Kontrolleur (§6.4): Phasen Gehen → Achtung → Halt (rot) → Gehen …
 -- Bei „stop“ (nach Gnadenzeit) kostet Bewegung Lebenspunkte, höchstens einmal je Haltphase.
 -- Wer bis auf INSPECTOR_CHECK_DISTANCE herankommt, ist kontrolliert. Sind alle lebenden Spieler
--- im Wagen kontrolliert (mind. einer), geht der Kontrolleur ab und gibt die Tür frei.
+-- im Wagen kontrolliert (mind. einer), geht der Kontrolleur ab und gibt die Tür frei – spätestens nach
+-- INSPECTOR_MAX_DURATION Sekunden.
 -- Signale (Compliance H-A10/H-A11): Phasenwechsel ohne Flackern; zweites Merkmal = Form der Kelle.
 
 local GameConfig = require("../Config/GameConfig")
@@ -12,6 +13,7 @@ export type Phase = "intro" | "go" | "warn" | "stop" | "gone"
 
 export type State = {
 	rng: Prng.Prng,
+	startedAt: number,
 	phase: Phase,
 	phaseEndsAt: number,
 	stopStartedAt: number,
@@ -39,6 +41,7 @@ local Inspector = {}
 function Inspector.new(seed: number, now: number): State
 	return {
 		rng = Prng.new(seed),
+		startedAt = now,
 		phase = "intro",
 		phaseEndsAt = now + GameConfig.INSPECTOR_INTRO,
 		stopStartedAt = -math.huge,
@@ -67,6 +70,13 @@ end
 function Inspector.update(state: State, now: number, players: { PlayerView }): Result
 	local result: Result = { hits = {}, phaseChanged = false, done = state.phase == "gone" }
 	if state.phase == "gone" then
+		return result
+	end
+	-- Zeitlimit: niemand kann die Gruppe dauerhaft festhalten (Compliance H-A18).
+	if now - state.startedAt >= GameConfig.INSPECTOR_MAX_DURATION then
+		state.phase = "gone"
+		result.phaseChanged = true
+		result.done = true
 		return result
 	end
 	while now >= state.phaseEndsAt do

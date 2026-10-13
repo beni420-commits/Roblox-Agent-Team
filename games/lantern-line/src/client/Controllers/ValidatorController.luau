@@ -92,7 +92,7 @@ function ValidatorController.init()
 			Hud.toast(Strings.format("validator.right"))
 		else
 			status.Text = Strings.format("validator.wrong")
-			if not Settings.gentle() then
+			if Settings.motionAllowed() then
 				local origin = panel.Position
 				panel.Position = origin + UDim2.fromOffset(8, 0)
 				TweenService:Create(panel, TweenInfo.new(0.25, Enum.EasingStyle.Elastic), { Position = origin }):Play()

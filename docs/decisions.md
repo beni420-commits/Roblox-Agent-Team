@@ -192,4 +192,17 @@ Der Owner hat in §0.1 keine Werte ausgefüllt. Es gelten die Defaults:
   - Der Mutationstest (falscher Projektpfad) wurde von 3 Tests erkannt.
   - Echtes Windows ist weiterhin ungetestet.
 
+### D-040 · 2026-10-13 · Game Designer / Compliance · Umsetzung der Compliance-Nachprüfung (H-A16 bis H-A18)
+- **Entscheidung:**
+  - **Gegenzug:** ruhiges, weich anschwellendes Seitenlicht an festen Positionen statt vorbeirasender Lichter (vorher ca. 8 Lichtwechsel pro Sekunde).
+  - **Express:** kleinerer Lichtkern über Augenhöhe, der nahe an der Kamera ausblendet (nie bildfüllend).
+  - **Sanfter Modus** schließt „Flackern reduzieren“ ein. „Bewegung reduzieren“ wirkt auch auf UI-Wackeln und den Kellen-Puls.
+  - **Zuschauen:** Verfolgerkamera hinter dem Mitreisenden statt Ich-Perspektive.
+  - **Kontrolleur:** geht spätestens nach 40 s ab.
+  - **Schaffner:** Hörradius Laufen 16 (= Sichtweite).
+  - **Kofferlawine:** neue Kernmechanik „Kupplung lösen“ (Teamaufgabe).
+- **Evidenz:**
+  - [GETESTET] Logik: Zeitlimit, Kupplung (Freigabe nur, wenn alle vorbei sind; Anhalten), Hörradius ≤ Sicht.
+  - Lichtwirkung in der Engine nicht geprüft (Owner-Test E1, E2). D-034 („eigene Kernmechanik“) ist erst damit erfüllt.
+
 <!-- Weitere Entscheidungen werden unten angehängt. -->

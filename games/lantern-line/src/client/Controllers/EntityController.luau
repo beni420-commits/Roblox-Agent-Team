@@ -79,26 +79,32 @@ local function lowestCarriage(): number
 	return if lowest == math.huge then 0 else lowest
 end
 
+-- Express: kleiner Lichtkern über Augenhöhe mit weichem Hof. Nahe an der Kamera blendet er aus,
+-- damit er nie das ganze Bild weiß füllt (Compliance H-A10 d, H-A16).
+local EXPRESS_FADE_DISTANCE = 12
+
 local function onExpress(payload: any)
 	local schedule = scheduleOf(payload, "express")
 	local model = Instance.new("Model")
 	model.Name = "Express"
 	local gentle = Settings.gentle()
-	local core = part(model, Vector3.new(6, 6, 6), Palette.express, Enum.Material.Neon)
+	local core = part(model, Vector3.new(3.5, 3.5, 3.5), Palette.express, Enum.Material.Neon)
 	core.Shape = Enum.PartType.Ball
-	core.Transparency = if gentle then 0.6 else 0.3
-	local halo = part(model, Vector3.new(10, 10, 10), Palette.express, Enum.Material.Neon)
+	core.Transparency = if gentle then 0.6 else 0.35
+	core:SetAttribute("BaseTransparency", core.Transparency)
+	local halo = part(model, Vector3.new(7, 7, 7), Palette.express, Enum.Material.Neon)
 	halo.Shape = Enum.PartType.Ball
-	halo.Transparency = 0.9
+	halo.Transparency = 0.93
+	halo:SetAttribute("BaseTransparency", halo.Transparency)
 	local light = Instance.new("PointLight")
-	light.Range = 40
-	light.Brightness = if gentle then 1.5 else 3
+	light.Range = 30
+	light.Brightness = if gentle then 1.2 else 2
 	light.Color = Palette.express
 	light.Parent = core
 	core.CFrame = CFrame.identity
 	halo.CFrame = CFrame.identity
 	model.WorldPivot = CFrame.identity
-	model:PivotTo(CFrame.new(schedule.x0, GameConfig.FLOOR_Y + 5, 0))
+	model:PivotTo(CFrame.new(schedule.x0, GameConfig.FLOOR_Y + 6.5, 0))
 	model.Parent = localStuff
 	table.insert(movers, { schedule = schedule, model = model })
 	AmbienceController.addEffect(
@@ -111,6 +117,18 @@ local function onExpress(payload: any)
 		nil
 	)
 	Hud.setWarning(Palette.express, schedule.startAt + (schedule.x1 - schedule.x0) / 2 / GameConfig.EXPRESS_SPEED)
+end
+
+local function fadeNearCamera(model: Model)
+	local camera = workspace.CurrentCamera
+	for _, child in model:GetChildren() do
+		local base = child:GetAttribute("BaseTransparency")
+		if child:IsA("BasePart") and type(base) == "number" then
+			local d = (child.Position - camera.CFrame.Position).Magnitude
+			local k = math.clamp((EXPRESS_FADE_DISTANCE - d) / EXPRESS_FADE_DISTANCE, 0, 1)
+			child.Transparency = base + (0.97 - base) * k
+		end
+	end
 end
 
 local function onChase(payload: any)
@@ -151,10 +169,13 @@ local function onChase(payload: any)
 	Hud.setWarning(Palette.chase, schedule.endAt)
 end
 
+-- Gegenzug: ruhiges Licht an festen Fensterpositionen, schwillt weich an und ab (keine Lichtwechsel,
+-- Compliance H-A16). Zweites Merkmal: markierte Bodenhälfte + Pfeil im HUD (H-A11).
+local ONCOMING_FADE = 0.35
+
 local function onOncoming(payload: any)
-	oncomingUntil = payload.endAt
+	oncomingUntil = payload.endAt + ONCOMING_FADE
 	Hud.setOncoming(payload.side, payload.endAt)
-	-- Gefahrenhälfte sichtbar markieren (zweites Merkmal neben der Farbe, H-A11)
 	local band = part(
 		localStuff,
 		Vector3.new(payload.x1 - payload.x0, 0.06, HALF + GameConfig.ONCOMING_SAFE_Z),
@@ -168,15 +189,18 @@ local function onOncoming(payload: any)
 	)
 	band.Transparency = 0.92
 	table.insert(oncomingParts, band)
-	for i = 1, 6 do
-		local glow = part(localStuff, Vector3.new(2, 3, 2), Palette.oncoming, Enum.Material.Neon)
+	local root = Context.root()
+	local centerX = if root then root.Position.X else (payload.x0 + payload.x1) / 2
+	for i = -3, 3 do
+		local x = math.clamp(centerX + i * 16, payload.x0, payload.x1)
+		local glow = part(localStuff, Vector3.new(1, 1, 1), Palette.oncoming, Enum.Material.SmoothPlastic)
 		glow.Transparency = 1
-		glow:SetAttribute("Index", i)
-		glow:SetAttribute("Side", payload.side)
+		glow.CFrame = CFrame.new(x, GameConfig.FLOOR_Y + 5, payload.side * (HALF + 3))
 		glow:SetAttribute("HitAt", payload.hitAt)
 		glow:SetAttribute("WarnAt", payload.warnAt)
+		glow:SetAttribute("EndAt", payload.endAt)
 		local light = Instance.new("PointLight")
-		light.Range = 26
+		light.Range = 24
 		light.Brightness = 0
 		light.Color = Palette.oncoming
 		light.Parent = glow
@@ -195,30 +219,23 @@ local function updateOncoming(t: number)
 		table.clear(oncomingParts)
 		return
 	end
-	local root = Context.root()
-	local baseX = if root then root.Position.X else 0
+	local scale = if Settings.gentle() then 0.6 else 1
 	for _, p in oncomingParts do
-		local index = p:GetAttribute("Index")
-		local side = p:GetAttribute("Side")
 		local hitAt = p:GetAttribute("HitAt")
 		local warnAt = p:GetAttribute("WarnAt")
+		local endAt = p:GetAttribute("EndAt")
 		local light = p:FindFirstChildOfClass("PointLight")
-		if
-			type(index) == "number"
-			and type(side) == "number"
-			and type(hitAt) == "number"
-			and type(warnAt) == "number"
-			and light
-		then
-			-- Warnphase: Licht wird stetig heller (kein Flackern); Trefferphase: Lichter rasen vorbei.
-			local grow = math.clamp((t - warnAt) / math.max(0.1, hitAt - warnAt), 0, 1)
-			local brightness = if t >= hitAt then 5 else 1.5 * grow
-			if Settings.gentle() then
-				brightness *= 0.6
+		if type(hitAt) == "number" and type(warnAt) == "number" and type(endAt) == "number" and light then
+			-- stetig: Warnphase 0 → 1,2; Trefferphase weich auf 3; danach weich aus (nie ein Sprung)
+			local brightness
+			if t < hitAt then
+				brightness = 1.2 * math.clamp((t - warnAt) / math.max(0.1, hitAt - warnAt), 0, 1)
+			elseif t <= endAt then
+				brightness = 1.2 + 1.8 * math.clamp((t - hitAt) / ONCOMING_FADE, 0, 1)
+			else
+				brightness = 3 * math.clamp(1 - (t - endAt) / ONCOMING_FADE, 0, 1)
 			end
-			light.Brightness = brightness
-			local runX = if t >= hitAt then (t - hitAt) * 160 else 0
-			p.Position = Vector3.new(baseX + 60 - index * 20 - runX % 120, GameConfig.FLOOR_Y + 5, side * (HALF + 3))
+			light.Brightness = brightness * scale
 		end
 	end
 end
@@ -234,8 +251,11 @@ local function updateMovers(t: number)
 			local jitter = if mover.schedule.kind == "chase" and Settings.motionAllowed()
 				then CFrame.Angles(0, 0, math.rad(4) * math.sin(t * 9))
 				else CFrame.identity
-			local y = if mover.schedule.kind == "express" then 5 else 0
+			local y = if mover.schedule.kind == "express" then 6.5 else 0
 			mover.model:PivotTo(CFrame.new(x, GameConfig.FLOOR_Y + y, 0) * jitter)
+			if mover.schedule.kind == "express" then
+				fadeNearCamera(mover.model)
+			end
 		end
 	end
 end
@@ -359,6 +379,26 @@ function EntityController.init()
 	Context.onWorld("oncoming", onOncoming)
 	Context.onWorld("conductor", function(payload)
 		conductorPath = payload
+	end)
+	Context.onWorld("chaseStop", function()
+		-- Abgekoppelt: Die Kofferwand bleibt stehen und fällt mit den hinteren Wagen zurück.
+		for i = #movers, 1, -1 do
+			local mover = movers[i]
+			if mover.schedule.kind == "chase" then
+				table.remove(movers, i)
+				local model = mover.model
+				local start = model:GetPivot()
+				task.spawn(function()
+					local t0 = os.clock()
+					while os.clock() - t0 < 2.5 and model.Parent do
+						local k = (os.clock() - t0) / 2.5
+						model:PivotTo(start * CFrame.new(-60 * k * k, -2 * k, 0))
+						task.wait()
+					end
+					model:Destroy()
+				end)
+			end
+		end
 	end)
 	Context.onWorld("reset", EntityController.clear)
 	Context.onWorld("start", EntityController.clear)

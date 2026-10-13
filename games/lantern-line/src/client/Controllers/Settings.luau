@@ -46,9 +46,9 @@ function Settings.onChanged(listener: () -> ())
 	table.insert(listeners, listener)
 end
 
--- Kurzformen
+-- Kurzformen. Der Sanfte Modus schließt „Flackern reduzieren“ ein (Compliance H-A16).
 function Settings.reducedFlicker(): boolean
-	return values.flicker
+	return values.flicker or values.gentle
 end
 
 function Settings.gentle(): boolean

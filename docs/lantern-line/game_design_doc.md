@@ -29,7 +29,7 @@ Das Spiel nutzt bekannte Prinzipien des Raum-für-Raum-Horrors. Gestaltung, Name
 | Gefahr in dunklen Räumen | **Blinder Passagier**: grüne Augenpaare unter Sitzen und in Ablagen. Man muss **Abstand halten**; kommt man zu nah, kostet das 35 Lebenspunkte | „Ansehen“-Mechanik, Laut „psst“, Augen-Cluster |
 | Wesen, das eine bestimmte Reaktion verlangt | **Gegenzug**: Licht flutet eine Fensterseite. Dann auf die andere Wagenhälfte wechseln; ein Pfeil im HUD und eine markierte Bodenhälfte zeigen die Seite | Wiederholte Hin-und-her-Durchgänge |
 | (eigene Mechanik) | **Kontrolleur**: Bei runder Kelle darf man gehen, bei der Kelle mit Streifen muss man stillstehen. Wer bei ihm ankommt, ist kontrolliert. Er gibt die Tür erst frei, wenn alle kontrolliert sind | Begriffe oder Optik bekannter Serien |
-| Verfolgungsjagd | **Kofferlawine**: Eine Wand aus Koffern rollt durch 5 Wagen, die Türen vorn öffnen sich von selbst | Augen an Wänden, greifende Arme (H-A4) |
+| Verfolgungsjagd | **Kofferlawine**: Eine Wand aus Koffern rollt durch 5 Wagen. Eigener Kern ist die **Kupplung**: Sind alle Lebenden an ihr vorbei, kann die Gruppe die hinteren Wagen abkoppeln, und die Lawine bleibt zurück (H-A17) | Augen an Wänden, greifende Arme (H-A4) |
 | Rätsel-Finale mit Wächter | **Schaffner** im Postwagen sieht nur, was seine Kopflampe beleuchtet, und hört laute Schritte. **Entwerter-Rätsel**: Drei Fahrkartenschnipsel zeigen je eine Reihe eines 3×3-Lochmusters | Blindheit als Kernmechanik, Formen-Ziffern-Code, Bücher, Vorhängeschloss (H-A3) |
 | Hinweis nach dem Tod | Fahrkarten-Notiz des Bahnhofsvorstehers mit eigenen Texten | Leuchtende blaue oder gelbe Texte, schwebende Lichtfigur |
 | Zurückgebliebene einholen | **Der Ruck**: Hinter dem höchsten geöffneten Wagen bleiben 4 Wagen angekoppelt; wer weiter zurück ist, wird nach vorn versetzt | – |
@@ -74,9 +74,9 @@ Das Spiel nutzt bekannte Prinzipien des Raum-für-Raum-Horrors. Gestaltung, Name
 | Express | weißes Licht von hinten; Lampen schwingen und flackern (≤ 2 Hz); Warnleiste unten | verstecken | ausgeschieden | 5 | Ø ca. 3 pro Lauf, Abstand ≥ 4 Wagen |
 | Gegenzug | blaues Licht an einer Fensterseite; Pfeil im HUD; markierte Bodenhälfte | auf die andere Hälfte oder verstecken | 50 Schaden | 10 | Ø ca. 1,5 pro Lauf |
 | Blinder Passagier | grüne Augenpaare, ab 8 Studs heller | Abstand > 2,5 Studs | 35 Schaden, Augenpaar verschwindet | 8 (dunkel) | 2–4 Paare je dunklem Wagen |
-| Kontrolleur | Laterne und Kelle: rund = gehen, Streifen = stillstehen. Die Warnung pulsiert langsam (≤ 1 Hz) | bei Streifen still; zu ihm hingehen | 40 Schaden je Haltphase | 7 (Schlafwagen) | 30 % der Schlafwagen, Abstand ≥ 6 |
+| Kontrolleur | Laterne und Kelle: rund = gehen, Streifen = stillstehen. Die Warnung pulsiert langsam (≤ 1 Hz) | bei Streifen still; zu ihm hingehen | 40 Schaden je Haltphase | 7 (Schlafwagen) | 30 % der Schlafwagen, Abstand ≥ 6; geht spätestens nach 40 s ab (H-A18) |
 | Kofferlawine | Lampen hinten färben sich orange, Kofferwand rumpelt | nach vorn laufen | ausgeschieden | Start 25–38 | genau 1 pro Lauf |
-| Schaffner | Kopflampe mit sichtbarem Lichtkegel (16 Studs, ±30°) | schleichen, aus dem Kegel bleiben, Schließfach | ausgeschieden | 50 | immer |
+| Schaffner | Kopflampe mit sichtbarem Lichtkegel (16 Studs, ±30°); hört Laufen höchstens so weit, wie er sieht | schleichen, aus dem Kegel bleiben, Schließfach | ausgeschieden | 50 | immer |
 
 ### 6.1 Express
 - **Auslöser:** Betreten von Wagen *k*.
@@ -102,12 +102,13 @@ Das Spiel nutzt bekannte Prinzipien des Raum-für-Raum-Horrors. Gestaltung, Name
 
 ### 6.5 Schaffner und Entwerter (Finale)
 - **Start:** Er erwacht 6 s nach dem Betreten am vorderen Ende.
-- **Wahrnehmung:** Lichtkegel mit Sichtprüfung an den Regalen vorbei. Er hört Laufen (> 10 Studs/s) im Radius 22, Schleichen im Radius 6, Stillstand gar nicht. Ein falsches Muster am Entwerter hört er im Radius 60.
+- **Wahrnehmung:** Lichtkegel mit Sichtprüfung an den Regalen vorbei. Er hört Laufen (> 10 Studs/s) im Radius 16 (nicht weiter, als er sieht; H-A17), Schleichen im Radius 6, Stillstand gar nicht. Ein falsches Muster am Entwerter hört er im Radius 60.
 - **Tempo:** Streife 7, Jagd 13; das liegt zwischen Schleichen (8) und Laufen (16). Er fängt im Radius 3,5; Schließfächer schützen.
 - **Rätsel:** Jedes Fragment zeigt eine Reihe (1–2 Löcher). Gelesene Reihen erscheinen für alle im Notizzettel. Am Entwerter stanzt man das 3×3-Muster ohne Texteingabe.
 
 ### 6.6 Kofferlawine
 - **Start:** Einmal pro Lauf, Start in Wagen *c* (25–38). Nach 3 s Warnung startet sie am Heck von *c−1*, rollt mit 13 Studs/s und endet an der Vordertür von *c+4*.
+- **Kupplung (eigener Kern, H-A17):** Im Übergang hinter Wagen *c+2* hängt ein Kupplungshebel. Er leuchtet orange, sobald alle lebenden Mitreisenden hinter der Tür davor sind. 1 s halten koppelt ab: Die Tür schließt sich, die Lawine bleibt mit den hinteren Wagen zurück. Ohne Abkoppeln rollt sie bis *c+4*. Damit wird die Flucht zur Teamaufgabe: Niemand darf zurückbleiben, sonst lässt sich der Hebel nicht ziehen.
 - **Verstecke:** In diesen Wagen sind die Verstecke deaktiviert.
 - **Garantie:** Nur gerade Wagentypen. Laufweg/16 ≤ 0,9 × Lawinenzeit.
 - **Ruhe:** Wagen *c−1* und *c+5* bleiben ruhig.
@@ -151,7 +152,7 @@ Alle sind durch Tests über 150 Seeds geprüft.
   - Raureif bei Kälte
 - **Einstellungen** über Knopf oder Taste M:
   - Flackern reduzieren: keine Pulse, sanftes Abdunkeln ≥ 0,3 s.
-  - Sanfter Modus: kein Wackeln, kein Blitz, gedämpfte Lichtwesen.
+  - Sanfter Modus: kein Wackeln, kein Blitz, gedämpfte Lichtwesen; schließt „Flackern reduzieren“ ein.
   - Bewegung reduzieren: Startwert aus der Roblox-Einstellung `ReducedMotionEnabled`.
 - **Sprache:** EN und DE (59 Textschlüssel). ProximityPrompts werden automatisch über die Source-Texte übersetzt.
 

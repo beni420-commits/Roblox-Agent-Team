@@ -57,6 +57,8 @@ local conductor: ConductorRun? = nil
 local noises: { Conductor.Noise } = {}
 local eyesByCarriage: { [number]: { Eyes.EyeState } } = {}
 local endingScheduled = false
+local chaseUncoupled = false
+local couplingReady = false
 
 local function keyOf(player: Player): string
 	return tostring(player.UserId)
@@ -204,6 +206,11 @@ local function buildCarriage(index: number)
 		return
 	end
 	TrainBuilder.build(c, current.lastIndex)
+	local chaseStartCarriage = carriageData(index - GameConfig.CHASE_COUPLING_WAGON)
+	local chaseEvent = if chaseStartCarriage then chaseStartCarriage.event else nil
+	if c.chase and chaseEvent and chaseEvent.kind == "chase" then
+		TrainBuilder.buildCoupling(c)
+	end
 	if c.dark and eyesByCarriage[index] == nil then
 		eyesByCarriage[index] = Eyes.fromCarriage(c)
 	end
@@ -312,6 +319,8 @@ local function triggerEvent(k: number, event: Types.Event)
 			end
 		end
 		chase = s
+		chaseUncoupled = false
+		couplingReady = false
 		NetService.fireAll(WORLD, {
 			type = "chase",
 			carriage = k,
@@ -377,6 +386,50 @@ local function openDoor(door: number)
 	if event then
 		triggerEvent(door, event)
 	end
+end
+
+-- Kupplung der Kofferlawine (H-A17): freigeben, sobald alle Lebenden hinter der Tür vor der Kupplung sind.
+local function alivePositionsX(): { number }
+	local list: { number } = {}
+	for _, player in aliveParticipants() do
+		local root = PlayerService.root(player)
+		if root then
+			table.insert(list, root.Position.X)
+		end
+	end
+	return list
+end
+
+local function updateCoupling(t: number)
+	local ch = chase
+	local current = plan
+	if ch == nil or current == nil or chaseUncoupled then
+		return
+	end
+	local ready = Sweep.canUncouple(ch, Sweep.couplingX(current, ch.carriage), t, alivePositionsX())
+	if ready ~= couplingReady then
+		couplingReady = ready
+		TrainBuilder.setCouplingReady(ch.carriage + GameConfig.CHASE_COUPLING_WAGON, ready)
+	end
+end
+
+local function uncouple(player: Player)
+	local ch = chase
+	local current = plan
+	local t = now()
+	if ch == nil or current == nil or chaseUncoupled then
+		return
+	end
+	if not Sweep.canUncouple(ch, Sweep.couplingX(current, ch.carriage), t, alivePositionsX()) then
+		return
+	end
+	chaseUncoupled = true
+	Sweep.stop(ch, t)
+	local wagon = ch.carriage + GameConfig.CHASE_COUPLING_WAGON
+	TrainBuilder.setCouplingReady(wagon, false)
+	TrainBuilder.setDoorOpen(wagon + 1, false) -- Tür vor der Kupplung schließt, die Wagen dahinter fallen zurück
+	NetService.fireAll(WORLD, { type = "chaseStop", at = t, x = ch.x1 })
+	TelemetryService.custom(player, Events.CUSTOM.Uncoupled, ch.carriage, nil)
 end
 
 -- Sicherheitsnetz: Wer trotz geschlossener Hülle unter den Zug fällt, kommt zurück an den Anfang
@@ -619,7 +672,11 @@ local function updateEntities(t: number, dt: number)
 		end
 		if t > ch.endAt then
 			chase = nil
-			TrainBuilder.setDoorOpen(ch.carriage + GameConfig.CHASE_LENGTH, false)
+			TrainBuilder.setCouplingReady(ch.carriage + GameConfig.CHASE_COUPLING_WAGON, false)
+			if not chaseUncoupled then
+				-- Die Lawine bleibt an der letzten Tür hängen; die Tür schließt hinter der Gruppe.
+				TrainBuilder.setDoorOpen(ch.carriage + GameConfig.CHASE_LENGTH, false)
+			end
 		end
 	end
 
@@ -825,6 +882,7 @@ local function step()
 	if accumulators.door >= 0.1 then
 		accumulators.door = 0
 		checkDoors()
+		updateCoupling(t)
 		rescueFallen()
 		checkFinish(t)
 	end
@@ -899,6 +957,8 @@ local function onPrompt(prompt: ProximityPrompt, player: Player)
 				end
 			end
 		end
+	elseif kind == "coupling" then
+		uncouple(player)
 	elseif kind == "validator" then
 		NetService.fire(player, PERSONAL, { type = "validator" })
 	end

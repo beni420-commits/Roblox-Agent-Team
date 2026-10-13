@@ -802,6 +802,58 @@ function TrainBuilder.builtIndices(): { number }
 	return list
 end
 
+-- Kupplung der Kofferlawine (Compliance H-A17) im Übergang an der Front von Wagen c:
+-- Hebel an der Balgwand. Der Prompt ist aus, bis der Server ihn freigibt (alle Lebenden vorbei).
+function TrainBuilder.buildCoupling(c: Carriage)
+	local model = carriageModels[c.index]
+	if model == nil or model:FindFirstChild("Coupling") then
+		return
+	end
+	local coupling = Instance.new("Model")
+	coupling.Name = "Coupling"
+	local x = c.length + GameConfig.CHASE_COUPLING_OFFSET
+	local base = block(
+		coupling,
+		"LeverBase",
+		Vector3.new(0.6, 1.4, 0.4),
+		at(c, x, 3.4, 2.75),
+		Palette.metal,
+		Enum.Material.Metal,
+		false
+	)
+	local handle = block(
+		coupling,
+		"LeverHandle",
+		Vector3.new(0.3, 1.2, 0.3),
+		at(c, x, 4.5, 2.6),
+		Palette.lampOff,
+		Enum.Material.SmoothPlastic,
+		false
+	)
+	handle.CFrame = handle.CFrame * CFrame.Angles(math.rad(-25), 0, 0)
+	local attachment = Instance.new("Attachment")
+	attachment.Parent = base
+	local prompt = newPrompt(attachment, "Uncouple", "Coupling", 1, 7)
+	prompt.Enabled = false
+	registerPrompt(prompt, "coupling", c.index, 1)
+	coupling.Parent = model
+end
+
+-- Hebel leuchtet, solange Abkoppeln möglich ist (Licht als Zeichen, S1).
+function TrainBuilder.setCouplingReady(index: number, ready: boolean)
+	local prompt = TrainBuilder.prompt("coupling", index, 1)
+	if prompt then
+		prompt.Enabled = ready
+	end
+	local model = carriageModels[index]
+	local coupling = if model then model:FindFirstChild("Coupling") else nil
+	local handle = if coupling then coupling:FindFirstChild("LeverHandle") else nil
+	if handle and handle:IsA("BasePart") then
+		handle.Color = if ready then Palette.chase else Palette.lampOff
+		handle.Material = if ready then Enum.Material.Neon else Enum.Material.SmoothPlastic
+	end
+end
+
 -- Kontrolleur: Silhouette in Uniform mit Laterne und Kelle (Form + Farbe), kollisionsfrei.
 function TrainBuilder.buildInspector(c: Carriage): Model
 	local model = Instance.new("Model")

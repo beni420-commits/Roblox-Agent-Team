@@ -53,10 +53,11 @@ TestRunner.it(suite, "Lichtkegel: sieht vorn im Gang, nicht hinter sich, nicht d
 	expect(Conductor.lineOfSight(state, 55, -3.5)):toBe(false) -- Regal 50–60 verdeckt
 end)
 
-TestRunner.it(suite, "Hören: Laufen in 22 Studs, Schleichen nur in 6, Stillstand nie", function()
+TestRunner.it(suite, "Hören: Laufen bis zur Sichtweite (H-A17), Schleichen nur in 6, Stillstand nie", function()
 	expect(Conductor.noiseRadius(16)):toBe(GameConfig.NOISE_WALK_RADIUS)
 	expect(Conductor.noiseRadius(8)):toBe(GameConfig.NOISE_SNEAK_RADIUS)
 	expect(Conductor.noiseRadius(0.5)):toBe(0)
+	expect(GameConfig.NOISE_WALK_RADIUS <= GameConfig.CONDUCTOR_VIEW_DISTANCE):toBe(true)
 	local state = newConductor(0)
 	place(state, 50, 3.5, 1, 0)
 	-- Spieler 15 Studs hinter ihm (nicht im Kegel): schleichend unbemerkt, laufend gehört

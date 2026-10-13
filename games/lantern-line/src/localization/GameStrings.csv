@@ -3,6 +3,7 @@ prompt.hide,Climb in,,,Climb in,Verstecken
 prompt.search,Search,,,Search,Durchsuchen
 prompt.read,Read,,,Read,Lesen
 prompt.validator,Punch ticket,,,Punch ticket,Fahrkarte lochen
+prompt.uncouple,Uncouple,,,Uncouple,Abkoppeln
 object.wardrobe,Wardrobe,,,Wardrobe,Kleiderschrank
 object.locker,Locker,,,Locker,Gepäckschrank
 object.trunk,Steamer trunk,,,Steamer trunk,Überseekoffer
@@ -13,6 +14,7 @@ object.drawer,Drawer,,,Drawer,Schublade
 object.crate,Crate,,,Crate,Kiste
 object.fragment,Ticket scrap,,,Ticket scrap,Fahrkartenschnipsel
 object.validator,Ticket validator,,,Ticket validator,Entwerter
+object.coupling,Coupling,,,Coupling,Kupplung
 hud.carriage,CAR {1},,,CAR {1},WAGEN {1}
 hud.key,Key,,,Key,Schlüssel
 hud.sneak,Sneak,,,Sneak,Schleichen
@@ -48,13 +50,13 @@ validator.wrong,Wrong pattern!,,,Wrong pattern!,Falsches Muster!
 validator.right,The gate opens!,,,The gate opens!,Das Tor öffnet sich!
 HINT_EXPRESS_1,"When the lamps swing and a white glow grows behind you, climb into a wardrobe or trunk until it has passed.",,,"When the lamps swing and a white glow grows behind you, climb into a wardrobe or trunk until it has passed.","Wenn die Lampen schwingen und hinter dir ein weißes Leuchten wächst: ab in einen Schrank oder Koffer, bis es vorbei ist."
 HINT_EXPRESS_2,You have a few seconds. Remember where the nearest wardrobe is in every car.,,,You have a few seconds. Remember where the nearest wardrobe is in every car.,"Du hast ein paar Sekunden. Merk dir in jedem Wagen, wo der nächste Schrank steht."
-HINT_ONCOMING_1,A horn and light at the windows on one side: cross to the other side of the car.,,,A horn and light at the windows on one side: cross to the other side of the car.,Hupe und Licht an den Fenstern einer Seite: Wechsle auf die andere Wagenseite.
+HINT_ONCOMING_1,Bright light at the windows on one side: cross to the other side of the car.,,,Bright light at the windows on one side: cross to the other side of the car.,Helles Licht an den Fenstern einer Seite: Wechsle auf die andere Wagenseite.
 HINT_ONCOMING_2,The arrow on your screen shows where the light comes from. Move away from it.,,,The arrow on your screen shows where the light comes from. Move away from it.,"Der Pfeil zeigt, von wo das Licht kommt. Geh auf die andere Seite."
 HINT_EYES_1,"In dark cars, keep your distance from the green glow under seats and racks.",,,"In dark cars, keep your distance from the green glow under seats and racks.",Halte in dunklen Wagen Abstand zu dem grünen Leuchten unter Sitzen und Ablagen.
 HINT_EYES_2,The glow gets brighter when you come close. Walk around it.,,,The glow gets brighter when you come close. Walk around it.,"Das Leuchten wird heller, wenn du nahe kommst. Geh drumherum."
 HINT_INSPECTOR_1,"When the inspector shows the striped paddle, stand still until the round paddle returns.",,,"When the inspector shows the striped paddle, stand still until the round paddle returns.","Zeigt der Kontrolleur die Kelle mit dem Streifen, bleib stehen, bis die runde Kelle zurück ist."
 HINT_INSPECTOR_2,"Walk to the inspector while the round paddle shows. Once your ticket is checked, you are safe.",,,"Walk to the inspector while the round paddle shows. Once your ticket is checked, you are safe.","Geh zum Kontrolleur, solange die runde Kelle zu sehen ist. Wer kontrolliert ist, ist sicher."
 HINT_CHASE_1,"When the luggage starts to rumble behind you, run forward and do not stop.",,,"When the luggage starts to rumble behind you, run forward and do not stop.",Wenn hinter dir das Gepäck rumpelt: nach vorn laufen und nicht stehen bleiben.
-HINT_CHASE_2,Wardrobes will not help here. The way ahead opens by itself.,,,Wardrobes will not help here. The way ahead opens by itself.,Schränke helfen hier nicht. Der Weg nach vorn öffnet sich von selbst.
+HINT_CHASE_2,"Wardrobes will not help here. Once everyone is past the coupling, release it to leave the luggage behind.",,,"Wardrobes will not help here. Once everyone is past the coupling, release it to leave the luggage behind.","Schränke helfen hier nicht. Sind alle an der Kupplung vorbei, löst sie, dann bleibt das Gepäck zurück."
 HINT_CONDUCTOR_1,The conductor only sees what his lamp lights up and hears footsteps. Sneak and stay out of the beam.,,,The conductor only sees what his lamp lights up and hears footsteps. Sneak and stay out of the beam.,"Der Schaffner sieht nur, was seine Lampe beleuchtet, und hört Schritte. Schleiche und bleib aus dem Lichtkegel."
 HINT_CONDUCTOR_2,"Read all three ticket scraps, then punch the full pattern at the validator. Wrong patterns are loud.",,,"Read all three ticket scraps, then punch the full pattern at the validator. Wrong patterns are loud.",Lies alle drei Fahrkartenschnipsel und stanze dann das ganze Muster am Entwerter. Falsche Muster sind laut.
