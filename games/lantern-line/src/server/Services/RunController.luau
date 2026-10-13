@@ -547,6 +547,7 @@ local function startRun(boarders: { Player })
 		player:SetAttribute("Alive", true)
 		player:SetAttribute("Stubs", 0)
 		player:SetAttribute("HiddenIn", 0)
+		player:SetAttribute("CheckedIn", -1)
 		TelemetryService.onboarding(player, 2)
 	end
 	for row = 1, 3 do
@@ -578,6 +579,7 @@ local function resetToLobby()
 		player:SetAttribute("InRun", false)
 		player:SetAttribute("Alive", true)
 		player:SetAttribute("HiddenIn", 0)
+		player:SetAttribute("CheckedIn", -1)
 		task.spawn(PlayerService.spawnAtPlatform, player)
 	end
 end
@@ -619,11 +621,11 @@ local function updateLobby()
 		return
 	end
 	local ready: { Player } = {}
-	local total = 0
+	local present: { Player } = {}
 	for _, player in Players:GetPlayers() do
 		local root = PlayerService.root(player)
 		if root then
-			total += 1
+			table.insert(present, player)
 			if WorldSetup.isInBoardingZone(root.Position) then
 				table.insert(ready, player)
 			end
@@ -633,10 +635,13 @@ local function updateLobby()
 		end
 	end
 	local t = now()
-	local depart = Lobby.update(lobby, t, #ready, total)
+	local depart = Lobby.update(lobby, t, #ready, #present)
 	workspace:SetAttribute("LobbyEndsAt", lobby.endsAt or -1)
+	workspace:SetAttribute("LobbyReady", #ready)
+	workspace:SetAttribute("LobbyTotal", #present)
 	if depart then
-		startRun(ready)
+		-- Ein Server ist eine Gruppe: Bei Abfahrt steigen alle am Bahnsteig ein (Playtest LP-04).
+		startRun(present)
 	end
 end
 
@@ -742,6 +747,12 @@ local function updateInspector(t: number)
 	if result.phaseChanged then
 		active.model:SetAttribute("Phase", active.state.phase)
 	end
+	for key in active.state.checked do
+		local player = byKey[key]
+		if player and player:GetAttribute("CheckedIn") ~= active.carriage then
+			player:SetAttribute("CheckedIn", active.carriage) -- HUD zeigt „Kontrolliert“ (LP-16)
+		end
+	end
 	for _, key in result.hits do
 		local player = byKey[key]
 		if player then
@@ -818,10 +829,11 @@ end
 
 local function updateCold(t: number)
 	local active = conductor
+	-- Im Postwagen pausiert die Kälte, solange der Schaffner wach ist (Playtest LP-13).
 	local entityActive = express ~= nil
 		or oncoming ~= nil
 		or chase ~= nil
-		or (active ~= nil and active.state.mode == "hunt")
+		or (active ~= nil and active.state.mode ~= "dormant")
 	for player in participants do
 		if isHidden(player) then
 			local cold = HideState.cold(hide, keyOf(player), t, entityActive)

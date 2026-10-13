@@ -100,6 +100,8 @@ function ValidatorController.init()
 		end
 	end)
 	Context.onWorld("reset", close)
+	Context.onPersonal("death", close) -- Entwerter schließt beim Ausscheiden (Playtest LP-18)
+	UiKit.fitHeight(panel, 400, 0.85)
 end
 
 return ValidatorController

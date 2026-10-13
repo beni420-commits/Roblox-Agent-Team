@@ -117,15 +117,14 @@ local function boarding(_rng: Prng.Prng): Layout
 	return layout
 end
 
--- Großraumwagen: Sitzreihen beidseitig, Mittelgang, Gepäckschränke an den Enden.
+-- Großraumwagen: Sitzreihen beidseitig, Mittelgang, Gepäckschränke an den Enden und in der Mitte.
 local function saloon(rng: Prng.Prng): Layout
 	local layout = newLayout(56)
-	local middleLocker = rng.chance(0.5)
+	-- Immer ein dritter Schrank in der Mitte, Seite zufällig (Vierer-Garantie beim Express, LP-02).
+	local middleSide = if rng.chance(0.5) then 1 else -1
 	addSpot(layout, "locker", 2, HALF - 1.4, 3, 2.8, 8, 0, -1)
 	addSpot(layout, "locker", 54, -(HALF - 1.4), 3, 2.8, 8, 0, 1)
-	if middleLocker then
-		addSpot(layout, "locker", 28, HALF - 1.4, 3, 2.8, 8, 0, -1)
-	end
+	addSpot(layout, "locker", 28, middleSide * (HALF - 1.4), 3, 2.8, 8, 0, -middleSide)
 	local rows: { number } = {}
 	local x = 7.8
 	while x <= 48.5 do
@@ -134,7 +133,7 @@ local function saloon(rng: Prng.Prng): Layout
 	end
 	for _, rowX in rows do
 		for _, side in { 1, -1 } do
-			local blockedByLocker = middleLocker and side == 1 and math.abs(rowX - 28) < 3.5
+			local blockedByLocker = side == middleSide and math.abs(rowX - 28) < 3.5
 			if not blockedByLocker and rng.chance(0.85) then
 				addBox(layout, rowX, side * 4, 1.6, 4, 3.5, "chair")
 			end

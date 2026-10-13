@@ -137,10 +137,14 @@ local function checkReachInTime(
 end
 
 -- Express in Wagen cur (Vorgänger prev): Von jedem erreichbaren Punkt in prev und cur ist das
--- nächste Versteck desselben Wagens rechtzeitig erreichbar, und es gibt genug Verstecke.
+-- nächste Versteck desselben Wagens rechtzeitig erreichbar, und eine volle Gruppe an der Tür findet
+-- je ein eigenes Versteck rechtzeitig.
 function Fairness.checkExpress(prev: Carriage, cur: Carriage, event: Event): (boolean, string?)
 	if #prev.hidingSpots + #cur.hidingSpots < GameConfig.MIN_SPOTS_FOR_EXPRESS then
 		return false, "not enough hiding spots"
+	end
+	if Fairness.groupSpotsInTime(prev, cur, event) < GameConfig.MAX_PLAYERS then
+		return false, "group cannot hide in time"
 	end
 	return checkReachInTime(
 		{ prev, cur },
@@ -152,6 +156,31 @@ function Fairness.checkExpress(prev: Carriage, cur: Carriage, event: Event): (bo
 			return Fairness.arrivalTime(prev, event, c.originX + x)
 		end
 	)
+end
+
+-- Gruppe (Playtest LP-02): MAX_PLAYERS Spieler stehen beim Auslösen an der Tür zwischen prev und cur.
+-- Jeder braucht ein eigenes Versteck (eine Person je Versteck), das er vor dem Express erreicht.
+function Fairness.groupSpotsInTime(prev: Carriage, cur: Carriage, event: Event): number
+	local overhead = GameConfig.REACTION_TIME + GameConfig.HIDE_ENTER_TIME
+	local count = 0
+	local sides: { { c: Carriage, front: boolean, extra: number } } = {
+		{ c = prev, front = true, extra = 0 },
+		{ c = cur, front = false, extra = GameConfig.GANGWAY },
+	}
+	for _, side in sides do
+		local grid = Fairness.gridFor(side.c)
+		local fromDoor = NavGrid.distanceField(grid, NavGrid.doorCells(grid, side.front))
+		for _, spot in side.c.hidingSpots do
+			local idx = NavGrid.cellOf(grid, spot.ax, spot.az)
+			if idx and fromDoor[idx] < NavGrid.INF then
+				local needed = (fromDoor[idx] + side.extra) / GameConfig.WALK_SPEED + overhead
+				if needed <= Fairness.arrivalTime(prev, event, side.c.originX + spot.x) then
+					count += 1
+				end
+			end
+		end
+	end
+	return count
 end
 
 -- Gegenzug: Von jedem erreichbaren Punkt in prev und cur ist die sichere Wagenhälfte

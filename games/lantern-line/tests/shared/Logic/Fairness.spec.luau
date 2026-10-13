@@ -58,7 +58,35 @@ TestRunner.it(suite, "Express: weit entfernte Verstecke bei kurzer Warnzeit sind
 	local instant = Fixtures.event("express", 0, 200, 0)
 	local ok, why = Fairness.checkExpress(long, cur2, instant)
 	expect(ok):toBe(false)
-	expect(string.find(why or "", "carriage 4", 1, true) ~= nil):toBe(true)
+	expect(why ~= nil):toBe(true)
+end)
+
+TestRunner.it(suite, "Vierer-Garantie (LP-02): jeder an der Tür findet ein eigenes Versteck rechtzeitig", function()
+	local event = Fixtures.event("express", GameConfig.EXPRESS_DELAY_MIN, GameConfig.EXPRESS_SPEED, 0)
+	-- je zwei Verstecke nahe der Tür zwischen prev (vorn) und cur (hinten)
+	local prev = Fixtures.carriage({
+		index = 4,
+		length = 40,
+		spots = { { 37, 4.7, 0, -1 }, { 37, -4.7, 0, 1 }, { 3, 4.7, 0, -1 } },
+	})
+	local cur = Fixtures.carriage({
+		index = 5,
+		originX = 44,
+		length = 40,
+		spots = { { 3, 4.7, 0, -1 }, { 3, -4.7, 0, 1 } },
+	})
+	expect(Fairness.groupSpotsInTime(prev, cur, event) >= GameConfig.MAX_PLAYERS):toBe(true)
+	expect((Fairness.checkExpress(prev, cur, event))):toBe(true)
+	-- Nur ein Versteck nahe der Tür, die anderen weit hinten in einem langen Wagen: Gruppe passt nicht
+	local longPrev = Fixtures.carriage({
+		index = 4,
+		length = 96,
+		spots = { { 93, 4.7, 0, -1 }, { 3, -4.7, 0, 1 }, { 5, 4.7, 0, -1 }, { 8, -4.7, 0, 1 } },
+	})
+	local farCur = Fixtures.carriage({ index = 5, originX = 100, length = 96, spots = {} })
+	local ok, why = Fairness.checkExpress(longPrev, farCur, event)
+	expect(ok):toBe(false)
+	expect(why):toBe("group cannot hide in time")
 end)
 
 TestRunner.it(suite, "Express: zu wenige Verstecke in k−1 ∪ k", function()

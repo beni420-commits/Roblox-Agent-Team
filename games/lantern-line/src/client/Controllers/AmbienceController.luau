@@ -178,11 +178,29 @@ local function sway()
 	camera.CFrame = camera.CFrame * CFrame.Angles(0, 0, roll)
 end
 
+-- Sanfter Modus: eigene Laterne heller und weiter (dunkle Wagen weniger bedrohlich, Playtest LP-07).
+-- Nur lokal; der Server-Wert gilt für alle anderen.
+local function updateOwnLantern()
+	local root = Context.root()
+	local light = if root then root:FindFirstChild("Lantern") else nil
+	if light and light:IsA("PointLight") then
+		local gentle = Settings.gentle()
+		light.Range = if gentle then 14 else 9
+		light.Brightness = if gentle then 1.0 else 0.7
+	end
+end
+
 function AmbienceController.init()
 	buildPassing()
 	RunService.Heartbeat:Connect(function()
 		updatePassing()
 		updateLamps(Context.now())
+	end)
+	Settings.onChanged(updateOwnLantern)
+	Context.player.CharacterAdded:Connect(function(character)
+		character:WaitForChild("HumanoidRootPart", 10)
+		task.wait(0.5) -- der Server legt die Laterne kurz nach dem Erscheinen an
+		updateOwnLantern()
 	end)
 	RunService:BindToRenderStep("LanternSway", Enum.RenderPriority.Camera.Value + 1, sway)
 	Context.onWorld("reset", AmbienceController.clear)

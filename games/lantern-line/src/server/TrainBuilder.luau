@@ -26,6 +26,7 @@ local DOOR_H = GameConfig.DOOR_HEIGHT
 
 TrainBuilder.LAMP_TAG = "LanternLineLamp"
 TrainBuilder.EYES_TAG = "LanternLineEyes"
+TrainBuilder.INFO_TAG = "LanternLineInfoBoard"
 
 local trainFolder: Folder? = nil
 local carriageModels: { [number]: Model } = {}
@@ -671,6 +672,17 @@ function TrainBuilder.build(c: Carriage, lastIndex: number): Model
 	carriageModels[c.index] = model
 	if c.index == 0 then
 		TrainBuilder.sealRear(0)
+		-- Fahrgastinformation: Zeichen → Reaktion (Text zeichnet der Client lokalisiert, Playtest LP-06)
+		local board = block(
+			model,
+			"InfoBoard",
+			Vector3.new(16, 3.6, 0.15),
+			at(c, 20, 5.3, -(HALF - 0.05)),
+			Palette.ticket,
+			Enum.Material.SmoothPlastic,
+			false
+		)
+		CollectionService:AddTag(board, TrainBuilder.INFO_TAG)
 	end
 	buildDoor(c, c.index + 1, c.index == lastIndex)
 	if c.locked then
@@ -763,6 +775,49 @@ function TrainBuilder.setLocked(door: number, locked: boolean)
 	end
 	if doorModel then
 		doorModel:SetAttribute("Locked", locked)
+		-- Schloss-Form auf dem Türflügel (zweites Merkmal neben der Lampe, Playtest LP-14)
+		local existing = doorModel:FindFirstChild("Padlock")
+		if locked and existing == nil then
+			local panel = doorModel:FindFirstChild("PanelLeft")
+			if panel and panel:IsA("BasePart") then
+				local padlock = Instance.new("Model")
+				padlock.Name = "Padlock"
+				local front = panel.Position - Vector3.new(0.2, 0, 0)
+				local body = block(
+					padlock,
+					"Body",
+					Vector3.new(0.1, 1, 1.1),
+					CFrame.new(front + Vector3.new(0, 0.2, -0.6)),
+					Palette.stencil,
+					Enum.Material.SmoothPlastic,
+					false
+				)
+				body.CastShadow = false
+				for _, dz in { -0.35, 0.35 } do
+					block(
+						padlock,
+						"Shackle",
+						Vector3.new(0.1, 0.6, 0.15),
+						CFrame.new(front + Vector3.new(0, 0.95, -0.6 + dz)),
+						Palette.stencil,
+						Enum.Material.SmoothPlastic,
+						false
+					)
+				end
+				block(
+					padlock,
+					"ShackleTop",
+					Vector3.new(0.1, 0.15, 0.85),
+					CFrame.new(front + Vector3.new(0, 1.25, -0.6)),
+					Palette.stencil,
+					Enum.Material.SmoothPlastic,
+					false
+				)
+				padlock.Parent = doorModel
+			end
+		elseif not locked and existing then
+			existing:Destroy()
+		end
 	end
 end
 

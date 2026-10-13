@@ -4,6 +4,7 @@
 -- Ergebnis-Fahrkarte am Laufende.
 
 local ContextActionService = game:GetService("ContextActionService")
+local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
@@ -122,13 +123,29 @@ local function startSpectating()
 	showSpectate()
 end
 
+local okButton: TextButton
+local diedAt = -math.huge
+local lastHint: string? = nil
+
 local function onDeath(payload: any)
+	diedAt = os.clock()
+	lastHint = payload.hint
 	task.spawn(Hud.fadeOut, TINT[payload.cause])
 	task.wait(1)
+	if summary.Visible then
+		return -- Lauf schon vorbei: Hinweis steht auf der Ergebnis-Fahrkarte (Playtest LP-05)
+	end
 	noteTitle.Text = Strings.format("death.title", { string.format("%02d", payload.carriage or 0) })
 	noteHint.Text = Strings.format(payload.hint)
 	noteFrom.Text = Strings.format("death.from")
 	note.Visible = true
+	GuiService.SelectedObject = okButton -- Gamepad: „OK“ vorausgewählt (LP-11)
+	-- Nach 8 s automatisch zuschauen, falls niemand „OK“ drückt
+	task.delay(8, function()
+		if note.Visible and not summary.Visible then
+			startSpectating()
+		end
+	end)
 end
 
 local function formatTime(seconds: number): string
@@ -136,7 +153,17 @@ local function formatTime(seconds: number): string
 end
 
 local function onSummary(payload: any)
+	-- Kurz nach dem eigenen Ausscheiden erst die Abblende abwarten, dann Ergebnis mit Hinweis zeigen.
+	local wait = 1.2 - (os.clock() - diedAt)
+	if wait > 0 then
+		task.wait(wait)
+	end
 	note.Visible = false
+	spectateBar.Visible = false
+	local died = Context.player:GetAttribute("Alive") == false and lastHint ~= nil
+	summaryLines[5].Text = if died
+		then Strings.format(lastHint :: string) .. " " .. Strings.format("death.from")
+		else ""
 	summaryLines[1].Text = Strings.format(if payload.outcome == "won" then "end.won" else "end.lost")
 	summaryLines[2].Text = Strings.format("end.car", { string.format("%02d", payload.carriage or 0) })
 	summaryLines[3].Text = Strings.format("end.stubs", { payload.stubs or 0 })
@@ -147,6 +174,7 @@ end
 local function reset()
 	spectating = false
 	spectateTarget = nil
+	lastHint = nil
 	bindSpectateKeys(false)
 	note.Visible = false
 	spectateBar.Visible = false
@@ -168,8 +196,9 @@ function DeathController.init()
 	noteHint = UiKit.label(note, "", UDim2.new(1, 0, 0.45, 0), UDim2.fromScale(0, 0.22))
 	noteFrom = UiKit.label(note, "", UDim2.new(0.6, 0, 0.12, 0), UDim2.fromScale(0.4, 0.68))
 	noteFrom.TextXAlignment = Enum.TextXAlignment.Right
-	local ok = UiKit.button(note, "OK", UDim2.new(0.3, 0, 0.14, 0), UDim2.fromScale(0.35, 0.84), true)
-	ok.Activated:Connect(startSpectating)
+	okButton = UiKit.button(note, "OK", UDim2.new(0.3, 0, 0.14, 0), UDim2.fromScale(0.35, 0.84), true)
+	okButton.Activated:Connect(startSpectating)
+	UiKit.fitHeight(note, 250, 0.8)
 
 	spectateBar = UiKit.ticket(gui, UDim2.fromOffset(360, 56), UDim2.new(0.5, 0, 1, -24), Vector2.new(0.5, 1))
 	spectateBar.Visible = false
@@ -182,17 +211,20 @@ function DeathController.init()
 	nextButton.Activated:Connect(function()
 		cycle(1)
 	end)
-	summary = UiKit.ticket(gui, UDim2.fromOffset(380, 220), UDim2.fromScale(0.5, 0.42), Vector2.new(0.5, 0.5))
+	summary = UiKit.ticket(gui, UDim2.fromOffset(440, 300), UDim2.fromScale(0.5, 0.45), Vector2.new(0.5, 0.5))
 	summary.Visible = false
 	for i = 1, 4 do
 		summaryLines[i] = UiKit.label(
 			summary,
 			"",
-			UDim2.new(1, 0, 0.2, 0),
-			UDim2.fromScale(0, (i - 1) * 0.24),
+			UDim2.new(1, 0, 0.14, 0),
+			UDim2.fromScale(0, (i - 1) * 0.16),
 			if i == 1 then UiKit.FONT_STENCIL else nil
 		)
 	end
+	-- Hinweis des Bahnhofsvorstehers auf der Ergebnis-Fahrkarte (Playtest LP-05)
+	summaryLines[5] = UiKit.label(summary, "", UDim2.new(1, 0, 0.32, 0), UDim2.fromScale(0, 0.66))
+	UiKit.fitHeight(summary, 300, 0.8)
 
 	RunService.RenderStepped:Connect(spectateCamera)
 	Context.onPersonal("death", onDeath)

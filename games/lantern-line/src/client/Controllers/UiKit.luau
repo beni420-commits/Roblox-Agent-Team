@@ -11,11 +11,16 @@ local UiKit = {}
 UiKit.FONT_TICKET = Enum.Font.SpecialElite
 UiKit.FONT_STENCIL = Enum.Font.Michroma
 
-function UiKit.screen(name: string, order: number): ScreenGui
+-- fullscreen = true: über die Roblox-Leiste hinweg (Abdunkeln, Overlays); sonst im sicheren Bereich
+-- unter der Roblox-Leiste und außerhalb von Notch/Rundungen (Playtest LP-12).
+function UiKit.screen(name: string, order: number, fullscreen: boolean?): ScreenGui
 	local gui = Instance.new("ScreenGui")
 	gui.Name = name
 	gui.ResetOnSpawn = false
-	gui.IgnoreGuiInset = true
+	gui.IgnoreGuiInset = fullscreen ~= false
+	if fullscreen == false then
+		gui.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
+	end
 	gui.DisplayOrder = order
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
@@ -103,6 +108,18 @@ function UiKit.button(parent: Instance, text: string, size: UDim2, position: UDi
 	UiKit.corner(button, 6)
 	button.Parent = parent
 	return button
+end
+
+-- Skaliert ein Fenster herunter, wenn es höher als `share` der Bildschirmhöhe wäre (kleine Handys).
+function UiKit.fitHeight(frame: GuiObject, designHeight: number, share: number)
+	local scale = Instance.new("UIScale")
+	scale.Parent = frame
+	local camera = workspace.CurrentCamera
+	local function update()
+		scale.Scale = math.min(1, camera.ViewportSize.Y * share / designHeight)
+	end
+	camera:GetPropertyChangedSignal("ViewportSize"):Connect(update)
+	update()
 end
 
 return UiKit

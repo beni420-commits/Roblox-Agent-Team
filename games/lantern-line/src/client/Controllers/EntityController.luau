@@ -116,7 +116,11 @@ local function onExpress(payload: any)
 		true,
 		nil
 	)
-	Hud.setWarning(Palette.express, schedule.startAt + (schedule.x1 - schedule.x0) / 2 / GameConfig.EXPRESS_SPEED)
+	Hud.setWarning(
+		Palette.express,
+		schedule.startAt + (schedule.x1 - schedule.x0) / 2 / GameConfig.EXPRESS_SPEED,
+		"express"
+	)
 end
 
 local function fadeNearCamera(model: Model)
@@ -166,7 +170,7 @@ local function onChase(payload: any)
 		false,
 		Palette.chase
 	)
-	Hud.setWarning(Palette.chase, schedule.endAt)
+	Hud.setWarning(Palette.chase, schedule.endAt, "chase")
 end
 
 -- Gegenzug: ruhiges Licht an festen Fensterpositionen, schwillt weich an und ab (keine Lichtwechsel,
@@ -187,7 +191,7 @@ local function onOncoming(payload: any)
 		GameConfig.FLOOR_Y + 0.04,
 		payload.side * (HALF - (HALF + GameConfig.ONCOMING_SAFE_Z) / 2)
 	)
-	band.Transparency = 0.92
+	band.Transparency = 0.82
 	table.insert(oncomingParts, band)
 	local root = Context.root()
 	local centerX = if root then root.Position.X else (payload.x0 + payload.x1) / 2
@@ -339,8 +343,10 @@ local function styleInspector(model: Model)
 	apply()
 end
 
-local function updateEyes()
+-- Augen werden in der Nähe weich heller (0,5 s statt Umschalten, Playtest LP-17).
+local function updateEyes(dt: number)
 	local root = Context.root()
+	local k = math.clamp(dt * 4, 0, 1)
 	for _, eyes in CollectionService:GetTagged(EYES_TAG) do
 		local used = eyes:GetAttribute("Used") == true
 		for _, dot in eyes:GetChildren() do
@@ -350,8 +356,8 @@ local function updateEyes()
 				elseif root then
 					local d = (dot.Position - root.Position).Magnitude
 					local awake = d < GameConfig.EYES_WAKE_RADIUS
-					dot.Transparency = if awake then 0 else 0.55
-					dot.Size = if awake then Vector3.new(0.3, 0.3, 0.3) else Vector3.new(0.22, 0.22, 0.22)
+					local target = if awake then 0 else 0.55
+					dot.Transparency += (target - dot.Transparency) * k
 				end
 			end
 		end
