@@ -16,6 +16,8 @@ local AmbienceController = {}
 local LAMP_TAG = "LanternLineLamp"
 local PASSING_SPEED = 70
 local PASSING_COUNT = 6
+local PASSING_BRIGHTNESS = 0.8
+local PASSING_DIMMED = 0.3
 
 type Effect = {
 	from: number,
@@ -114,6 +116,12 @@ local function updateLamps(t: number)
 			table.remove(effects, i)
 		end
 	end
+	-- Lampen abgekoppelter Wagen vergessen (LL-23)
+	for lamp in lampDefaults do
+		if lamp.Parent == nil then
+			lampDefaults[lamp] = nil
+		end
+	end
 end
 
 local function buildPassing()
@@ -131,7 +139,7 @@ local function buildPassing()
 		p.Shape = Enum.PartType.Ball
 		local light = Instance.new("PointLight")
 		light.Range = 20
-		light.Brightness = 0.8
+		light.Brightness = PASSING_BRIGHTNESS
 		light.Color = Palette.lampLight
 		light.Parent = p
 		p:SetAttribute("Offset", (i - 1) * (240 / PASSING_COUNT))
@@ -161,13 +169,16 @@ local function updatePassing()
 			local light = p:FindFirstChildOfClass("PointLight")
 			if light then
 				light.Enabled = true
+				-- „Flackern reduzieren“ dimmt auch die vorbeiziehenden Lichter (H-A16 b, LL-22)
+				light.Brightness = if Settings.reducedFlicker() then PASSING_DIMMED else PASSING_BRIGHTNESS
 			end
 		end
 	end
 end
 
 local function sway()
-	if not Context.inRun() or not Settings.motionAllowed() then
+	-- Nur mit eigener Figur: Ohne CameraSubject würde sich die Rollung aufsummieren (LL-18)
+	if not Context.inRun() or not Context.alive() or Context.root() == nil or not Settings.motionAllowed() then
 		return
 	end
 	local camera = workspace.CurrentCamera

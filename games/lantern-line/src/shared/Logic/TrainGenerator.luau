@@ -185,7 +185,11 @@ function TrainGenerator.generate(seed: number): Plan
 						event = newEvent("express")
 						event.delay = rng.nextRange(GameConfig.EXPRESS_DELAY_MIN, GameConfig.EXPRESS_DELAY_MAX)
 						event.speed = GameConfig.EXPRESS_SPEED
-						fair = Fairness.checkExpress(prev, c, event)
+						local behind: { Carriage } = {}
+						for back = i - 2, math.max(0, i - 3), -1 do
+							table.insert(behind, carriages[back + 1])
+						end
+						fair = Fairness.checkExpress(prev, c, event, behind)
 					end
 					if fair then
 						c.event = event

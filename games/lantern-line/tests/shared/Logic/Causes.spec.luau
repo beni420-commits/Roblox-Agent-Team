@@ -14,7 +14,8 @@ TestRunner.it(suite, "Hinweisschlüssel je Ursache und Variante (Texte prüft sc
 	expect(function()
 		Causes.hintKey("unknown", 1)
 	end):toThrow()
-	expect(#Causes.LIST):toBe(6)
+	expect(#Causes.LIST):toBe(7)
+	expect(Causes.hintKey("lost", 1)):toBe("HINT_LOST_1")
 end)
 
 return suite

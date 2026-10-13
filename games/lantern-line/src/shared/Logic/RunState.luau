@@ -208,6 +208,17 @@ function RunState.checkEnd(state: State, now: number, finished: boolean): Outcom
 	return state.outcome
 end
 
+-- Lauf ohne Fortschritt abbrechen (Code-Review LL-06): zählt als verloren.
+function RunState.abort(state: State, now: number): Outcome?
+	if state.phase ~= "running" then
+		return state.outcome
+	end
+	state.phase = "ended"
+	state.outcome = "lost"
+	state.endedAt = now
+	return state.outcome
+end
+
 -- Wagen, die bestehen bleiben (alles davor wird abgekoppelt, „Der Ruck“).
 function RunState.retainFrom(state: State): number
 	return math.max(0, state.opened - GameConfig.RETAIN_BEHIND)

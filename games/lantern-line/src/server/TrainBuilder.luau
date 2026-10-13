@@ -376,9 +376,13 @@ local function buildSpot(model: Model, c: Carriage, spot: Types.HidingSpot)
 		local slitSize = if spot.fx ~= 0 then Vector3.new(0.05, 0.12, width - 1) else Vector3.new(width - 1, 0.12, 0.05)
 		block(spotModel, "Slit", slitSize, CFrame.new(slitPos), Palette.hudShade, Enum.Material.SmoothPlastic, false)
 	end
+	-- Erst Parent, dann WorldPosition: Ohne Parent würde die Weltkoordinate als lokaler Versatz
+	-- gespeichert und der Prompt läge weit neben dem Schrank (Code-Review LL-01).
 	local attachment = Instance.new("Attachment")
-	attachment.WorldPosition = world(c, spot.x, 3, spot.z) + facing * (depth / 2 + 0.2)
 	attachment.Parent = body
+	local target = world(c, spot.x, 3, spot.z) + facing * (depth / 2 + 0.2)
+	attachment.WorldPosition = target
+	assert((attachment.WorldPosition - target).Magnitude < 0.01, "hiding prompt misplaced")
 	local prompt = newPrompt(attachment, "Climb in", style.text, 0, 6)
 	registerPrompt(prompt, "hide", c.index, spot.id)
 	local _, eye = TrainBuilder.spotFrames(c, spot)
@@ -447,7 +451,7 @@ local function buildContainer(model: Model, c: Carriage, container: Types.Contai
 end
 
 local function buildLamps(model: Model, c: Carriage)
-	for _, lamp in c.lamps do
+	for i, lamp in c.lamps do
 		local fixture = block(
 			model,
 			"Lamp",
@@ -461,7 +465,7 @@ local function buildLamps(model: Model, c: Carriage)
 		light.Range = 16
 		light.Brightness = 1.1
 		light.Color = Palette.lampLight
-		light.Shadows = true
+		light.Shadows = i % 3 == 2 -- nur jede dritte Lampe wirft Schatten (Leistung, Code-Review LL-11)
 		light.Enabled = not c.dark
 		light.Parent = fixture
 		fixture:SetAttribute("Carriage", c.index)
@@ -936,9 +940,10 @@ function TrainBuilder.buildInspector(c: Carriage): Model
 		Enum.Material.Neon,
 		false
 	)
+	-- Kleine Reichweite: Rot nur als schwache Tönung in der Nähe (Compliance H-A10 c, Code-Review LL-22)
 	local light = Instance.new("PointLight")
-	light.Range = 14
-	light.Brightness = 1.4
+	light.Range = 8
+	light.Brightness = 0.9
 	light.Color = Palette.inspectorGo
 	light.Parent = lantern
 	local disc = block(

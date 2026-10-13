@@ -4,7 +4,8 @@
 
 local Causes = {}
 
-Causes.LIST = table.freeze({ "express", "oncoming", "eyes", "inspector", "chase", "conductor" })
+-- „lost“: Figur verloren (Roblox-Tod, Exploit, Verbindung) – kein Wesen (Code-Review LL-05).
+Causes.LIST = table.freeze({ "express", "oncoming", "eyes", "inspector", "chase", "conductor", "lost" })
 
 local VARIANTS = 2
 

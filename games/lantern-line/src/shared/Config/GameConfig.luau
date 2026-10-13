@@ -42,8 +42,8 @@ local GameConfig = table.freeze({
 	EXPRESS_SPAWN_BEHIND = 140,
 	EXPRESS_SPEED = 70,
 	EXPRESS_KILL_MARGIN = 2,
-	EXPRESS_CHANCE_START = 0.15,
-	EXPRESS_CHANCE_END = 0.28,
+	EXPRESS_CHANCE_START = 0.17,
+	EXPRESS_CHANCE_END = 0.32, -- etwas höher, weil die strengere Fairness (LL-03, LP-02) mehr Ereignisse ablehnt
 	EXPRESS_GAP = 4, -- Mindestabstand in Wagen zwischen Express und Gegenzug
 	MIN_SPOTS_FOR_EXPRESS = 4, -- Verstecke in k−1 ∪ k
 
@@ -119,6 +119,11 @@ local GameConfig = table.freeze({
 	LOBBY_COUNTDOWN = 15,
 	LOBBY_COUNTDOWN_ALL_READY = 3,
 	END_SCREEN_TIME = 15,
+
+	-- Lauf-Absicherung (Code-Review LL-05, LL-06, LL-10)
+	RUN_IDLE_TIMEOUT = 300, -- 5 min ohne neue Tür ⇒ Lauf endet (niemand hält die Gruppe fest)
+	LOST_CHARACTER_TIMEOUT = 5, -- so lange ohne Figur ⇒ ausgeschieden („lost“)
+	SPEED_LIMIT = 24, -- Studs/s über 1 s gemittelt; darüber zurück auf die letzte gültige Position
 })
 
 export type GameConfig = typeof(GameConfig)

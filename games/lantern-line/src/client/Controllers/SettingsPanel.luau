@@ -1,6 +1,6 @@
 --!strict
 -- Einstellungs-Fahrkarte: Flackern reduzieren, Sanfter Modus, Bewegung reduzieren.
--- Öffnen über HUD-Knopf, Taste M oder Gamepad-Select; am Bahnsteig vor dem ersten Lauf sichtbar (H-A9).
+-- Öffnen über HUD-Knopf, Taste M oder Gamepad Y (Select gehört Roblox’ UI-Navigation, LL-24); am Bahnsteig vor dem ersten Lauf sichtbar (H-A9).
 
 local ContextActionService = game:GetService("ContextActionService")
 local GuiService = game:GetService("GuiService")
@@ -77,7 +77,7 @@ function SettingsPanel.init(gui: ScreenGui)
 			SettingsPanel.toggle()
 		end
 		return Enum.ContextActionResult.Sink
-	end, false, Enum.KeyCode.M, Enum.KeyCode.ButtonSelect)
+	end, false, Enum.KeyCode.M, Enum.KeyCode.ButtonY)
 end
 
 return SettingsPanel

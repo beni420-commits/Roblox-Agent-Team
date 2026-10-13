@@ -59,6 +59,11 @@ local eyesByCarriage: { [number]: { Eyes.EyeState } } = {}
 local endingScheduled = false
 local chaseUncoupled = false
 local couplingReady = false
+local chaseBlock: { from: number, to: number }? = nil -- Wagen ohne Verstecke während der Kofferlawine
+local lastLeaveAt: { [Player]: number } = {}
+local missingSince: { [Player]: number } = {}
+local lastValid: { [Player]: CFrame } = {}
+local lastProgressAt = 0
 
 local function keyOf(player: Player): string
 	return tostring(player.UserId)
@@ -107,19 +112,32 @@ end
 ---------------------------------------------------------------------------------------------------
 -- Verstecke
 
+local function chaseBlocks(carriageIndex: number): boolean
+	local block = chaseBlock
+	return block ~= nil and carriageIndex >= block.from and carriageIndex <= block.to
+end
+
+-- Versteck wieder freigeben (auch wenn der Versteckte ausscheidet oder geht, Code-Review LL-14).
+local function releaseSpot(spotKey: number)
+	local carriageIndex = HideState.carriageOf(spotKey)
+	local prompt = TrainBuilder.prompt("hide", carriageIndex, spotKey % 100)
+	if prompt and not chaseBlocks(carriageIndex) then
+		prompt.Enabled = true
+	end
+end
+
 local function leaveHiding(player: Player)
 	local spotKey = HideState.leave(hide, keyOf(player))
 	if spotKey == nil then
 		return
 	end
 	coldWarned[player] = nil
+	lastLeaveAt[player] = now()
 	player:SetAttribute("HiddenIn", 0)
+	PlayerService.setConcealed(player, false)
 	local carriageIndex = HideState.carriageOf(spotKey)
 	local spotId = spotKey % 100
-	local prompt = TrainBuilder.prompt("hide", carriageIndex, spotId)
-	if prompt then
-		prompt.Enabled = true
-	end
+	releaseSpot(spotKey)
 	local root = PlayerService.root(player)
 	local c = carriageData(carriageIndex)
 	if root and c then
@@ -136,7 +154,11 @@ local function enterHiding(player: Player, carriageIndex: number, spotId: number
 	local current = run
 	local c = carriageData(carriageIndex)
 	local root = PlayerService.root(player)
-	if current == nil or c == nil or root == nil or c.chase then
+	if current == nil or c == nil or root == nil or chaseBlocks(carriageIndex) then
+		return
+	end
+	-- Kurz nach dem Aussteigen kein neues Versteck (E-Taste trifft sonst den Nachbarschrank, LL-09)
+	if now() - (lastLeaveAt[player] or -math.huge) < 0.3 then
 		return
 	end
 	local spot = c.hidingSpots[spotId]
@@ -151,6 +173,7 @@ local function enterHiding(player: Player, carriageIndex: number, spotId: number
 	local inside = TrainBuilder.spotFrames(c, spot)
 	root.Anchored = true
 	PlayerService.teleport(player, inside)
+	PlayerService.setConcealed(player, true)
 	player:SetAttribute("HiddenIn", spotKey)
 	TelemetryService.onboarding(player, 4)
 	TelemetryService.custom(player, Events.CUSTOM.Hide, carriageIndex, nil)
@@ -169,8 +192,9 @@ local function eliminate(player: Player, cause: string)
 	if not RunState.kill(current, keyOf(player), cause, carriage) then
 		return
 	end
-	if isHidden(player) then
-		HideState.leave(hide, keyOf(player))
+	local spotKey = HideState.leave(hide, keyOf(player))
+	if spotKey then
+		releaseSpot(spotKey)
 		player:SetAttribute("HiddenIn", 0)
 	end
 	player:SetAttribute("Alive", false)
@@ -214,12 +238,34 @@ local function buildCarriage(index: number)
 	if c.dark and eyesByCarriage[index] == nil then
 		eyesByCarriage[index] = Eyes.fromCarriage(c)
 	end
-	if c.chase then
+	if chaseBlocks(index) then
 		-- Während der Kofferlawine helfen keine Verstecke (Hinweis HINT_CHASE_2): Prompts aus.
 		for _, spot in c.hidingSpots do
 			local prompt = TrainBuilder.prompt("hide", index, spot.id)
 			if prompt then
 				prompt.Enabled = false
+			end
+		end
+	end
+end
+
+-- Verstecke in Wagen [from, to] für die Dauer der Kofferlawine sperren bzw. wieder freigeben (LL-15).
+local function setChaseBlock(from: number?, to: number?)
+	local old = chaseBlock
+	chaseBlock = if from and to then { from = from, to = to } else nil
+	local block = chaseBlock or old
+	if block == nil then
+		return
+	end
+	for index = block.from, block.to do
+		local c = carriageData(index)
+		if c then
+			for _, spot in c.hidingSpots do
+				local prompt = TrainBuilder.prompt("hide", index, spot.id)
+				local occupied = hide.occupant[HideState.spotKey(index, spot.id)] ~= nil
+				if prompt then
+					prompt.Enabled = chaseBlock == nil and not occupied
+				end
 			end
 		end
 	end
@@ -308,9 +354,17 @@ local function triggerEvent(k: number, event: Types.Event)
 	elseif event.kind == "chase" then
 		-- Nachzügler hinter dem Start der Lawine an das Heck von Wagen k − 1 holen.
 		local s = Sweep.chase(current, k, t)
+		setChaseBlock(k - 1, k + GameConfig.CHASE_LENGTH - 1)
 		for _, player in aliveParticipants() do
 			local root = PlayerService.root(player)
 			local frame = rearFrame(k - 1)
+			-- Versteckte in den Lawinenwagen holen (Schränke schützen hier nicht)
+			if isHidden(player) then
+				local spotKey = hide.hiddenIn[keyOf(player)]
+				if spotKey and chaseBlocks(HideState.carriageOf(spotKey)) then
+					leaveHiding(player)
+				end
+			end
 			if root and frame and root.Position.X < s.x0 then
 				if isHidden(player) then
 					leaveHiding(player)
@@ -376,6 +430,7 @@ local function openDoor(door: number)
 	end
 	TrainBuilder.setDoorOpen(door, true)
 	TrainBuilder.setLocked(door, false)
+	lastProgressAt = now()
 	workspace:SetAttribute("RunCarriage", door)
 	workspace:SetAttribute("KeyDoor", if current.keys[door + 1] then door + 1 else 0)
 	for index = door, RunState.buildUpTo(current) do
@@ -452,6 +507,47 @@ local function rescueFallen()
 	end
 end
 
+-- Bewegungs-Plausibilität (Code-Review LL-10): Wer über 1 s schneller als SPEED_LIMIT ist
+-- (Teleport-/Speed-Exploit), wird auf die letzte gültige Position zurückgesetzt.
+local function checkMovement()
+	for _, player in aliveParticipants() do
+		local root = PlayerService.root(player)
+		local tracker = PlayerService.motion(player)
+		if root and tracker and not isHidden(player) and not root.Anchored then
+			if MotionTracker.speed(tracker, 1.0) > GameConfig.SPEED_LIMIT then
+				local valid = lastValid[player]
+				if valid then
+					PlayerService.teleport(player, valid)
+				end
+			else
+				lastValid[player] = root.CFrame
+			end
+		end
+	end
+end
+
+-- Figur verloren (gelöscht, nicht nachgeladen): nach LOST_CHARACTER_TIMEOUT ausgeschieden (LL-05).
+local function checkLostCharacters(t: number)
+	local current = run
+	if current == nil then
+		return
+	end
+	for player in participants do
+		local alive = RunState.isAlive(current, keyOf(player))
+		if alive and PlayerService.root(player) == nil and not PlayerService.isVanishing(player) then
+			local since = missingSince[player]
+			if since == nil then
+				missingSince[player] = t
+			elseif t - since > GameConfig.LOST_CHARACTER_TIMEOUT then
+				missingSince[player] = nil
+				eliminate(player, "lost")
+			end
+		else
+			missingSince[player] = nil
+		end
+	end
+end
+
 local function checkDoors()
 	local current = run
 	if current == nil or current.phase ~= "running" then
@@ -511,8 +607,12 @@ local function startRun(boarders: { Player })
 	table.clear(participants)
 	table.clear(eyesByCarriage)
 	table.clear(noises)
+	table.clear(lastValid)
+	table.clear(missingSince)
 	express, chase, oncoming, inspector, conductor = nil, nil, nil, nil, nil
+	chaseBlock = nil
 	endingScheduled = false
+	lastProgressAt = t
 	local keys: { string } = {}
 	for _, player in boarders do
 		participants[player] = true
@@ -560,7 +660,6 @@ local function startRun(boarders: { Player })
 	if startEvent then
 		triggerEvent(startIndex, startEvent)
 	end
-	prepareNextPlan()
 end
 
 local function resetToLobby()
@@ -568,7 +667,9 @@ local function resetToLobby()
 	run = nil
 	plan = nil
 	express, chase, oncoming, inspector, conductor = nil, nil, nil, nil, nil
+	chaseBlock = nil
 	hide = HideState.new()
+	local riders = table.clone(participants)
 	table.clear(participants)
 	table.clear(eyesByCarriage)
 	table.clear(coldWarned)
@@ -580,8 +681,12 @@ local function resetToLobby()
 		player:SetAttribute("Alive", true)
 		player:SetAttribute("HiddenIn", 0)
 		player:SetAttribute("CheckedIn", -1)
-		task.spawn(PlayerService.spawnAtPlatform, player)
+		-- Nur Mitfahrer und Spieler ohne Figur neu laden; Wartende am Bahnsteig bleiben stehen (LL-21)
+		if riders[player] or PlayerService.root(player) == nil then
+			task.spawn(PlayerService.spawnAtPlatform, player)
+		end
 	end
+	prepareNextPlan() -- Generator läuft am Bahnsteig, nicht direkt nach der Abfahrt (LL-23)
 end
 
 local function endRun(outcome: RunState.Outcome)
@@ -640,8 +745,19 @@ local function updateLobby()
 	workspace:SetAttribute("LobbyReady", #ready)
 	workspace:SetAttribute("LobbyTotal", #present)
 	if depart then
-		-- Ein Server ist eine Gruppe: Bei Abfahrt steigen alle am Bahnsteig ein (Playtest LP-04).
-		startRun(present)
+		-- Ein Server ist eine Gruppe: Bei Abfahrt steigen alle am Bahnsteig ein (Playtest LP-04),
+		-- höchstens MAX_PLAYERS, Bereite zuerst (Code-Review LL-24).
+		local boarders: { Player } = {}
+		local taken: { [Player]: boolean } = {}
+		for _, list in { ready, present } do
+			for _, player in list do
+				if #boarders < GameConfig.MAX_PLAYERS and not taken[player] then
+					taken[player] = true
+					table.insert(boarders, player)
+				end
+			end
+		end
+		startRun(boarders)
 	end
 end
 
@@ -677,6 +793,7 @@ local function updateEntities(t: number, dt: number)
 		end
 		if t > ch.endAt then
 			chase = nil
+			setChaseBlock(nil, nil)
 			TrainBuilder.setCouplingReady(ch.carriage + GameConfig.CHASE_COUPLING_WAGON, false)
 			if not chaseUncoupled then
 				-- Die Lawine bleibt an der letzten Tür hängen; die Tür schließt hinter der Gruppe.
@@ -867,6 +984,10 @@ local function checkFinish(t: number)
 		end
 	end
 	local outcome = RunState.checkEnd(current, t, finished)
+	if outcome == nil and t - lastProgressAt > GameConfig.RUN_IDLE_TIMEOUT then
+		-- Niemand kommt mehr voran: Lauf beenden, damit keiner endlos festhängt (LL-06)
+		outcome = RunState.abort(current, t)
+	end
 	if outcome then
 		endRun(outcome)
 	end
@@ -896,6 +1017,8 @@ local function step()
 		checkDoors()
 		updateCoupling(t)
 		rescueFallen()
+		checkMovement()
+		checkLostCharacters(t)
 		checkFinish(t)
 	end
 	if accumulators.inspector >= 0.05 then
@@ -943,6 +1066,9 @@ local function onPrompt(prompt: ProximityPrompt, player: Player)
 	end
 	if not withinReach(player, prompt) then
 		return
+	end
+	if (kind == "hide" or kind == "coupling") and carriage > current.opened then
+		return -- Wagen hinter einer geschlossenen Tür (Code-Review LL-16)
 	end
 	if kind == "hide" then
 		enterHiding(player, carriage, id, prompt)
@@ -1040,10 +1166,16 @@ end
 local function onPlayerRemoving(player: Player)
 	local current = run
 	if current and participants[player] then
-		HideState.leave(hide, keyOf(player))
+		local spotKey = HideState.leave(hide, keyOf(player))
+		if spotKey then
+			releaseSpot(spotKey)
+		end
 		RunState.removePlayer(current, keyOf(player))
 		participants[player] = nil
 	end
+	lastLeaveAt[player] = nil
+	missingSince[player] = nil
+	lastValid[player] = nil
 	local rejected = 0
 	for _, count in NetService.rejections(player) do
 		rejected += count
@@ -1063,6 +1195,15 @@ function RunController.start()
 	workspace:SetAttribute("LobbyEndsAt", -1)
 	prepareNextPlan()
 	ProximityPromptService.PromptTriggered:Connect(onPrompt)
+	PlayerService.onLost(function(player)
+		-- Roblox-Tod außerhalb des Spiels (Reset, Exploit): als ausgeschieden werten, Figur ausblenden
+		local current = run
+		if current and participants[player] and RunState.isAlive(current, keyOf(player)) then
+			eliminate(player, "lost")
+		elseif current == nil then
+			task.spawn(PlayerService.spawnAtPlatform, player)
+		end
+	end)
 	Players.PlayerAdded:Connect(onPlayerAdded)
 	Players.PlayerRemoving:Connect(onPlayerRemoving)
 	for _, player in Players:GetPlayers() do

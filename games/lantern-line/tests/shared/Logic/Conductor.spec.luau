@@ -116,6 +116,15 @@ TestRunner.it(suite, "Jagdtempo liegt zwischen Schleichen und Laufen; bleibt imm
 	end
 end)
 
+TestRunner.it(suite, "Moduswechsel erhöht die Wegrevision (Clients rechnen sofort mit neuem Tempo)", function()
+	local state = newConductor(0)
+	place(state, 50, 3.5, 1, 0)
+	local before = state.revision
+	Conductor.update(state, 10, DT, {}, { { x = 50.5, z = 3.5, radius = 10 } }) -- Ziel nahe der eigenen Position
+	expect(state.mode):toBe("hunt")
+	expect(state.revision > before):toBe(true)
+end)
+
 TestRunner.it(suite, "Strecke-Box-Schnitt (Sichtprüfung)", function()
 	local box: Types.Box = { cx = 0, cz = 0, sx = 2, sz = 2, h = 7, kind = "shelf" }
 	expect(Conductor.segmentHitsBox(-5, 0, 5, 0, box)):toBe(true)

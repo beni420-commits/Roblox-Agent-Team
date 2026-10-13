@@ -52,21 +52,27 @@ TestRunner.it(suite, "Phasenfolge Einleitung → Gehen → Achtung → Halt → 
 	expect(Inspector.isDangerous("warn")):toBe(false)
 end)
 
-TestRunner.it(suite, "Bewegung kostet nur bei Halt nach der Gnadenzeit, höchstens einmal je Haltphase", function()
-	local state = Inspector.new(7, 0)
-	local tStop = advanceTo(state, "stop", 0)
-	local moving = { view("a", 30, 3), view("b", 30, 0.5) }
-	expect(#Inspector.update(state, tStop + GameConfig.INSPECTOR_GRACE - 0.01, moving).hits):toBe(0)
-	local r = Inspector.update(state, tStop + GameConfig.INSPECTOR_GRACE + 0.01, moving)
-	expect(#r.hits):toBe(1)
-	expect(r.hits[1]):toBe("a")
-	expect(#Inspector.update(state, tStop + GameConfig.INSPECTOR_GRACE + 0.2, moving).hits):toBe(0)
-	-- nächste Haltphase: wieder genau ein Treffer möglich
-	local tGo = advanceTo(state, "go", tStop)
-	expect(#Inspector.update(state, tGo + 0.1, moving).hits):toBe(0) -- Gehen ist sicher
-	local tStop2 = advanceTo(state, "stop", tGo)
-	expect(#Inspector.update(state, tStop2 + 1, moving).hits):toBe(1)
-end)
+TestRunner.it(
+	suite,
+	"Bewegung kostet nur bei Halt, gemessen nach der Gnadenzeit, höchstens einmal je Haltphase",
+	function()
+		local state = Inspector.new(7, 0)
+		local tStop = advanceTo(state, "stop", 0)
+		local moving = { view("a", 30, 3), view("b", 30, 0.5) }
+		local measureFrom = tStop + GameConfig.INSPECTOR_GRACE + GameConfig.INSPECTOR_MOVE_WINDOW
+		expect(#Inspector.update(state, tStop + GameConfig.INSPECTOR_GRACE + 0.01, moving).hits):toBe(0) -- Fenster reicht noch in die Gnadenzeit
+		expect(#Inspector.update(state, measureFrom - 0.01, moving).hits):toBe(0)
+		local r = Inspector.update(state, measureFrom + 0.01, moving)
+		expect(#r.hits):toBe(1)
+		expect(r.hits[1]):toBe("a")
+		expect(#Inspector.update(state, measureFrom + 0.2, moving).hits):toBe(0)
+		-- nächste Haltphase: wieder genau ein Treffer möglich
+		local tGo = advanceTo(state, "go", tStop)
+		expect(#Inspector.update(state, tGo + 0.1, moving).hits):toBe(0) -- Gehen ist sicher
+		local tStop2 = advanceTo(state, "stop", tGo)
+		expect(#Inspector.update(state, tStop2 + 1, moving).hits):toBe(1)
+	end
+)
 
 TestRunner.it(suite, "Kontrollierte, tote und Spieler außerhalb des Wagens werden nie getroffen", function()
 	local state = Inspector.new(9, 0)

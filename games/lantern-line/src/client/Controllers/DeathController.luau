@@ -38,8 +38,12 @@ local spectating = false
 local spectateIndex = 1
 local spectateTarget: Player? = nil
 
--- Zuschauen mit Kamera hinter und über dem Mitreisenden statt in seinem Kopf (Compliance H-A18:
--- fremde Kopfbewegung kann Übelkeit auslösen). Mit „Bewegung reduzieren“ ohne Nachziehen.
+-- Zuschauen mit Kamera hinter und über dem Mitreisenden statt in seinem Kopf (Compliance H-A18).
+-- Die Kamera schaut immer in Fahrtrichtung (+x, ruhig, keine fremden Drehungen) und bleibt per
+-- Raycast vor Wänden und Möbeln (Code-Review LL-07).
+local spectateParams = RaycastParams.new()
+spectateParams.FilterType = Enum.RaycastFilterType.Exclude
+
 local function spectateCamera(dt: number)
 	local target = spectateTarget
 	local character = if target then target.Character else nil
@@ -49,13 +53,18 @@ local function spectateCamera(dt: number)
 	end
 	local camera = workspace.CurrentCamera
 	camera.CameraType = Enum.CameraType.Scriptable
-	local look = root.CFrame.LookVector
-	local flat = Vector3.new(look.X, 0, look.Z)
-	if flat.Magnitude < 1e-3 then
-		flat = Vector3.new(1, 0, 0)
+	local focus = root.Position + Vector3.new(0, 1.5, 0)
+	local wanted = root.Position + Vector3.new(-7, 3.5, 0)
+	local excluded: { Instance } = { workspace:FindFirstChild("LocalEntities") :: Instance }
+	for _, player in Players:GetPlayers() do
+		if player.Character then
+			table.insert(excluded, player.Character)
+		end
 	end
-	local eye = root.Position - flat.Unit * 7 + Vector3.new(0, 3.5, 0)
-	local goal = CFrame.lookAt(eye, root.Position + Vector3.new(0, 1.5, 0))
+	spectateParams.FilterDescendantsInstances = excluded
+	local hit = workspace:Raycast(focus, wanted - focus, spectateParams)
+	local eye = if hit then hit.Position + (focus - hit.Position).Unit * 0.6 else wanted
+	local goal = CFrame.lookAt(eye, focus)
 	local alpha = if Settings.motionAllowed() then math.clamp(dt * 4, 0, 1) else 1
 	camera.CFrame = camera.CFrame:Lerp(goal, alpha)
 end

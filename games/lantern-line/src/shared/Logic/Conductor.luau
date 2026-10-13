@@ -217,6 +217,16 @@ end
 
 -- Ein Simulationsschritt. Liefert die Schlüssel der gefangenen Spieler.
 function Conductor.update(state: State, now: number, dt: number, listeners: { Listener }, noises: { Noise }): { string }
+	local modeBefore = state.mode
+	local caught = Conductor.step(state, now, dt, listeners, noises)
+	if state.mode ~= modeBefore then
+		-- Tempowechsel sofort an die Clients melden (Code-Review LL-13)
+		state.revision += 1
+	end
+	return caught
+end
+
+function Conductor.step(state: State, now: number, dt: number, listeners: { Listener }, noises: { Noise }): { string }
 	if state.mode == "dormant" then
 		if now < state.wakeAt then
 			return {}

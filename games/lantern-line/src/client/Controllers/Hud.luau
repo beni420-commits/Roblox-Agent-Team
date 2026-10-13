@@ -203,8 +203,9 @@ local function setSign(phase: string?, checked: boolean)
 	if kind ~= lastSignKind then
 		lastSignKind = kind
 		shapeAs(kind)
+		-- Text nur beim Wechsel formatieren, nicht in jedem Bild (LL-23)
+		signLabel.Text = Strings.format(text)
 	end
-	signLabel.Text = Strings.format(text)
 	-- Ablaufbalken in der Achtungsphase (wie viel Zeit bis „Stillstehen“)
 	if kind == "half" then
 		local left = math.clamp(1 - (os.clock() - warnStartedAt) / GameConfig.INSPECTOR_WARN, 0, 1)
@@ -347,6 +348,7 @@ function Hud.init()
 	frost.Color = Color3.fromRGB(200, 225, 240)
 	frost.Thickness = 40
 	frost.Transparency = 0.45
+	frost.BorderStrokePosition = Enum.BorderStrokePosition.Inner -- Rand innen, sonst außerhalb des Bildes (LL-19)
 	frost.Parent = coldFrame
 	coldLabel = UiKit.label(
 		coldFrame,
@@ -415,6 +417,7 @@ function Hud.init()
 		Hud.setSneak(sneakTicket.Visible)
 		refreshCarriage()
 		refreshKey()
+		lastSignKind = "" -- Kellen-Text nach dem Laden des Translators neu setzen
 	end
 	Strings.onReady(relabel)
 	relabel()

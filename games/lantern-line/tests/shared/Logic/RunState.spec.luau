@@ -113,6 +113,17 @@ TestRunner.it(
 	end
 )
 
+TestRunner.it(suite, "Abbruch ohne Fortschritt: verloren, nur während des Laufs, danach unverändert", function()
+	local state = RunState.new(TrainGenerator.generate(10))
+	expect(RunState.abort(state, 1)):toBe(nil) -- Bahnsteig
+	RunState.start(state, { "a" }, 0)
+	expect(RunState.abort(state, 400)):toBe("lost")
+	expect(state.phase):toBe("ended")
+	expect(state.endedAt):toBe(400)
+	expect(RunState.abort(state, 500)):toBe("lost")
+	expect(state.endedAt):toBe(400)
+end)
+
 TestRunner.it(suite, "Verlassen zählt nicht als Tod, beendet aber den Lauf, wenn niemand übrig ist", function()
 	local state = RunState.new(TrainGenerator.generate(8))
 	RunState.start(state, { "a" }, 0)

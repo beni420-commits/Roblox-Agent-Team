@@ -116,11 +116,14 @@ local function onExpress(payload: any)
 		true,
 		nil
 	)
-	Hud.setWarning(
-		Palette.express,
-		schedule.startAt + (schedule.x1 - schedule.x0) / 2 / GameConfig.EXPRESS_SPEED,
-		"express"
-	)
+	-- Warnungen nur für Mitfahrer und Zuschauer, nicht am Bahnsteig (LL-17)
+	if Context.inRun() then
+		Hud.setWarning(
+			Palette.express,
+			schedule.startAt + (schedule.x1 - schedule.x0) / 2 / GameConfig.EXPRESS_SPEED,
+			"express"
+		)
+	end
 end
 
 local function fadeNearCamera(model: Model)
@@ -170,7 +173,9 @@ local function onChase(payload: any)
 		false,
 		Palette.chase
 	)
-	Hud.setWarning(Palette.chase, schedule.endAt, "chase")
+	if Context.inRun() then
+		Hud.setWarning(Palette.chase, schedule.endAt, "chase")
+	end
 end
 
 -- Gegenzug: ruhiges Licht an festen Fensterpositionen, schwillt weich an und ab (keine Lichtwechsel,
@@ -179,7 +184,9 @@ local ONCOMING_FADE = 0.35
 
 local function onOncoming(payload: any)
 	oncomingUntil = payload.endAt + ONCOMING_FADE
-	Hud.setOncoming(payload.side, payload.endAt)
+	if Context.inRun() then
+		Hud.setOncoming(payload.side, payload.endAt)
+	end
 	local band = part(
 		localStuff,
 		Vector3.new(payload.x1 - payload.x0, 0.06, HALF + GameConfig.ONCOMING_SAFE_Z),
@@ -388,6 +395,7 @@ function EntityController.init()
 	end)
 	Context.onWorld("chaseStop", function()
 		-- Abgekoppelt: Die Kofferwand bleibt stehen und fällt mit den hinteren Wagen zurück.
+		Hud.setWarning(Palette.chase, 0, "chase") -- Warnleiste sofort aus (LL-17)
 		for i = #movers, 1, -1 do
 			local mover = movers[i]
 			if mover.schedule.kind == "chase" then

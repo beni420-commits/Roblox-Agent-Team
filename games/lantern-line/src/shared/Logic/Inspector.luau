@@ -90,7 +90,10 @@ function Inspector.update(state: State, now: number, players: { PlayerView }): R
 		end
 	end
 
-	if state.phase == "stop" and now >= state.stopStartedAt + GameConfig.INSPECTOR_GRACE then
+	-- Gemessen wird erst, wenn das Messfenster ganz nach der Gnadenzeit liegt (Code-Review LL-04):
+	-- Bewegung während der Gnadenzeit zählt nie.
+	local measureFrom = state.stopStartedAt + GameConfig.INSPECTOR_GRACE + GameConfig.INSPECTOR_MOVE_WINDOW
+	if state.phase == "stop" and now >= measureFrom then
 		for _, p in players do
 			local exposed = p.alive and p.inCarriage and not state.checked[p.key]
 			if exposed and not state.hitThisStop[p.key] and p.moved > GameConfig.INSPECTOR_MOVE_THRESHOLD then

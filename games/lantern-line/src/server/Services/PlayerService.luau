@@ -15,8 +15,21 @@ local PlayerService = {}
 
 local trackers: { [Player]: MotionTracker.Tracker } = {}
 local vanishing: { [Player]: boolean } = {}
+local loading: { [Player]: boolean } = {}
+local lostListeners: { (Player) -> () } = {}
 
-local function setupCharacter(character: Model)
+-- Meldet, wenn eine Figur außerhalb des Spiels „stirbt“ (Roblox-Tod, Exploit), Code-Review LL-05.
+function PlayerService.onLost(listener: (Player) -> ())
+	table.insert(lostListeners, listener)
+end
+
+local function reportLost(player: Player)
+	for _, listener in lostListeners do
+		task.spawn(listener, player)
+	end
+end
+
+local function setupCharacter(player: Player, character: Model)
 	for _, child in character:GetDescendants() do
 		if child:IsA("BasePart") then
 			child.CollisionGroup = WorldSetup.PLAYER_GROUP
@@ -29,6 +42,11 @@ local function setupCharacter(character: Model)
 	end)
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	if humanoid then
+		humanoid.Died:Connect(function()
+			if not vanishing[player] then
+				reportLost(player)
+			end
+		end)
 		humanoid.BreakJointsOnDeath = false
 		humanoid.MaxHealth = GameConfig.MAX_HEALTH
 		humanoid.Health = GameConfig.MAX_HEALTH
@@ -49,20 +67,23 @@ local function setupCharacter(character: Model)
 end
 
 function PlayerService.init()
-	Players.PlayerAdded:Connect(function(player)
+	local function track(player: Player)
 		trackers[player] = MotionTracker.new()
-		player.CharacterAdded:Connect(setupCharacter)
-	end)
+		player.CharacterAdded:Connect(function(character)
+			setupCharacter(player, character)
+		end)
+		if player.Character then
+			setupCharacter(player, player.Character)
+		end
+	end
+	Players.PlayerAdded:Connect(track)
 	Players.PlayerRemoving:Connect(function(player)
 		trackers[player] = nil
 		vanishing[player] = nil
+		loading[player] = nil
 	end)
 	for _, player in Players:GetPlayers() do
-		trackers[player] = MotionTracker.new()
-		player.CharacterAdded:Connect(setupCharacter)
-		if player.Character then
-			setupCharacter(player.Character)
-		end
+		track(player)
 	end
 end
 
@@ -93,10 +114,22 @@ function PlayerService.spawnAtPlatform(player: Player)
 	if player.Parent == nil then
 		return
 	end
+	if loading[player] then
+		return -- nicht doppelt laden (Doku: erst nach CharacterAppearanceLoaded erneut), Code-Review LL-21
+	end
+	loading[player] = true
 	vanishing[player] = nil
-	local ok, err = pcall(function()
-		player:LoadCharacterAsync()
-	end)
+	local ok, err = false, nil
+	for attempt = 1, 3 do
+		ok, err = pcall(function()
+			player:LoadCharacterAsync()
+		end)
+		if ok or player.Parent == nil then
+			break
+		end
+		task.wait(attempt * 2)
+	end
+	loading[player] = nil
 	if not ok then
 		warn("[PlayerService] LoadCharacterAsync failed: " .. tostring(err))
 		return
@@ -174,6 +207,34 @@ function PlayerService.vanish(player: Player)
 		end
 		character:Destroy()
 	end)
+end
+
+function PlayerService.isLoading(player: Player): boolean
+	return loading[player] == true
+end
+
+-- Versteckte Figur für alle unsichtbar machen bzw. wiederherstellen (Code-Review LL-08).
+function PlayerService.setConcealed(player: Player, concealed: boolean)
+	local character = player.Character
+	if character == nil then
+		return
+	end
+	for _, child in character:GetDescendants() do
+		if child:IsA("BasePart") or child:IsA("Decal") then
+			if concealed then
+				if child:GetAttribute("OrigTransparency") == nil then
+					child:SetAttribute("OrigTransparency", child.Transparency)
+				end
+				child.Transparency = 1
+			else
+				local original = child:GetAttribute("OrigTransparency")
+				if type(original) == "number" then
+					child.Transparency = original
+					child:SetAttribute("OrigTransparency", nil)
+				end
+			end
+		end
+	end
 end
 
 function PlayerService.isVanishing(player: Player): boolean

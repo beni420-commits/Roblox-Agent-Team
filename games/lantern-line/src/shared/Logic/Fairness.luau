@@ -139,20 +139,32 @@ end
 -- Express in Wagen cur (Vorgänger prev): Von jedem erreichbaren Punkt in prev und cur ist das
 -- nächste Versteck desselben Wagens rechtzeitig erreichbar, und eine volle Gruppe an der Tür findet
 -- je ein eigenes Versteck rechtzeitig.
-function Fairness.checkExpress(prev: Carriage, cur: Carriage, event: Event): (boolean, string?)
+-- behind: ältere angekoppelte Wagen (k−2, k−3), die ebenfalls auf der Fahrbahn liegen (Code-Review LL-03).
+-- Dort gilt dieselbe Frist für jeden Punkt ab dem Startpunkt des Express.
+function Fairness.checkExpress(prev: Carriage, cur: Carriage, event: Event, behind: { Carriage }?): (boolean, string?)
 	if #prev.hidingSpots + #cur.hidingSpots < GameConfig.MIN_SPOTS_FOR_EXPRESS then
 		return false, "not enough hiding spots"
 	end
 	if Fairness.groupSpotsInTime(prev, cur, event) < GameConfig.MAX_PLAYERS then
 		return false, "group cannot hide in time"
 	end
+	local spawnX = prev.originX - GameConfig.EXPRESS_SPAWN_BEHIND
+	local carriages: { Carriage } = { prev, cur }
+	for _, c in behind or {} do
+		if c.originX + c.length >= spawnX then
+			table.insert(carriages, c)
+		end
+	end
 	return checkReachInTime(
-		{ prev, cur },
+		carriages,
 		function(c, grid)
 			return cellsFor(grid, spotPoints(c))
 		end,
 		GameConfig.REACTION_TIME + GameConfig.HIDE_ENTER_TIME,
 		function(c, x)
+			if c.originX + x < spawnX then
+				return math.huge -- hinter dem Startpunkt fährt der Express nicht
+			end
 			return Fairness.arrivalTime(prev, event, c.originX + x)
 		end
 	)

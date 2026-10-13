@@ -84,7 +84,12 @@ TestRunner.it(suite, "Garantie: Express und Gegenzug sind unabhängig nachgeprü
 				local ok, why
 				if event.kind == "express" then
 					express += 1
-					ok, why = Fairness.checkExpress(prev, c, event)
+					local behind: { Types.Carriage } = {}
+					-- Array-Index i ist Wagen i − 1; Wagen k−2 und k−3 liegen bei i − 2 und i − 3.
+					for back = i - 2, math.max(1, i - 3), -1 do
+						table.insert(behind, plan.carriages[back])
+					end
+					ok, why = Fairness.checkExpress(prev, c, event, behind)
 					if event.delay < GameConfig.EXPRESS_DELAY_MIN or event.delay > GameConfig.EXPRESS_DELAY_MAX then
 						fail(plan, c.index, "express delay out of range")
 					end
