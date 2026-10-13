@@ -246,6 +246,7 @@ local function decouple(keepFrom: number)
 			end
 			TrainBuilder.remove(index)
 			eyesByCarriage[index] = nil
+			TrainBuilder.sealRear(keepFrom)
 		end
 	end
 end
@@ -378,6 +379,26 @@ local function openDoor(door: number)
 	end
 end
 
+-- Sicherheitsnetz: Wer trotz geschlossener Hülle unter den Zug fällt, kommt zurück an den Anfang
+-- des höchsten geöffneten Wagens (ohne Schaden).
+local function rescueFallen()
+	local current = run
+	if current == nil then
+		return
+	end
+	for _, player in aliveParticipants() do
+		local root = PlayerService.root(player)
+		local frame = rearFrame(current.opened)
+		if root and frame and root.Position.Y < GameConfig.FLOOR_Y - 30 then
+			if isHidden(player) then
+				leaveHiding(player)
+			end
+			root.Anchored = false
+			PlayerService.teleport(player, frame)
+		end
+	end
+end
+
 local function checkDoors()
 	local current = run
 	if current == nil or current.phase ~= "running" then
@@ -445,12 +466,29 @@ local function startRun(boarders: { Player })
 		table.insert(keys, keyOf(player))
 	end
 	RunState.start(current, keys, t)
-	for index = 0, RunState.buildUpTo(current) do
+	-- Nur in Roblox Studio: Workspace-Attribut „DebugStartCarriage“ startet den Lauf in Wagen n
+	-- (für den Owner-Test des Finales, reports/lantern-line/owner_test_template.md). Live wirkungslos.
+	local debugStart = workspace:GetAttribute("DebugStartCarriage")
+	local startEvent: Types.Event? = nil
+	local startIndex = 0
+	if RunService:IsStudio() and type(debugStart) == "number" then
+		local ok, event = RunState.debugSkipTo(current, debugStart)
+		if ok then
+			startIndex = current.opened
+			startEvent = event
+		end
+	end
+	for index = math.max(0, startIndex - 1), RunState.buildUpTo(current) do
 		buildCarriage(index)
 	end
-	local first = newPlan.carriages[1]
+	if startIndex > 0 then
+		TrainBuilder.setDoorOpen(startIndex, true)
+		TrainBuilder.sealRear(startIndex - 1)
+	end
+	local first = newPlan.carriages[startIndex + 1]
 	for i, player in boarders do
-		local p = Vector3.new(first.originX + 8 + (i - 1) * 3, GameConfig.FLOOR_Y + 3, if i % 2 == 0 then 1.5 else -1.5)
+		-- Nebeneinander im hinteren Vorraum (x 1,5–3,5, |z| ≤ 2,5: dort steht in keinem Wagentyp ein Möbelstück).
+		local p = Vector3.new(first.originX + 2.5, GameConfig.FLOOR_Y + 3, -1.5 + (i - 1))
 		PlayerService.teleport(player, CFrame.lookAt(p, p + Vector3.new(1, 0, 0)))
 		player:SetAttribute("InRun", true)
 		player:SetAttribute("Alive", true)
@@ -465,6 +503,9 @@ local function startRun(boarders: { Player })
 	workspace:SetAttribute("LobbyEndsAt", -1)
 	setRunAttributes("running")
 	NetService.fireAll(WORLD, { type = "start", runId = runId })
+	if startEvent then
+		triggerEvent(startIndex, startEvent)
+	end
 	prepareNextPlan()
 end
 
@@ -784,6 +825,7 @@ local function step()
 	if accumulators.door >= 0.1 then
 		accumulators.door = 0
 		checkDoors()
+		rescueFallen()
 		checkFinish(t)
 	end
 	if accumulators.inspector >= 0.05 then

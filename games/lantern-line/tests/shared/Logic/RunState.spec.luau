@@ -95,6 +95,24 @@ TestRunner.it(suite, "Tod einmal; alle tot ⇒ verloren; Tote öffnen keine Beh�
 	expect(RunState.kill(state, "zzz", "eyes", 1)):toBe(false)
 end)
 
+TestRunner.it(
+	suite,
+	"Studio-Abkürzung: nur zu Beginn, nur gültige Wagen, liefert das Ereignis des Zielwagens",
+	function()
+		local plan = TrainGenerator.generate(9)
+		local state = RunState.new(plan)
+		expect((RunState.debugSkipTo(state, 10))):toBe(false) -- noch Bahnsteig
+		RunState.start(state, { "a" }, 0)
+		expect((RunState.debugSkipTo(state, 0))):toBe(false)
+		expect((RunState.debugSkipTo(state, plan.lastIndex + 1))):toBe(false)
+		local ok, event = RunState.debugSkipTo(state, plan.lastIndex)
+		expect(ok):toBe(true)
+		expect(state.opened):toBe(plan.lastIndex)
+		expect((event :: Types.Event).kind):toBe("conductor")
+		expect((RunState.debugSkipTo(state, 5))):toBe(false) -- nur einmal, nur von Wagen 0 aus
+	end
+)
+
 TestRunner.it(suite, "Verlassen zählt nicht als Tod, beendet aber den Lauf, wenn niemand übrig ist", function()
 	local state = RunState.new(TrainGenerator.generate(8))
 	RunState.start(state, { "a" }, 0)

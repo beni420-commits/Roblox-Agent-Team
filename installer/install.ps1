@@ -1,18 +1,22 @@
 ﻿<#
 .SYNOPSIS
-    Richtet „Schwungturm“ auf einem Windows-PC zum Testen in Roblox Studio ein.
+    Richtet die Spiele des Projekts („Schwungturm“, „Lantern Line“) auf einem Windows-PC zum Testen
+    in Roblox Studio ein.
 
 .DESCRIPTION
     Ein Roblox-Spiel läuft immer in Roblox bzw. Roblox Studio – es gibt keine eigenständige PC-Version.
     Dieses Skript macht den Weg dorthin so einfach wie möglich:
       1. prüft, ob es im Projektordner liegt,
       2. lädt das Build-Werkzeug Rojo (offizielles GitHub-Release, Prüfsumme wird kontrolliert),
-      3. baut daraus die Spieldatei build\Schwungturm.rbxlx,
+      3. baut daraus die Spieldatei (build\Schwungturm.rbxlx bzw. build\LanternLine.rbxlx),
       4. sucht Roblox Studio (und öffnet sonst die offizielle Download-Seite),
       5. installiert das Rojo-Plugin für Studio und legt eine Desktop-Verknüpfung an,
       6. öffnet das Spiel in Roblox Studio (dort mit „Play“ bzw. F5 testen).
     Es braucht keine Administratorrechte und ändert nichts außerhalb des Projektordners,
     außer der Desktop-Verknüpfung und dem Rojo-Plugin in Studios Plugin-Ordner.
+
+.PARAMETER Game
+    Welches Spiel: Schwungturm (Standard) oder LanternLine („Lantern Line – Der Nachtzug“).
 
 .PARAMETER Quick
     Nur neu bauen und öffnen (für die Desktop-Verknüpfung nach einem Update des Projektordners).
@@ -21,7 +25,8 @@
     Am Ende nichts öffnen.
 
 .PARAMETER Uninstall
-    Entfernt Rojo aus dem Projektordner, die gebaute Spieldatei, die Desktop-Verknüpfung und das Rojo-Plugin.
+    Entfernt Rojo aus dem Projektordner, die gebauten Spieldateien, die Desktop-Verknüpfungen (beider Spiele)
+    und das Rojo-Plugin.
 
 .PARAMETER RojoVersion
     Rojo-Version (Standard: 7.7.1, wie in rokit.toml).
@@ -31,6 +36,8 @@
 #>
 [CmdletBinding()]
 param(
+    [ValidateSet('Schwungturm', 'LanternLine')]
+    [string]$Game = 'Schwungturm',
     [switch]$Quick,
     [switch]$NoOpen,
     [switch]$Uninstall,
@@ -41,9 +48,35 @@ param(
 Set-StrictMode -Version 3.0
 $ErrorActionPreference = 'Stop'
 
-$script:PlaceFileName = 'Schwungturm.rbxlx'
-$script:ShortcutName = 'Schwungturm testen.lnk'
 $script:StudioDownloadPage = 'https://create.roblox.com/'
+
+# Alle Spiele des Projekts (Pfade relativ zum Projektordner).
+$script:Games = @{
+    Schwungturm = @{
+        Title     = 'Schwungturm'
+        Project   = 'default.project.json'
+        Place     = 'Schwungturm.rbxlx'
+        Shortcut  = 'Schwungturm testen.lnk'
+        Starter   = 'Schwungturm-Starten.bat'
+        Checklist = 'reports\owner_test_template.md'
+    }
+    LanternLine = @{
+        Title     = 'Lantern Line - Der Nachtzug'
+        Project   = 'games\lantern-line\default.project.json'
+        Place     = 'LanternLine.rbxlx'
+        Shortcut  = 'Lantern Line testen.lnk'
+        Starter   = 'LanternLine-Starten.bat'
+        Checklist = 'reports\lantern-line\owner_test_template.md'
+    }
+}
+
+function Get-GameInfo {
+    param([string]$Name)
+    if (-not $script:Games.ContainsKey($Name)) {
+        throw ("Unbekanntes Spiel '{0}'. Erlaubt: {1}" -f $Name, (($script:Games.Keys | Sort-Object) -join ', '))
+    }
+    return $script:Games[$Name]
+}
 
 function Write-Step {
     param([int]$Number, [int]$Total, [string]$Text)
@@ -160,11 +193,12 @@ function Get-RojoExecutable {
 }
 
 function Invoke-PlaceBuild {
-    param([string]$Rojo, [string]$RepoRoot)
+    param([string]$Rojo, [string]$RepoRoot, [string]$GameName = 'Schwungturm')
+    $info = Get-GameInfo -Name $GameName
     $buildDir = Join-Path $RepoRoot 'build'
     New-Item -ItemType Directory -Path $buildDir -Force | Out-Null
-    $place = Join-Path $buildDir $script:PlaceFileName
-    $project = Join-Path $RepoRoot 'default.project.json'
+    $place = Join-Path $buildDir $info.Place
+    $project = Join-Path $RepoRoot ($info.Project -replace '\\', [IO.Path]::DirectorySeparatorChar)
     # Ausgabe direkt anzeigen, nicht als Rückgabewert der Funktion weiterreichen.
     & $Rojo build $project --output $place | Out-Host
     if ($LASTEXITCODE -ne 0) {
@@ -209,20 +243,21 @@ function Install-RojoPlugin {
 }
 
 function New-DesktopShortcut {
-    param([string]$RepoRoot)
+    param([string]$RepoRoot, [string]$GameName = 'Schwungturm')
+    $info = Get-GameInfo -Name $GameName
     $desktop = [Environment]::GetFolderPath('Desktop')
     if ([string]::IsNullOrWhiteSpace($desktop)) {
         Write-Note 'Kein Desktop-Ordner gefunden – Verknüpfung übersprungen.'
         return
     }
-    $target = Join-Path $RepoRoot 'installer\Schwungturm-Starten.bat'
+    $target = Join-Path (Join-Path $RepoRoot 'installer') $info.Starter
     $shell = New-Object -ComObject WScript.Shell
-    $shortcut = $shell.CreateShortcut((Join-Path $desktop $script:ShortcutName))
+    $shortcut = $shell.CreateShortcut((Join-Path $desktop $info.Shortcut))
     $shortcut.TargetPath = $target
     $shortcut.WorkingDirectory = Join-Path $RepoRoot 'installer'
-    $shortcut.Description = 'Schwungturm neu bauen und in Roblox Studio öffnen'
+    $shortcut.Description = ("{0} neu bauen und in Roblox Studio öffnen" -f $info.Title)
     $shortcut.Save()
-    Write-Ok ("Desktop-Verknüpfung '{0}' angelegt" -f ($script:ShortcutName -replace '\.lnk$', ''))
+    Write-Ok ("Desktop-Verknüpfung '{0}' angelegt" -f ($info.Shortcut -replace '\.lnk$', ''))
 }
 
 function Open-Place {
@@ -251,17 +286,20 @@ function Invoke-Uninstall {
         Remove-Item -LiteralPath $exe -Force
         Write-Ok 'Rojo entfernt'
     }
-    $place = Join-Path (Join-Path $RepoRoot 'build') $script:PlaceFileName
-    if (Test-Path -LiteralPath $place) {
-        Remove-Item -LiteralPath $place -Force
-        Write-Ok 'Spieldatei entfernt'
-    }
     $desktop = [Environment]::GetFolderPath('Desktop')
-    if ($desktop) {
-        $link = Join-Path $desktop $script:ShortcutName
-        if (Test-Path -LiteralPath $link) {
-            Remove-Item -LiteralPath $link -Force
-            Write-Ok 'Desktop-Verknüpfung entfernt'
+    foreach ($name in ($script:Games.Keys | Sort-Object)) {
+        $info = $script:Games[$name]
+        $place = Join-Path (Join-Path $RepoRoot 'build') $info.Place
+        if (Test-Path -LiteralPath $place) {
+            Remove-Item -LiteralPath $place -Force
+            Write-Ok ("Spieldatei entfernt: {0}" -f $info.Place)
+        }
+        if ($desktop) {
+            $link = Join-Path $desktop $info.Shortcut
+            if (Test-Path -LiteralPath $link) {
+                Remove-Item -LiteralPath $link -Force
+                Write-Ok ("Desktop-Verknüpfung entfernt: {0}" -f ($info.Shortcut -replace '\.lnk$', ''))
+            }
         }
     }
     Write-Host ''
@@ -269,8 +307,9 @@ function Invoke-Uninstall {
 }
 
 function Invoke-Main {
+    $info = Get-GameInfo -Name $Game
     Write-Host '=============================================' -ForegroundColor White
-    Write-Host '  Schwungturm – Einrichtung für Roblox Studio' -ForegroundColor White
+    Write-Host ("  {0} – Einrichtung für Roblox Studio" -f $info.Title) -ForegroundColor White
     Write-Host '=============================================' -ForegroundColor White
 
     $repoRoot = Get-RepoRoot -ScriptDirectory $PSScriptRoot
@@ -298,7 +337,7 @@ function Invoke-Main {
     $step++
 
     Write-Step $step $total 'Spieldatei bauen'
-    $place = Invoke-PlaceBuild -Rojo $rojo -RepoRoot $repoRoot
+    $place = Invoke-PlaceBuild -Rojo $rojo -RepoRoot $repoRoot -GameName $Game
     $step++
 
     $studio = Find-RobloxStudio
@@ -320,7 +359,7 @@ function Invoke-Main {
 
         Write-Step $step $total 'Rojo-Plugin und Desktop-Verknüpfung'
         Install-RojoPlugin -Rojo $rojo
-        New-DesktopShortcut -RepoRoot $repoRoot
+        New-DesktopShortcut -RepoRoot $repoRoot -GameName $Game
     }
 
     if (-not $NoOpen) {
@@ -330,8 +369,8 @@ function Invoke-Main {
     Write-Host ''
     Write-Host 'Fertig!' -ForegroundColor Green
     Write-Host '  So testest du: In Roblox Studio oben auf "Play" klicken (oder F5).'
-    Write-Host '  Checkliste für den Test: reports\owner_test_template.md'
-    Write-Host '  Nach einem Update des Projektordners: Desktop-Verknüpfung "Schwungturm testen" starten.'
+    Write-Host ("  Checkliste für den Test: {0}" -f $info.Checklist)
+    Write-Host ('  Nach einem Update des Projektordners: Desktop-Verknüpfung "{0}" starten.' -f ($info.Shortcut -replace '\.lnk$', ''))
 }
 
 # Nur ausführen, wenn das Skript gestartet (nicht per Punkt-Operator für Tests geladen) wird.

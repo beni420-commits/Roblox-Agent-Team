@@ -622,6 +622,23 @@ local function buildPost(model: Model, c: Carriage)
 	glow.Brightness = 1.5
 	glow.Color = Palette.lampLight
 	glow.Parent = exitFloor
+	-- Unsichtbare Absperrung um den Ankunftsbahnsteig (Seiten und Ende)
+	local barriers: { { size: Vector3, x: number, z: number } } = {
+		{ size = Vector3.new(16, 12, 1), x = c.length + 8, z = 7.5 },
+		{ size = Vector3.new(16, 12, 1), x = c.length + 8, z = -7.5 },
+		{ size = Vector3.new(1, 12, 16), x = c.length + 16.5, z = 0 },
+	}
+	for _, spec in barriers do
+		local barrier = block(
+			model,
+			"ArrivalBarrier",
+			spec.size,
+			at(c, spec.x, 6, spec.z),
+			Palette.platform,
+			Enum.Material.SmoothPlastic
+		)
+		barrier.Transparency = 1
+	end
 end
 
 -- Baut Wagen c (idempotent). Die Tür an seiner Front (Tür c.index + 1) bzw. das Tor des Postwagens gehört dazu.
@@ -652,11 +669,37 @@ function TrainBuilder.build(c: Carriage, lastIndex: number): Model
 	buildPost(model, c)
 	model.Parent = folder()
 	carriageModels[c.index] = model
+	if c.index == 0 then
+		TrainBuilder.sealRear(0)
+	end
 	buildDoor(c, c.index + 1, c.index == lastIndex)
 	if c.locked then
 		TrainBuilder.setLocked(c.index + 1, true)
 	end
 	return model
+end
+
+-- Verschließt die hintere Türöffnung eines Wagens (Wagen 0 immer; nach dem Abkoppeln der älteste Wagen),
+-- damit niemand aus dem Zug ins Leere läuft.
+function TrainBuilder.sealRear(index: number)
+	local model = carriageModels[index]
+	if model == nil or model:FindFirstChild("RearSeal") then
+		return
+	end
+	local origin = model:GetAttribute("OriginX")
+	if type(origin) ~= "number" then
+		return
+	end
+	local seal = Instance.new("Part")
+	seal.Name = "RearSeal"
+	seal.Anchored = true
+	seal.Size = Vector3.new(WALL, DOOR_H, 2 * DOOR_HALF)
+	seal.CFrame = CFrame.new(origin, FLOOR_Y + DOOR_H / 2, 0)
+	seal.Color = Palette.wallTrim
+	seal.Material = Enum.Material.Wood
+	seal.TopSurface = Enum.SurfaceType.Smooth
+	seal.BottomSurface = Enum.SurfaceType.Smooth
+	seal.Parent = model
 end
 
 function TrainBuilder.remove(index: number)

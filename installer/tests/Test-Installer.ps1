@@ -116,6 +116,19 @@ Test-Case 'Find-RobloxStudio nimmt die neueste installierte Version, sonst $null
     finally { Remove-Item -LiteralPath $dir -Recurse -Force }
 }
 
+Test-Case 'Get-GameInfo kennt beide Spiele, ihre Projekte und Starter existieren; Unbekanntes wird abgelehnt' {
+    foreach ($name in @('Schwungturm', 'LanternLine')) {
+        $info = Get-GameInfo -Name $name
+        $project = Join-Path $repoRoot ($info.Project -replace '\\', [IO.Path]::DirectorySeparatorChar)
+        Assert-True (Test-Path -LiteralPath $project) ("Projektdatei fehlt: {0}" -f $project)
+        Assert-True (Test-Path -LiteralPath (Join-Path $installerDir $info.Starter)) ("Starter fehlt: {0}" -f $info.Starter)
+        Assert-True ($info.Place -like '*.rbxlx') 'Spieldatei ohne .rbxlx'
+    }
+    $threw = $false
+    try { Get-GameInfo -Name 'Unbekannt' | Out-Null } catch { $threw = $_.Exception.Message -like '*Unbekanntes Spiel*' }
+    Assert-True $threw 'unbekanntes Spiel akzeptiert'
+}
+
 $rojoCommand = Get-Command rojo -ErrorAction SilentlyContinue
 if ($rojoCommand) {
     Test-Case 'Invoke-PlaceBuild baut build/Schwungturm.rbxlx mit Server- und Client-Skripten' {
@@ -127,6 +140,29 @@ if ($rojoCommand) {
         Assert-True ($xml -match 'ServerScriptService') 'ServerScriptService fehlt'
         Assert-True ($xml -match 'StarterPlayerScripts') 'StarterPlayerScripts fehlt'
         Assert-True ($xml -match 'LocalizationTable') 'LocalizationTable fehlt'
+    }
+
+    Test-Case 'Invoke-PlaceBuild -GameName LanternLine baut build/LanternLine.rbxlx' {
+        $result = @(Invoke-PlaceBuild -Rojo $rojoCommand.Source -RepoRoot $repoRoot -GameName 'LanternLine')
+        Assert-True ($result.Count -eq 1) ('Rückgabe ist kein einzelner Pfad: ' + ($result -join ' | '))
+        $place = [string]$result[0]
+        Assert-True ($place.EndsWith('LanternLine.rbxlx')) ('falscher Pfad: ' + $place)
+        $xml = Get-Content -LiteralPath $place -Raw
+        Assert-True ($xml -match 'RunController') 'Server-Laufsteuerung fehlt'
+        Assert-True ($xml -match 'HidingController') 'Client-Controller fehlen'
+        Assert-True ($xml -match 'LocalizationTable') 'LocalizationTable fehlt'
+    }
+
+    Test-Case 'Gesamtlauf -Game LanternLine -Quick -NoOpen endet erfolgreich' {
+        $output = & pwsh -NoProfile -File $installer -Game LanternLine -Quick -NoOpen -RojoPath $rojoCommand.Source 2>&1 | Out-String
+        Assert-True ($LASTEXITCODE -eq 0) ("Exit-Code {0}: {1}" -f $LASTEXITCODE, $output)
+        Assert-True ($output -match 'Lantern Line') 'Titel fehlt in der Ausgabe'
+        Assert-True ($output -match 'lantern-line') 'Checkliste für Lantern Line fehlt'
+    }
+
+    Test-Case 'Unbekanntes -Game wird abgelehnt (Exit-Code ungleich 0)' {
+        $output = & pwsh -NoProfile -File $installer -Game Unbekannt -Quick -NoOpen 2>&1 | Out-String
+        Assert-True ($LASTEXITCODE -ne 0) ('unbekanntes Spiel akzeptiert: ' + $output)
     }
 
     Test-Case 'Gesamtlauf -Quick -NoOpen mit vorhandenem Rojo endet erfolgreich' {
@@ -157,12 +193,15 @@ Test-Case 'Invoke-Uninstall entfernt Rojo und Spieldatei, auch wenn rojo.exe def
     try {
         New-Item -ItemType Directory -Path (Join-Path $dir '.tools/bin'), (Join-Path $dir 'build') | Out-Null
         $fakeExe = Join-Path $dir '.tools/bin/rojo.exe'
-        $fakePlace = Join-Path $dir ('build/' + $script:PlaceFileName)
+        $fakePlace = Join-Path $dir ('build/' + (Get-GameInfo -Name 'Schwungturm').Place)
+        $fakePlace2 = Join-Path $dir ('build/' + (Get-GameInfo -Name 'LanternLine').Place)
         Set-Content -LiteralPath $fakeExe -Value 'kein Programm'
         Set-Content -LiteralPath $fakePlace -Value 'x'
+        Set-Content -LiteralPath $fakePlace2 -Value 'x'
         Invoke-Uninstall -RepoRoot $dir | Out-Null
         Assert-True (-not (Test-Path -LiteralPath $fakeExe)) 'rojo.exe nicht entfernt'
-        Assert-True (-not (Test-Path -LiteralPath $fakePlace)) 'Spieldatei nicht entfernt'
+        Assert-True (-not (Test-Path -LiteralPath $fakePlace)) 'Spieldatei Schwungturm nicht entfernt'
+        Assert-True (-not (Test-Path -LiteralPath $fakePlace2)) 'Spieldatei Lantern Line nicht entfernt'
     }
     finally { Remove-Item -LiteralPath $dir -Recurse -Force }
 }

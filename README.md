@@ -2,6 +2,10 @@
 
 Ein autonomes, KI-gestütztes Roblox-Entwicklerstudio nach dem „Masterprompt v2“. Spiele werden recherchiert, konzipiert, gebaut, getestet und iterativ verbessert. Jede Entscheidung wird dokumentiert und belegt.
 
+**Spiele im Repo:**
+- **Schwungturm**: Kletterspiel; das Rojo-Projekt liegt in der Repo-Wurzel (`src/`, `tests/`).
+- **Lantern Line – Der Nachtzug**: Horror im Raum-für-Raum-Stil, 1–4 Spieler; liegt in `games/lantern-line/`. Design: `docs/lantern-line/game_design_doc.md`.
+
 **Aktueller Stand:** siehe [`docs/state.md`](docs/state.md). Jede Sitzung beginnt dort.
 
 ## Struktur
@@ -12,16 +16,17 @@ reports/   Sprint-Berichte (QA, Playtest, Metriken, Compliance, Owner-Bericht)
 src/       Rojo-Projekt: server/ → ServerScriptService, client/ → StarterPlayerScripts, shared/ → ReplicatedStorage
 tests/     Logik-Tests (laufen im Luau-CLI ohne Roblox)
 scripts/   check.sh (Format, Lint, Build, Typprüfung, Tests), setup_tools.sh
-installer/ Windows-Installer zum Testen in Roblox Studio (install.ps1 + .bat-Starter)
+installer/ Windows-Installer zum Testen in Roblox Studio (install.ps1 + .bat-Starter, beide Spiele)
+games/     weitere Spiele als eigene Rojo-Projekte (lantern-line/: src, tests, default.project.json)
 ```
 
 ## Auf dem PC testen (Windows)
 
-Doppelklick auf `installer/Schwungturm-Installieren.bat`. Der Installer lädt Rojo, baut die Spieldatei und öffnet sie in Roblox Studio. Details: [`installer/ANLEITUNG.md`](installer/ANLEITUNG.md).
+Doppelklick auf `installer/LanternLine-Installieren.bat` bzw. `installer/Schwungturm-Installieren.bat`. Der Installer lädt Rojo, baut die Spieldatei und öffnet sie in Roblox Studio. Details: [`installer/ANLEITUNG.md`](installer/ANLEITUNG.md).
 
 ## Lokal arbeiten (Owner-Maschine)
 
 1. Werkzeuge installieren: `rokit install` (Versionen in `rokit.toml`) und das Luau-CLI von https://github.com/luau-lang/luau/releases.
 2. Roblox-Typdefinitionen laden: `scripts/setup_tools.sh`
-3. Alle Prüfungen: `scripts/check.sh`
+3. Alle Prüfungen (beide Spiele): `scripts/check.sh`
 4. Mit Studio synchronisieren: `rojo serve` + Rojo-Plugin, oder `rojo build -o build/place.rbxlx` und die Datei in Studio öffnen.

@@ -88,6 +88,17 @@ function RunState.openDoor(state: State, door: number): (boolean, Types.Event?)
 	return true, if c then c.event else nil
 end
 
+-- Nur für Tests in Roblox Studio (Workspace-Attribut „DebugStartCarriage“): Lauf beginnt in Wagen n.
+-- Ereignisse der übersprungenen Wagen entfallen. Liefert das Ereignis von Wagen n.
+function RunState.debugSkipTo(state: State, index: number): (boolean, Types.Event?)
+	if state.phase ~= "running" or state.opened ~= 0 or index < 1 or index > state.plan.lastIndex then
+		return false, nil
+	end
+	state.opened = math.floor(index)
+	local c = carriage(state, state.opened)
+	return true, if c then c.event else nil
+end
+
 function RunState.containerKey(carriageIndex: number, containerId: number): number
 	return carriageIndex * 100 + containerId
 end

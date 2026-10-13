@@ -131,4 +131,65 @@ Der Owner hat in §0.1 keine Werte ausgefüllt. Es gelten die Defaults:
 - **Begründung:** Roblox-Spiele sind keine eigenständigen PC-Programme. Der realistische Weg „auf dem PC spielen“ ist Roblox Studio, und der Installer macht ihn zum Doppelklick.
 - **Evidenz:** [GETESTET] 14 Tests mit PowerShell 7 unter Linux, darunter nachgebildeter Download inkl. Prüfsumme, Build, Gesamtlauf, Deinstallation, AST-Prüfung auf Syntax nur für PowerShell 7 und Dateiformate. Mutationstest bestanden. Die Tests fanden 2 echte Fehler (typografische Anführungszeichen als String-Ende, Rojo-Ausgabe im Rückgabewert). **Nicht getestet:** echtes Windows, Windows PowerShell 5.1, Desktop-Verknüpfung (COM), Studio-Start, echter GitHub-Download.
 
+## Lantern Line – Der Nachtzug (zweites Spiel)
+
+### D-032 · 2026-10-13 · Orchestrator · Owner-Auftrag: Horror-Spiel als eigenes Projekt
+- **Owner-Auftrag (wörtlich):** „erstelle ein Horror Game das wie ''Doors'' es soll nah am original sein aber trotzdem einen eigenen wiedererkennbaren style haben“.
+- **Entscheidung:** neues, eigenständiges Rojo-Projekt `games/lantern-line/` im selben Repo. Schwungturm bleibt unverändert (wartet weiter auf Owner-Test P0).
+- **„Nah am Original“** heißt hier: vertrautes Genre-Gefühl und dieselben Genre-Prinzipien (Raum für Raum, Warnung durch Licht, Verstecken, Schlüssel, Rätsel-Finale), aber keine übernommene Gestaltung (Namen, Figuren, Texte, UI, Sounds). Grundlage ist die Compliance-Vorprüfung (Freigabe mit Auflagen H-A1 bis H-A15).
+- **Prozess (Sprint-0-Ablauf, verdichtet):** Recherche und Compliance laufen parallel zur Logik. Gebaut wurde nur, was keine Owner-Freigabe nach §8 braucht: keine Veröffentlichung, keine Käufe, keine Assets außer Kat. 0, keine Daten. Die Freigaben stehen im Owner-Bericht.
+
+### D-033 · 2026-10-13 · Game Designer · Setting „Nachtzug“, Stil „Laternen-Noir“, Arbeitstitel „Lantern Line – Der Nachtzug“
+- **Entscheidung:** Ein Nachtzug statt eines Gebäudes. Wagen sind die Räume, jede Gefahr kündigt sich durch Licht an. Dazu kommt eine UI in Fahrkarten-Ästhetik.
+- **Begründung:**
+  - Der Stil ist eigenständig und wiedererkennbar.
+  - Ein linearer Zug macht Wesen-Wege und Generator robust: kein Überlappen von Räumen, Wesen fahren entlang x.
+  - Licht als Warnsprache funktioniert ohne Sounds (D-030) und ist barrierearm.
+- **Titel:** Laut Compliance H-A15 keine Wortmarke im Muster des Vorbilds, deshalb wurde „CARRIAGES“ verworfen. Die Recherche fand ein Konkurrenzprojekt im Zug-Setting („LastStop“, in Entwicklung).
+- **Evidenz:** `docs/lantern-line/research_doors.md` [QUELLE/ANNAHME gekennzeichnet]. Markenrecherche offen (Owner-Freigabe).
+
+### D-034 · 2026-10-13 · Game Designer · Design-Änderungen nach Recherche und Compliance (GDD v0.2)
+- **Entscheidung:**
+  - „Pendel“ (Hin-und-her-Durchgänge) wird ersetzt durch den **Gegenzug**: Licht flutet eine Fensterseite, man wechselt die Wagenhälfte.
+  - Der **Blinde Passagier** verlangt **Abstand** zu festen Augenpaaren statt „ansehen“.
+  - Das Finale nutzt das **Entwerter-Lochmuster** (3 Reihen-Fragmente, 3×3-Feld) statt eines Symbol-Ziffern-Codes.
+  - Der **Schaffner** nimmt über einen Lichtkegel wahr und hört Schritte; er ist nicht blind.
+  - **Teesalon** statt Salonwagen mit Bar.
+  - Neu: **Kofferlawine** (Verfolgung) mit eigener Kernmechanik.
+- **Begründung:**
+  - Die Recherche stufte Pendel, Passagier und Finale als mechanisch zu nah ein.
+  - Compliance H-A3 ist kernnah (Finale).
+  - H-A6: Eine Bar würde das Label 18+ auslösen.
+- **Evidenz:** Fairness der neuen Wesen geprüft [GETESTET, 150 Seeds]. Die Compliance-Nachprüfung steht in `reports/lantern-line/compliance_check_sprint1_ll.md`.
+
+### D-035 · 2026-10-13 · Systems Engineer · Server-Autorität, Darstellung aus gemeinsamen Fahrplänen
+- **Entscheidung:**
+  - Der Server erzeugt den Bauplan (Seed nur auf dem Server), baut die Wagen und wertet alle Treffer.
+  - Bewegte Wesen (Express, Kofferlawine, Schaffner) zeichnet jeder Client selbst. Grundlage sind die Fahrpläne bzw. Wege, die der Server schickt; beide Seiten nutzen dieselbe Logik (`Sweep`, `Conductor`).
+  - Phasen des Kontrolleurs und Augen laufen über Attribute.
+- **Begründung:** flüssige Bewegung ohne ruckelnde Replikation verankerter Teile. Der Client kann nichts entscheiden.
+- **Folge:** Spielerbewegung ist (wie überall in Roblox) clientseitig. Ein Teleport-Cheat könnte Wagen überspringen. Ohne Speicherstand und Käufe ist der Schaden klein; eine Bewegungsprüfung kommt vor jedem Speicherstand.
+
+### D-036 · 2026-10-13 · Systems Engineer · Kein Roblox-Tod: Verblassen statt Ragdoll
+- **Entscheidung:**
+  - Bei 0 Lebenspunkten setzt der Server die Lebenspunkte auf 1, verankert die Figur, blendet sie in 0,6 s aus und entfernt sie.
+  - Der Client zeigt danach die Hinweis-Notiz und das Zuschauen.
+  - Regeneration ist aus (leeres Skript „Health“); Reset ist aus.
+- **Begründung:** Compliance H-A8: unrealistische Todesdarstellung, kein Ragdoll, Label Mild.
+
+### D-037 · 2026-10-13 · Systems Engineer · Gemeinsame Util-Module als geprüfte Kopie
+- **Entscheidung:** `Util/*` und `Net/Guard.luau` sind nach `games/lantern-line/src/shared/` kopiert. `scripts/lantern_line_checks.py` prüft byte-genau, dass die Kopien gleich bleiben.
+- **Begründung:** Symlinks gehen beim ZIP-Download unter Windows verloren (Installer), und ein Paketmanager bräuchte eine Owner-Freigabe (§8.5). Die Tests der Originale decken die Kopien mit ab.
+
+### D-038 · 2026-10-13 · Game Designer · Schlüssel gehören der Gruppe; StreamingEnabled aus
+- **Schlüssel:** Ein gefundener Schlüssel gilt für alle (Schlüsselbund im HUD). So entsteht keine Sackgasse, wenn der Finder ausscheidet.
+- **Streaming:** `StreamingEnabled = false`, weil höchstens ca. 6 Wagen gleichzeitig existieren (ältere werden abgekoppelt). Verstecke und Prompts müssen immer da sein. [ANNAHME: Speicher auf Mobilgeräten ausreichend, im Owner-Test prüfen]
+
+### D-039 · 2026-10-13 · Orchestrator · Installer für beide Spiele
+- **Entscheidung:** `install.ps1 -Game LanternLine` mit eigenen Startern (`LanternLine-Installieren.bat`, `LanternLine-Starten.bat`) und einer Desktop-Verknüpfung „Lantern Line testen“. Die Deinstallation entfernt beide Spiele.
+- **Evidenz:**
+  - [GETESTET] 18 Installer-Tests mit PowerShell 7, davon 4 neu für Lantern Line.
+  - Der Mutationstest (falscher Projektpfad) wurde von 3 Tests erkannt.
+  - Echtes Windows ist weiterhin ungetestet.
+
 <!-- Weitere Entscheidungen werden unten angehängt. -->

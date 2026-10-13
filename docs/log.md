@@ -101,3 +101,44 @@
 ## 2026-10-12 – Owner-Wunsch: Installer für PC
 - Windows-Installer (`installer/`) erstellt: Rojo-Download mit Prüfsumme, Build, Studio-Erkennung, Plugin, Verknüpfung, Deinstallation (D-031).
 - 14 Installer-Tests mit PowerShell 7 [GETESTET]; Teil von `scripts/check.sh` (wird übersprungen, wenn `pwsh` fehlt). Echtes Windows ist ungetestet.
+
+## 2026-10-13 – Owner-Auftrag: Horror-Spiel „wie Doors“ → „Lantern Line – Der Nachtzug“
+
+### Orchestrator
+- Neues Projekt `games/lantern-line/` (D-032). Konzept „Nachtzug / Laternen-Noir“ als GDD v0.1 (D-033).
+- Delegiert (parallel): Market Researcher → `docs/lantern-line/research_doors.md`; Compliance → `reports/lantern-line/compliance_check_concept.md`.
+
+### Market Researcher
+- Doors-Analyse (ca. 40 Websuchen). Ergebnisse:
+  - Keine Namenskollision gefunden.
+  - Konkurrenz im Setting: „LastStop“ (in Entwicklung).
+  - Empfehlung: Pendel, Blinder Passagier und Finale weiter vom Vorbild abrücken, Kontrolleur und „Ruck“ betonen.
+
+### Compliance
+- Freigabe mit Auflagen H-A1 bis H-A15, bedingte Vetos V1 bis V3.
+- Funde: Bar im Salonwagen führt zu 18+; das Finale ist zu nah am Vorbild; das Repo ist öffentlich.
+- Erwartetes Label Mild.
+
+### Game Designer
+- GDD v0.2 mit Gegenzug, Abstands-Augen, Entwerter-Lochmuster, Schaffner mit Lichtkegel, Teesalon und Kofferlawine (D-034).
+- Arbeitstitel „Lantern Line – Der Nachtzug“.
+
+### Systems Engineer / QA
+- **Logik (reine Luau-Module):**
+  - Zuggenerator mit 7 Wagentypen
+  - Begehbarkeits-Raster und Fairness-Prüfer
+  - Express- und Lawinen-Kinematik (`Sweep`), Gegenzug, Augen, Kontrolleur, Schaffner (Wegenetz, Lichtkegel, Sicht, Hören), Verstecke mit Kälte
+  - Bewegungsmessung, Entwerter-Rätsel, Laufzustand, Bahnsteig-Countdown
+  - Flacker-Planer (≤ 2 Pulse/s, synchron)
+  - Telemetrie-Katalog
+- **Tests:** 71 [GETESTET], davon 150 Seeds × 51 Wagen für die Fairness-Garantien und eine Exploit-Suite.
+- **Fairness-Messung [GETESTET]:** Express-Ereignisse wurden in Gepäckwagen anfangs zu 3 % abgelehnt (Überseekoffer zu weit weg). Danach liegt je ein Koffer in der hinteren und vorderen Hälfte; jetzt 0 Ablehnungen bei 2.640 Proben.
+- **Roblox-Schicht:**
+  - Server: Bahnsteig, Zugbau, Lauf, Wesen, Verstecke, Rätsel, Telemetrie.
+  - Client: HUD, Einstellungen, Atmosphäre, Wesen-Darstellung, Versteck-Ansicht, Ausscheiden und Zuschauen, Entwerter, Abfahrtstafel.
+  - Typgeprüft, nicht in der Engine ausgeführt.
+- **Statische Compliance-Prüfungen:** `scripts/lantern_line_checks.py`. Die Gegenprobe mit eingeschleustem verbotenem Wort und einer TextBox wurde erkannt. Echte Funde, die behoben wurden: das Wort „doors“ in einem Hinweistext und der Vorbild-Name in der GDD.
+- **Umbenennung:** Das Modul `Rush` heißt jetzt `Sweep` (keine Vorbild-Namen im Code).
+- **`scripts/check.sh`** prüft jetzt beide Spiele: 81 + 71 Logik-Tests, Typprüfung, Lint, Build, Compliance-Checks, Installer-Tests.
+- **Installer:** `-Game LanternLine` (D-039), 18 Tests.
+
