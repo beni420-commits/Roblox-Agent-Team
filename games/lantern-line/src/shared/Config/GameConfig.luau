@@ -124,6 +124,8 @@ local GameConfig = table.freeze({
 	RUN_IDLE_TIMEOUT = 300, -- 5 min ohne neue Tür ⇒ Lauf endet (niemand hält die Gruppe fest)
 	LOST_CHARACTER_TIMEOUT = 5, -- so lange ohne Figur ⇒ ausgeschieden („lost“)
 	SPEED_LIMIT = 24, -- Studs/s über 1 s gemittelt; darüber zurück auf die letzte gültige Position
+	SPEED_CHECK_MIN_SPAN = 0.8, -- erst ab so vielen Sekunden Proben prüfen (kurze Fenster täuschen bei Netz-Jitter)
+	TELEPORT_SETTLE = 0.3, -- nach Server-Teleports so lange Positionsproben verwerfen
 })
 
 export type GameConfig = typeof(GameConfig)

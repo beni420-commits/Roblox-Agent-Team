@@ -46,6 +46,13 @@ function MotionTracker.displacement(tracker: Tracker, window: number): number
 	return math.sqrt(dx * dx + dz * dz)
 end
 
+-- Zeitspanne der vorhandenen Proben (0 bei weniger als zwei Proben).
+function MotionTracker.span(tracker: Tracker): number
+	local samples = tracker.samples
+	local n = #samples
+	return if n < 2 then 0 else samples[n].t - samples[1].t
+end
+
 -- Geschwindigkeit (Studs/s) über das Fenster.
 function MotionTracker.speed(tracker: Tracker, window: number): number
 	local samples = tracker.samples

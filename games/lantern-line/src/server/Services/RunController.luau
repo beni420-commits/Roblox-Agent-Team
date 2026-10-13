@@ -63,6 +63,15 @@ local chaseBlock: { from: number, to: number }? = nil -- Wagen ohne Verstecke w�
 local lastLeaveAt: { [Player]: number } = {}
 local missingSince: { [Player]: number } = {}
 local lastValid: { [Player]: CFrame } = {}
+
+local teleportedAt: { [Player]: number } = {}
+
+-- Server-Teleport: Ziel gilt als letzte gültige Position für die Bewegungsprüfung (LL-10).
+local function teleport(player: Player, cframe: CFrame)
+	lastValid[player] = cframe
+	teleportedAt[player] = os.clock()
+	PlayerService.teleport(player, cframe)
+end
 local lastProgressAt = 0
 
 local function keyOf(player: Player): string
@@ -145,7 +154,7 @@ local function leaveHiding(player: Player)
 		root.Anchored = false
 		if spot then
 			local _, _, exit = TrainBuilder.spotFrames(c, spot)
-			PlayerService.teleport(player, exit)
+			teleport(player, exit)
 		end
 	end
 end
@@ -172,7 +181,7 @@ local function enterHiding(player: Player, carriageIndex: number, spotId: number
 	prompt.Enabled = false
 	local inside = TrainBuilder.spotFrames(c, spot)
 	root.Anchored = true
-	PlayerService.teleport(player, inside)
+	teleport(player, inside)
 	PlayerService.setConcealed(player, true)
 	player:SetAttribute("HiddenIn", spotKey)
 	TelemetryService.onboarding(player, 4)
@@ -292,7 +301,7 @@ local function decouple(keepFrom: number)
 					end
 					local frame = rearFrame(keepFrom)
 					if frame then
-						PlayerService.teleport(player, frame)
+						teleport(player, frame)
 						NetService.fire(player, PERSONAL, { type = "ruck" })
 					end
 				end
@@ -369,7 +378,7 @@ local function triggerEvent(k: number, event: Types.Event)
 				if isHidden(player) then
 					leaveHiding(player)
 				end
-				PlayerService.teleport(player, frame)
+				teleport(player, frame)
 			end
 		end
 		chase = s
@@ -502,7 +511,7 @@ local function rescueFallen()
 				leaveHiding(player)
 			end
 			root.Anchored = false
-			PlayerService.teleport(player, frame)
+			teleport(player, frame)
 		end
 	end
 end
@@ -513,11 +522,22 @@ local function checkMovement()
 	for _, player in aliveParticipants() do
 		local root = PlayerService.root(player)
 		local tracker = PlayerService.motion(player)
-		if root and tracker and not isHidden(player) and not root.Anchored then
+		-- Nach einem Server-Teleport: kurz Proben verwerfen (verspätete Pakete vom alten Ort), dann erst
+		-- mit genug Proben urteilen.
+		if tracker and os.clock() - (teleportedAt[player] or -math.huge) < GameConfig.TELEPORT_SETTLE then
+			MotionTracker.reset(tracker)
+		end
+		if
+			root
+			and tracker
+			and not isHidden(player)
+			and not root.Anchored
+			and MotionTracker.span(tracker) >= GameConfig.SPEED_CHECK_MIN_SPAN
+		then
 			if MotionTracker.speed(tracker, 1.0) > GameConfig.SPEED_LIMIT then
 				local valid = lastValid[player]
 				if valid then
-					PlayerService.teleport(player, valid)
+					teleport(player, valid)
 				end
 			else
 				lastValid[player] = root.CFrame
@@ -608,6 +628,7 @@ local function startRun(boarders: { Player })
 	table.clear(eyesByCarriage)
 	table.clear(noises)
 	table.clear(lastValid)
+	table.clear(teleportedAt)
 	table.clear(missingSince)
 	express, chase, oncoming, inspector, conductor = nil, nil, nil, nil, nil
 	chaseBlock = nil
@@ -642,7 +663,7 @@ local function startRun(boarders: { Player })
 	for i, player in boarders do
 		-- Nebeneinander im hinteren Vorraum (x 1,5–3,5, |z| ≤ 2,5: dort steht in keinem Wagentyp ein Möbelstück).
 		local p = Vector3.new(first.originX + 2.5, GameConfig.FLOOR_Y + 3, -1.5 + (i - 1))
-		PlayerService.teleport(player, CFrame.lookAt(p, p + Vector3.new(1, 0, 0)))
+		teleport(player, CFrame.lookAt(p, p + Vector3.new(1, 0, 0)))
 		player:SetAttribute("InRun", true)
 		player:SetAttribute("Alive", true)
 		player:SetAttribute("Stubs", 0)
@@ -735,7 +756,7 @@ local function updateLobby()
 				table.insert(ready, player)
 			end
 			if root.Position.Y < -60 then
-				PlayerService.teleport(player, WorldSetup.platformSpawn())
+				teleport(player, WorldSetup.platformSpawn())
 			end
 		end
 	end
@@ -1176,6 +1197,7 @@ local function onPlayerRemoving(player: Player)
 	lastLeaveAt[player] = nil
 	missingSince[player] = nil
 	lastValid[player] = nil
+	teleportedAt[player] = nil
 	local rejected = 0
 	for _, count in NetService.rejections(player) do
 		rejected += count
